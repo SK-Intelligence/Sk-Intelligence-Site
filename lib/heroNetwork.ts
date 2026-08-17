@@ -1,8 +1,71 @@
-(function(){
-  "use strict";
-  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var themeCss = getComputedStyle(document.documentElement);
-  function tok(name, fallback){ var v = themeCss.getPropertyValue(name); return (v && v.trim()) || fallback; }
+/**
+ * The hero centrepiece: 84 nodes that start scattered and dim (the client's
+ * siloed systems) and organise into a lattice around a bronze core (us
+ * integrating into their stack), with pointer picking on the nodes.
+ *
+ * Ported verbatim from the verified vanilla build. Load-bearing details that
+ * look like details but are not:
+ *   - the node material must NOT set `vertexColors`. IcosahedronGeometry has no
+ *     `color` attribute, so USE_COLOR makes the shader multiply vColor by the
+ *     default (0,0,0) attribute and every node renders black. USE_INSTANCING_COLOR
+ *     is defined automatically because instanceColor is assigned.
+ *   - edges are instanced cylinders, not LineSegments: WebGL ignores
+ *     `linewidth`, and the fat-line addon is ESM-only.
+ *   - resize measures the canvas box, not the wrapper (they differ by the
+ *     -10%/-6% inset and the mismatch squashed the sphere).
+ *   - raycasting is gated on pointer movement and node matrices stop being
+ *     rewritten once the intro settles; both are zero-work at idle.
+ *
+ * Returns a cleanup function. Must be called on unmount — StrictMode double
+ * mounts in dev and a leaked WebGL context is not garbage collected.
+ */
+/* eslint-disable */
+// @ts-nocheck
+import * as THREE from 'three';
+
+export function initHeroNetwork(): () => void {
+  /* Testability hook. The scene makes two guarantees that are only provable by
+     instrumenting three.js itself: zero raycasts when the pointer is idle, and
+     zero instance-matrix uploads once the intro settles. Those were regressions
+     once already. Bundling put THREE out of reach of a browser test, so it is
+     exposed here behind an explicit query flag — inert unless ?__probe=1 is in
+     the URL, and never referenced by the site's own code. */
+  if (new URLSearchParams(window.location.search).has('__probe')) {
+    (window as unknown as { __THREE?: typeof THREE }).__THREE = THREE;
+  }
+
+  const css = getComputedStyle(document.documentElement);
+  function tok(name: string, fallback: string) {
+    const v = css.getPropertyValue(name);
+    return (v && v.trim()) || fallback;
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const disposers: Array<() => void> = [];
+  /* --- lifecycle tracking so the returned cleanup is complete ---------------
+     Every listener below gets the AbortController signal, every rAF id and
+     every observer is tracked. StrictMode mounts effects twice in development;
+     without this the second mount leaves an orphaned WebGL context and a
+     second render loop running forever. */
+  const _ac = new AbortController();
+  const _signal = _ac.signal;
+  const _rafIds = new Set<number>();
+  const _observers: Array<{ disconnect: () => void }> = [];
+  const _nativeRaf = window.requestAnimationFrame.bind(window);
+  const requestAnimationFrame = (cb: FrameRequestCallback) => {
+    const id = _nativeRaf((t) => { _rafIds.delete(id); cb(t); });
+    _rafIds.add(id);
+    return id;
+  };
+  const cancelAnimationFrame = (id: number) => { _rafIds.delete(id); window.cancelAnimationFrame(id); };
+  const _IO = window.IntersectionObserver;
+  const IntersectionObserver = function (this: any, cb: any, opts?: any) {
+    const o = new _IO(cb, opts); _observers.push(o); return o;
+  } as unknown as typeof window.IntersectionObserver;
+  const _RO = window.ResizeObserver;
+  const ResizeObserver = function (this: any, cb: any) {
+    const o = new _RO(cb); _observers.push(o); return o;
+  } as unknown as typeof window.ResizeObserver;
+
 
   /* ====================================================================
      Hero centerpiece: 84-node orbiting lattice. Nodes start scattered and
@@ -356,8 +419,8 @@
       pointerTarget.y = (p.clientY / window.innerHeight) * 2 - 1;
     }
     if (!reduceMotion){
-      window.addEventListener('mousemove', onPointerMove, { passive: true });
-      window.addEventListener('touchmove', onPointerMove, { passive: true });
+      window.addEventListener('mousemove', onPointerMove, { passive: true , signal: _signal });
+      window.addEventListener('touchmove', onPointerMove, { passive: true , signal: _signal });
     }
 
     var scrollProgress = 0;
@@ -372,7 +435,7 @@
       var p = 1 - (rect.bottom / (rect.height + vh));
       scrollProgress = Math.min(1, Math.max(0, p));
     }
-    window.addEventListener('scroll', updateScroll, { passive: true });
+    window.addEventListener('scroll', updateScroll, { passive: true , signal: _signal });
     updateScroll();
 
     function resize(){
@@ -381,7 +444,7 @@
       renderer.setSize(w, h, false);
     }
     if ('ResizeObserver' in window){ new ResizeObserver(resize).observe(sceneEl); }
-    else { window.addEventListener('resize', resize); }
+    else { window.addEventListener('resize', resize, { signal: _signal }); }
     resize();
 
     var clock = new THREE.Clock();
@@ -435,4 +498,14 @@
     canvas.style.opacity = '1';
     if (poster) poster.style.display = 'none';
   })();
-})();
+
+
+  disposers.push(() => {
+    _ac.abort();
+    _rafIds.forEach((id) => window.cancelAnimationFrame(id));
+    _rafIds.clear();
+    _observers.forEach((o) => { try { o.disconnect(); } catch {} });
+  });
+
+  return () => { disposers.forEach(fn => { try { fn(); } catch {} }); };
+}

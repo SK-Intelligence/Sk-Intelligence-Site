@@ -1,83 +1,101 @@
 # SK Intelligence — website
 
-Static marketing site for SK Intelligence, an AI-native consultancy.
-No build step, no framework, no dependencies to install.
-
-```
-index.html      hero (3D node network) · what we do · process (pinned scrub) ·
-                co-founders · client work (tabbed) · manifesto · CTA
-studio.html     build studio services + tech stack
-assets/
-  site.css          all shared styling, incl. the THEME:START/END token block
-  site.js           nav · reveal-on-scroll · entrance · shader wash · tabs · process scrub
-  hero-network.js   three.js node-network hero (index only)
-  hero-scene.css    hero scene layering + the "Us" / "Your systems" labels
-  clients/*.png     client logos
-  founders/         drop sameer.jpg / kenneth.jpg here — see the README inside
-favicon.ico, assets/favicon-32.png, apple-touch-icon.png, icon-512.png
-```
-
-## Running it
-
-Open `index.html` directly, or serve the folder:
+Marketing site for SK Intelligence, an AI-native consultancy.
+Next.js (App Router) + TypeScript. Two statically prerendered pages and one API route.
 
 ```bash
-python3 -m http.server 8123      # http://127.0.0.1:8123
+npm install
+npm run dev      # http://localhost:3000
+npm run build && npm start
 ```
 
-Both work — asset paths are relative and the logo masks are inlined precisely so
-that `file://` renders correctly (see "Gotchas").
+## Structure
 
-## Editing
+```
+app/
+  layout.tsx            fonts, metadata, shared chrome, behaviour layers
+  page.tsx              home — hero, services, process, co-founders, client work, CTA
+  studio/page.tsx       build studio services + tech stack
+  api/contact/route.ts  POST endpoint for the contact form
+  globals.css           the whole design system, incl. the theme token block
+  fonts.ts              Syne + Fraunces via next/font (self-hosted)
+components/             one component per section, plus the client-side behaviour
+lib/
+  content.ts            all copy in one typed place
+  heroNetwork.ts        three.js node lattice
+  shaderWash.ts         GLSL background wash
+public/clients/*        client logos
+public/founders/        drop sameer.jpg / kenneth.jpg here — see the README inside
+```
 
-**The two HTML files are the source of truth.** There is no generator. Shared
-chrome (nav, footer, CTA, and the inline `<svg><filter id="glass-distortion">`
-that `.glass` depends on) is duplicated across both pages — a nav change means
-two edits. That is a deliberate trade for keeping the files hand-editable.
+## Build output
 
-Colour lives in one place: the `/* ===== THEME:START ===== */ … THEME:END */`
-block at the top of `assets/site.css`. JS reads colours from CSS via a `tok()`
-helper, so the shader wash and the three.js scene follow the tokens rather than
-holding their own literals. A re-skin is that block and nothing else.
+```
+○ /              Static
+○ /studio        Static
+ƒ /api/contact   Dynamic
+```
 
-## Gotchas worth knowing before you change things
+Both pages are prerendered at build. The API route being dynamic does not affect
+them — static/dynamic is decided per route segment.
 
-- **Logo masks are inlined base64 on purpose.** A relative `url()` in a CSS
-  `mask-image` is blocked by CORS over `file://` and silently renders the SK
-  monogram invisible. Each blob is written once via a `--sk-mask` custom property
-  that both `-webkit-mask-image` and `mask-image` read.
-- **Progressive enhancement is a contract.** `[data-reveal]` defaults to visible
-  and JS adds `body.reveal-armed`; the tabs default to all-panels-visible and JS
-  adds `.js-tabs` plus all the ARIA; the process section defaults to stacked and
-  JS adds `.process-js`. With JS off every page is complete and readable — keep
-  it that way.
-- **`three.js` loads on `index.html` only.** It is ~168 KB gzipped and the hero
-  network is its only consumer.
-- **CDN scripts are pinned with SRI.** If you bump `three@0.160.1` or
-  `gsap@3.12.5`, regenerate the hashes or the scripts silently stop loading:
-  `curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A`.
-  `crossorigin="anonymous"` is required alongside `integrity`, not optional.
-- **No scrim behind the hero ball.** A radial gradient in that box gets clipped
-  at its top and bottom edges and draws visible horizontal seams. If a halo is
-  ever wanted, use a `mask-image` fade on `.hero-scene`.
-- The `.tab-indicator` position is set in JS (`top` as well as `translateX`)
-  because the tablist wraps to multiple rows below ~900px.
+## Theming
 
-## Before deploying
+Every colour lives in the `/* ===== THEME:START ===== */ … THEME:END */` block at
+the top of `app/globals.css`. The shader wash and the three.js scene read their
+colours from those tokens via a `tok()` helper rather than holding literals, so a
+re-skin is that block and nothing else.
 
-1. **Response headers** — CSP, `Referrer-Policy`, `X-Content-Type-Options`,
-   `X-Frame-Options`, `Permissions-Policy`, HSTS. Roll the CSP out in
-   report-only first: `style-src-attr` is CSP Level 3 and a browser without it
-   falls back to `style-src`, which would block the inline `style` attributes.
-2. **Domain-dependent meta** — `og:url`, `og:image` and `rel="canonical"` need
-   the live domain. Favicons and the rest of the Open Graph tags are already in.
-3. **Founder headshots** — strip EXIF before adding
-   (`exiftool -all= -overwrite_original …`); phone photos carry GPS.
+## Contact form
+
+`POST /api/contact` validates, rate-limits (5 per 10 min per IP, in-memory) and
+carries a honeypot field. Delivery is **not configured** — it logs server-side and
+returns `delivered: false` rather than pretending to have sent. To turn it on:
+
+```
+RESEND_API_KEY=...      # or swap the `deliver()` body for another provider
+CONTACT_TO=...
+CONTACT_FROM=...        # optional
+NEXT_PUBLIC_SITE_URL=https://your-domain   # makes og:url / canonical resolve
+```
+
+The form degrades: the mailto link next to it always works, including with JS off.
+
+## Things that will bite you if you change them
+
+- **`app/fonts.ts`** — Fraunces must not declare `weight`. next/font rejects
+  `axes` unless weight is omitted or `'variable'`, and `opsz` is not included
+  automatically. Without `axes: ['opsz']` the display type renders at the wrong
+  optical size.
+- **`lib/heroNetwork.ts`** — the node material must not set `vertexColors`.
+  `IcosahedronGeometry` has no `color` attribute, so `USE_COLOR` multiplies
+  `vColor` by the default `(0,0,0)` and every node renders black.
+  Edges are instanced cylinders, not `LineSegments`: WebGL ignores `linewidth`.
+- **Both `lib/` modules return a cleanup function and it must be called.**
+  StrictMode mounts effects twice in development; a leaked WebGL context is not
+  collected and browsers cap how many you can hold.
+- **No scrim behind the hero ball.** A radial gradient in that box is clipped at
+  its top and bottom edges and draws two faint horizontal seams. Use a
+  `mask-image` fade on `.hero-scene` if a halo is ever wanted.
+- **Whitespace between JSX elements is stripped** where HTML preserved it. The
+  hero headline needs its explicit `{' '}` or it reads "bottleneck.Then".
+- **Progressive enhancement is a contract.** `[data-reveal]` is visible by
+  default and JS arms the hidden state; the tabs render every panel and carry no
+  tab ARIA until hydrated; the process section is stacked and readable until the
+  scrub arms. With JS off every page is complete. Keep it that way.
+- **`?__probe=1`** exposes `window.__THREE` for the browser tests that prove the
+  scene does zero work at idle. It is inert without the query flag.
 
 ## Accessibility
 
-Verified: WCAG AA contrast throughout, keyboard-navigable tabs with roving
-focus, visible focus rings (raised to the band accent on dark panels), correct
-heading outline, `prefers-reduced-motion` honoured across the entrance, the
-scroll reveals, the process scrub and the 3D hover, and no horizontal scroll
-from 320px up.
+WCAG AA contrast throughout, keyboard-navigable tabs with roving focus, focus
+rings raised to the band accent on dark panels, correct heading outline,
+`prefers-reduced-motion` honoured across the entrance, scroll reveals, process
+scrub and the 3D hover, and no horizontal scroll from 320px up.
+
+## Deploying
+
+Vercel: import the repo, set the env vars above, done. Security headers (CSP,
+Referrer-Policy, HSTS, Permissions-Policy) are set in `next.config.ts` — static
+rather than nonce-based on purpose, because nonces force per-request rendering
+and would give up static generation.
