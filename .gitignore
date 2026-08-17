@@ -1,0 +1,14 @@
+# agent/tooling scratch
+.omc/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editors
+.vscode/
+.idea/
+
+# nothing here needs npm, but just in case
+node_modules/
