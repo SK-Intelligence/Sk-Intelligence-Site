@@ -21,8 +21,12 @@ the document's, which silently doubles the path. That bug cost an afternoon.)
 
 Current state
 -------------
-    kenneth.jpg     present (288x288, EXIF stripped)
-    sameer.jpg      not yet supplied, monogram showing
+    kenneth.jpg     present (288x288, metadata stripped)
+    sameer.jpg      present (288x288, metadata stripped)
+
+Both are cropped from graduation photos at matching tightness: face roughly 44%
+of the frame height, head and shoulders, gown visible. Keep that ratio if either
+is ever replaced.
 
 Strip EXIF first
 ----------------

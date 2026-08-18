@@ -377,17 +377,21 @@ for (const route of ['/', '/studio']) {
   await settle(p);
   const chips = await p.$$eval('#founders .cred-chip', (n) => n.length);
   ok(chips === 0, `founder cards carry no credential chips (${chips})`);
-  // Headshot: the layer only paints if the file actually resolves, so assert on
+  // Headshots: the layer only paints if the file actually resolves, so assert on
   // the request, not just on the inline style.
-  const shot = await p.evaluate(async () => {
-    const el = document.querySelector('.founder-card:nth-child(2) .founder-photo');
-    const url = getComputedStyle(el).backgroundImage.match(/url\("?([^")]+)"?\)/)?.[1];
-    if (!url) return { url: null };
-    const r = await fetch(url);
-    return { url, status: r.status, bytes: (await r.blob()).size };
+  const shots = await p.evaluate(async () => {
+    const out = [];
+    for (const el of document.querySelectorAll('.founder-photo')) {
+      const url = getComputedStyle(el).backgroundImage.match(/url\("?([^")]+)"?\)/)?.[1];
+      if (!url) { out.push({ url: null }); continue; }
+      const r = await fetch(url);
+      out.push({ url: url.split('/').pop(), status: r.status, bytes: (await r.blob()).size });
+    }
+    return out;
   });
-  ok(shot.status === 200 && shot.bytes > 5000,
-    `Kenneth headshot loads (${shot.url} → ${shot.status}, ${shot.bytes}b)`);
+  const goodShots = shots.filter((s) => s.status === 200 && s.bytes > 5000);
+  ok(goodShots.length === 2,
+    `both headshots load (${shots.map((s) => `${s.url} ${s.status} ${s.bytes}b`).join(', ')})`);
   const mono = await p.$$eval('.founder-monogram', (n) => n.map((e) => e.textContent.trim()));
   ok(mono.join() === 'SG,KO', `monograms still render underneath (${mono.join(' / ')})`);
   await p.close();
