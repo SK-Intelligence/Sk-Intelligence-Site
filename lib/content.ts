@@ -75,17 +75,36 @@ export const phases = [
   },
 ] as const;
 
+/**
+ * Founder credentials, split by whether both of them hold it.
+ *
+ * `shared` is stated ONCE. It used to be repeated inside both cards, which
+ * spent the reader's attention twice on the same fact and made the two lists
+ * look padded. `points` is now only what is true of that person alone.
+ */
+export const sharedCreds = [
+  {
+    label: 'Agentic AI, in production',
+    detail: 'Founding engineers at an agentic AI audit startup serving enterprise clients',
+  },
+  {
+    label: 'AI research',
+    detail: 'Specialising in AI security and trust-explicit systems',
+  },
+  {
+    label: 'First-Class Computer Science',
+    detail: 'BSc and MEng',
+  },
+] as const;
+
 export const founders = [
   {
     slug: 'sameer',
     monogram: 'SG',
     name: 'Sameer Gul',
     points: [
-      'Digital Market Infrastructure at <strong>LSEG</strong>',
+      'Secure, scalable infrastructure at the <strong>London Stock Exchange</strong>',
       'Software engineering at <strong>CME Group</strong>, on the cloud and monitoring stack behind live market data',
-      'Founding engineer at an agentic AI audit startup serving enterprise clients',
-      'First-Class BSc Computer Science',
-      'AI research: blockchain-anchored provenance for open-source AI models',
     ],
   },
   {
@@ -95,8 +114,6 @@ export const founders = [
     points: [
       'Software engineering at <strong>Squarespace</strong>',
       'Operations at <strong>Amazon</strong>',
-      'First-Class MEng Computer Science',
-      'AI research: LLM-assisted software sustainability, runner-up at the 2026 Megaw Lecture in front of a panel including BT Digital Data &amp; AI',
     ],
   },
 ] as const;
