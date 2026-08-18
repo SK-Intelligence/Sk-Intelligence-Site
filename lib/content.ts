@@ -88,10 +88,6 @@ export const sharedCreds = [
     detail: 'Founding engineers at an agentic AI audit startup serving enterprise clients',
   },
   {
-    label: 'AI research',
-    detail: 'Specialising in AI security and trust-explicit systems',
-  },
-  {
     label: 'First-Class Computer Science',
     detail: 'BSc and MEng',
   },
@@ -105,6 +101,7 @@ export const founders = [
     points: [
       'Secure, scalable infrastructure at the <strong>London Stock Exchange</strong>',
       'Software engineering at <strong>CME Group</strong>, on the cloud and monitoring stack behind live market data',
+      'AI research specialising in AI security, using trust-explicit systems',
     ],
   },
   {
@@ -114,6 +111,7 @@ export const founders = [
     points: [
       'Software engineering at <strong>Squarespace</strong>',
       'Operations at <strong>Amazon</strong>',
+      'AI research into LLM-assisted software sustainability, runner-up at the 2026 Megaw Lecture in front of a panel including BT Digital Data &amp; AI',
     ],
   },
 ] as const;

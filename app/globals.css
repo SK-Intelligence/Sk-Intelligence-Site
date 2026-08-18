@@ -841,19 +841,38 @@
     font-family:var(--font-display); font-size:.72rem; font-weight:700;
     letter-spacing:.18em; text-transform:uppercase; color:var(--accent-deep);
   }
+  /* THREE tracks for TWO items, on purpose. On a two-track grid the pair lands
+     directly under the two founder cards, and alignment is a strong enough
+     signal that it reads as "left one is his, right one is his" which is the
+     exact opposite of what this band says. Running them into the first two of
+     three tracks puts the second item at 1/3 across, nowhere near where
+     Kenneth's card starts, so no mapping is implied.
+     auto-fit is deliberately NOT used: the count here is content, not layout,
+     and a track that silently reflows on a copy change hides the fact that a
+     claim was added or removed. */
   .common-list{
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
     gap:clamp(18px,3vw,34px); margin-top:clamp(16px,2.4vw,22px);
   }
-  /* One column below 760px. The middle step at 3 -> 1 rather than 3 -> 2 is
-     deliberate: two-up leaves a lone orphan on the second row. */
   @media (max-width:760px){
     .common-list{ grid-template-columns:1fr; gap:16px; }
   }
-  .common-list li{ display:flex; flex-direction:column; gap:5px; }
+  /* Each entry carries its own rule. The three details are very different
+     lengths ("BSc and MEng" against a two-line sentence), so the row bottom is
+     always going to be ragged. Ruling the tops makes that read as three
+     deliberate columns rather than an unfinished row, which is the honest fix:
+     the alternative is padding the short one out with filler. */
+  .common-list li{
+    display:flex; flex-direction:column; gap:5px;
+    border-top:1px solid var(--accent-line); padding-top:14px;
+  }
   @media (max-width:760px){
-    /* Stacked, each item gets a rule so the group still reads as a set. */
-    .common-list li{ padding-left:16px; border-left:1px solid var(--accent-line); }
+    /* Stacked, the rule rotates to the left edge so the group still reads as a
+       set without three stacked horizontal lines fighting the band's own. */
+    .common-list li{
+      border-top:0; padding-top:0;
+      padding-left:16px; border-left:1px solid var(--accent-line);
+    }
   }
   .common-label{
     font-family:var(--font-display); font-size:.95rem; font-weight:700;
