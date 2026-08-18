@@ -36,7 +36,7 @@ export function ContactForm() {
   if (status.state === 'sent') {
     return (
       <p className="cta-contact" role="status">
-        Thanks — that&rsquo;s with us. We&rsquo;ll come back to you at the address you gave.
+        Thanks, that&rsquo;s with us. We&rsquo;ll come back to you at the address you gave.
       </p>
     );
   }

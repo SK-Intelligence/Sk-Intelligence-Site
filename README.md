@@ -25,7 +25,7 @@ lib/
   heroNetwork.ts        three.js node lattice
   shaderWash.ts         GLSL background wash
 public/clients/*        client logos
-public/founders/        drop sameer.jpg / kenneth.jpg here — see the README inside
+public/founders/        kenneth.jpg present; drop sameer.jpg here (see the README inside)
 ```
 
 ## Build output
@@ -98,8 +98,14 @@ npm run test:e2e                # in another
 generic smoke test: the tab underline tracking the right client once the strip
 scrolls, the mobile menu locking the page behind it, a stylesheet being silently
 swallowed by an unclosed comment, JSX eating the space in the hero headline, the
-3D scene doing zero work at idle, contrast, no overflow from 320px up, and the
-progressive-enhancement contract with JS disabled. Add to it when you fix a bug.
+3D scene doing zero work at idle, contrast, no overflow from 320px up, deep
+links landing clear of the fixed nav, and the progressive-enhancement contract
+with JS disabled. Add to it when you fix a bug.
+
+It also enforces one house-style rule: **no em or en dashes in anything a
+visitor sees.** They read as machine-written. The check walks rendered text
+plus `<title>` and the OG/Twitter tags, so `&mdash;` entities and interpolated
+metadata are caught too. Code comments are out of scope; they are not the site.
 
 ## Accessibility
 

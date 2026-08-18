@@ -7,7 +7,7 @@ export function Founders() {
         <div className="section-head" data-reveal>
           <p className="eyebrow">Co-founders</p>
           <h2>The experience we bring</h2>
-          <p>Two co-founders, both engineers. You deal with us directly — no account layer, no handover.</p>
+          <p>Two co-founders, both engineers. You deal with us directly, with no account manager in between.</p>
         </div>
 
         <div className="founders-grid">
@@ -25,14 +25,11 @@ export function Founders() {
                   <p className="founder-role">Co-founder</p>
                 </div>
               </div>
+              {/* The points are the whole card. A chip row underneath just
+                  restated the same four employers in a second typeface. */}
               <ul className="founder-points">
                 {f.points.map((p) => (
                   <li key={p} dangerouslySetInnerHTML={{ __html: p }} />
-                ))}
-              </ul>
-              <ul className="cred-chips">
-                {f.chips.map((c, ci) => (
-                  <li key={c} className={`cred-chip${ci === 0 ? ' is-lead' : ''}`}>{c}</li>
                 ))}
               </ul>
             </div>
@@ -43,8 +40,8 @@ export function Founders() {
             AI-research point is already on both profiles above; repeating it as
             its own panel was saying the same thing twice in a tidier font. */}
         <p className="founders-note" data-reveal style={{ '--d': 3 } as React.CSSProperties}>
-          A small team of developers works with us on delivery. And we build for load — most of
-          what we get called in to fix ran fine until more than a handful of people used it at once.
+          A small team of developers works with us on delivery. We also build for load, because most
+          of what we get called in to fix ran fine until more than a handful of people used it at once.
         </p>
       </div>
     </section>

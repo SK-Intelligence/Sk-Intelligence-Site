@@ -12,9 +12,9 @@ export function Hero() {
             <span className="h-line"><span className="h-line-inner">Then we live <em>inside</em> the fix.</span></span>
           </h1>
           <p className="hero-sub">
-            No guesswork, no AI for AI&rsquo;s sake. We embed inside your operations, audit where the work
-            actually breaks down, build the automations and tools that remove the friction — then stay
-            until it&rsquo;s just how things run.
+            No guesswork, and no AI for the sake of it. We embed inside your operations, find where the
+            work actually breaks down, build the automations and tools that take the friction out, then
+            stay long enough for it to stick.
           </p>
           <div className="hero-actions">
             <a href="#process" className="btn btn-glass-primary">See our process</a>
@@ -23,7 +23,7 @@ export function Hero() {
           <div className="hero-proof">
             <div><strong>3</strong><span>Phase engagement, start to embed</span></div>
             <div><strong>4+</strong><span>Client builds shipped end to end</span></div>
-            <div><strong>1</strong><span>Team that stays until it sticks</span></div>
+            <div><strong>1</strong><span>Team, from first audit to handover</span></div>
           </div>
         </div>
 

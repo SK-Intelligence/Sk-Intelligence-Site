@@ -81,10 +81,10 @@ export function ClientWork() {
       <div className="container">
         <div className="section-head" data-reveal>
           <p className="eyebrow">Client work</p>
-          <h2>Four companies. Real work, real words.</h2>
+          <h2>Four clients, in their own words.</h2>
           <p>
-            Email infrastructure, a first-ever website, a vehicle-lookup integration and a full
-            storefront &mdash; each one still running.
+            Email infrastructure, a first website, a vehicle-lookup integration and a full
+            storefront. All four are still running.
           </p>
           <div className="client-logo-rail" aria-hidden="true">
             {clients.map((c) => (

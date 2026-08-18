@@ -1,46 +1,51 @@
-Founder headshots — drop-in slot
-================================
+Founder headshots
+=================
 
-The founder cards render a typographic monogram (SG / KO) by default. To swap in
-a real photo, just put the file here with the exact filename:
+The founder cards fall back to a typographic monogram (SG / KO). To use a real
+photo, put the file here with the exact filename:
 
     sameer.jpg      -> Sameer Gul
     kenneth.jpg     -> Kenneth Obanor
 
-No code change needed, and no JavaScript involved. Each portrait carries the
-path as a CSS custom property:
+No code change needed. components/Founders.tsx sets the path as an inline
+background-image on .founder-photo, which sits over the monogram:
 
-    <span class="founder-portrait" style="--photo:url('assets/founders/sameer.jpg')">
+    <span class="founder-photo" style={{ backgroundImage: `url("/founders/${f.slug}.jpg")` }} />
 
-which site.css paints onto a ::after layer over the monogram:
+While a file is absent the layer simply doesn't paint and the monogram shows
+through, with no broken-image glyph and no JavaScript in the path.
 
-    .founder-portrait::after{ background-image: var(--photo, none); ... }
+(Do not move the url() into a CSS custom property in globals.css. A relative
+url() inside a custom property resolves against the stylesheet's base URL, not
+the document's, which silently doubles the path. That bug cost an afternoon.)
 
-While the file is absent the background simply doesn't paint and the monogram
-shows — no broken-image icon, and it behaves the same with scripting disabled.
-The moment the file exists, the photo covers the monogram automatically.
+Current state
+-------------
+    kenneth.jpg     present (288x288, EXIF stripped)
+    sameer.jpg      not yet supplied, monogram showing
 
-(You will see two 404s for these filenames in the network tab until you add the
-images. They are the only 404s on the site and they are harmless — nothing
-renders differently because of them.)
-
-Strip EXIF first (important)
----------------------------
+Strip EXIF first
+----------------
 Photos straight off a phone routinely carry GPS coordinates, camera serial
 numbers and timestamps. Publishing a headshot with your home location embedded
-is a real privacy leak. Before adding either file:
+is a real privacy leak. Before adding a file:
 
-    exiftool -all= -overwrite_original sameer.jpg kenneth.jpg
+    exiftool -all= -overwrite_original sameer.jpg
 
-(The four client logos in assets/clients/ were checked and are already clean.)
+Or re-encode through Pillow, which is what was done for kenneth.jpg:
+
+    from PIL import Image
+    im = Image.open('in.jpg').crop(box).resize((288, 288), Image.LANCZOS)
+    out = Image.new('RGB', im.size); out.putdata(list(im.getdata()))
+    out.save('sameer.jpg', 'JPEG', quality=86, optimize=True, progressive=True)
 
 Image guidance
 --------------
-- Square crop. The frame is 72px and uses background-size: cover, so anything
-  square works; 400x400 or larger keeps it crisp on retina displays.
-- Head and shoulders, centred, with a little headroom.
-- Keep the two consistent with each other — same rough crop, same lighting,
-  same background. Two mismatched photos look worse than two monograms.
+- Square crop. The frame is 72px with background-size: cover, so any square
+  works. 288x288 is 4x the slot and stays crisp on retina.
+- Head and shoulders, face in the upper third, a little headroom above the hair.
+- Match kenneth.jpg: same rough crop tightness, similar lighting, uncluttered
+  background. Two mismatched photos look worse than two monograms.
 - A plain or softly blurred background suits the cream palette best.
 
-Appears on: index.html (founders teaser) and founders.html (full blocks).
+Appears on: the home page founders section (/#founders).

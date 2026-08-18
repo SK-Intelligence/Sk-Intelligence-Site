@@ -564,7 +564,9 @@
   .page-head-deck{ margin-top:20px; max-width:56ch; color:var(--ink-soft); font-size:clamp(1rem,1.4vw,1.1rem); line-height:1.7; }
 
   /* =================== Credential chips ===================
-     Text sibling of .client-chip — same tokens, so it recolours per theme. */
+     Text sibling of .client-chip — same tokens, so it recolours per theme.
+     Used by the studio tech stack only. The founder cards deliberately do NOT
+     use these: a chip row under the points restated the same employers twice. */
   .cred-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
   .cred-chip{
     display:inline-flex; align-items:center; gap:.5em;
@@ -575,13 +577,11 @@
     white-space:nowrap;
   }
   .cred-chip::before{ content:''; width:5px; height:5px; border-radius:50%; background:var(--accent); flex-shrink:0; }
-  .cred-chip.is-lead{ color:var(--ink); border-color:var(--accent-line); }
-  .cred-chip.is-lead::before{ background:var(--accent-deep); }
 
   /* =================== Founders ===================
      Portrait is typographic by default; drop a real image into
-     assets/founders/ and the <img> takes over. No broken-image state —
-     the onerror handler removes it and the monogram shows through. */
+     public/founders/<slug>.jpg and it paints over the monogram. A missing file
+     leaves the monogram showing, with no broken-image state. */
   .founder-portrait{
     position:relative; flex-shrink:0; overflow:hidden;
     width:72px; height:72px; border-radius:20px;
@@ -595,10 +595,10 @@
   /* Optional headshot. Paints over the monogram once the file exists; a missing
      file simply doesn't paint — no broken-image glyph, and no JS in the path, so
      it degrades correctly with scripting off. Drop a photo into
-     assets/founders/ to activate it (see the README there).
-     The url() is set inline in the HTML on purpose: a relative url() inside a
-     CSS custom property resolves against THIS stylesheet's base (assets/), not
-     the document's, which silently doubled the path to assets/assets/. */
+     public/founders/<slug>.jpg to activate it (see the README there).
+     The url() is set inline in the JSX on purpose: a relative url() inside a
+     CSS custom property resolves against THIS stylesheet's base, not the
+     document's, which silently doubled the path. */
   .founder-photo{
     position:absolute; inset:0;
     background-size:cover; background-position:center; background-repeat:no-repeat;
@@ -625,19 +625,6 @@
   }
   .founder-points strong{ color:var(--ink); font-weight:700; }
 
-  /* Three shared points below the two cards. */
-  .founders-points{
-    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:clamp(20px,3vw,36px); margin-top:clamp(30px,4vw,46px);
-  }
-  @media (max-width:860px){ .founders-points{ grid-template-columns:1fr; } }
-  .founders-point{ border-top:1px solid var(--ink-line-strong); padding-top:18px; }
-  .founders-point h3{
-    font-family:var(--font-display); font-size:.72rem; font-weight:700;
-    letter-spacing:.18em; text-transform:uppercase; color:var(--accent-deep);
-  }
-  .founders-point p{ margin-top:10px; color:var(--ink-soft); font-size:.92rem; line-height:1.65; }
-  .founders-point strong{ color:var(--ink); font-weight:700; }
 
 
 
@@ -796,6 +783,19 @@
     .section-head{ margin-bottom:clamp(28px,7vw,40px); }
     .hero{ padding-top:clamp(104px,26vw,140px); }
     .founder-card{ padding:26px 22px; }
+  }
+
+  /* Anchor landings. The nav is fixed, so jumping straight to #founders puts
+     the eyebrow underneath it. Desktop gets away with it because the section
+     padding happens to exceed the nav height; the tightened mobile padding does
+     not, and the label landed 6px behind the bar. scroll-margin-top is honoured
+     by the browser's native hash jump AND by HashScroll's scrollIntoView, so
+     this one rule covers both routes in. Scoped to the burger breakpoint: on
+     desktop it would only add dead space to an already-clear landing. */
+  @media (max-width:900px){
+    #what-we-do, #process, #founders, #work, #contact, #studio, #stack, #top{
+      scroll-margin-top:44px;
+    }
   }
 
   /* Client technical detail — what was actually built, per project. */

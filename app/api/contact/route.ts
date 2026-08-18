@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     'unknown';
 
   if (rateLimited(ip)) {
-    return NextResponse.json({ error: 'Too many messages just now — try again shortly.' }, { status: 429 });
+    return NextResponse.json({ error: 'Too many messages just now. Try again shortly.' }, { status: 429 });
   }
 
   let body: Payload;
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
   // Honeypot: a real person never fills a field they cannot see.
   if (str(body.company_website, 100)) {
-    return NextResponse.json({ ok: true, message: 'Thanks — that’s with us.' }, { status: 200 });
+    return NextResponse.json({ ok: true, message: 'Thanks, that’s with us.' }, { status: 200 });
   }
 
   const name = str(body.name, MAX.name);
@@ -91,13 +91,18 @@ export async function POST(request: Request) {
   if (!EMAIL.test(email)) errors.push('a valid email address');
   if (message.length < 10) errors.push('a bit more detail');
   if (errors.length) {
-    return NextResponse.json({ error: `Please include ${errors.join(', ')}.` }, { status: 400 });
+    // "a name, a valid email address and a bit more detail" — the comma-spliced
+    // list without the conjunction read like machine output.
+    const list = errors.length > 1
+      ? `${errors.slice(0, -1).join(', ')} and ${errors[errors.length - 1]}`
+      : errors[0];
+    return NextResponse.json({ error: `Please include ${list}.` }, { status: 400 });
   }
 
   try {
     const { delivered } = await deliver({ name, email, message });
     return NextResponse.json(
-      { ok: true, delivered, message: 'Thanks — that’s with us.' },
+      { ok: true, delivered, message: 'Thanks, that’s with us.' },
       { status: 200 },
     );
   } catch (err) {

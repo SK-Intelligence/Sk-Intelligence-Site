@@ -321,6 +321,78 @@ head('contact endpoint');
   await p.close();
 }
 
+// ─────────────────────────────────────────── anchor landings
+/* Deep links must not park the section heading under the fixed nav. Each anchor
+   gets a FRESH page: same-document hash navigation skips the load path and
+   re-pins ScrollTrigger, which makes a reused page report nonsense. */
+head('anchor landings clear the fixed nav');
+for (const w of [320, 390, 768, 1440]) {
+  const gaps = [];
+  for (const a of ['founders', 'what-we-do', 'work', 'contact']) {
+    const p = await browser.newPage({ viewport: { width: w, height: 844 } });
+    await p.goto(`${BASE}/#${a}`, { waitUntil: 'load' });
+    await settle(p);
+    gaps.push({ a, gap: await p.evaluate((id) => {
+      const nav = document.querySelector('.nav').getBoundingClientRect();
+      const sec = document.getElementById(id);
+      const first = sec.querySelector('.eyebrow, h2, h1') || sec;
+      return Math.round(first.getBoundingClientRect().top - nav.bottom);
+    }, a) });
+    await p.close();
+  }
+  const under = gaps.filter((g) => g.gap < 8);
+  ok(under.length === 0,
+    `${w}px every anchor lands clear of the nav (min ${Math.min(...gaps.map((g) => g.gap))}px)${under.length ? ' — ' + under.map((u) => `${u.a} ${u.gap}px`).join(', ') : ''}`);
+}
+
+// ─────────────────────────────────────────── copy house style
+/* Em dashes read as machine-written to the client, so they are banned from
+   anything a visitor sees. Checking rendered text rather than source catches
+   &mdash; entities and template-interpolated titles too. Code comments are not
+   in scope: they are not the site. */
+head('copy house style');
+for (const route of ['/', '/studio']) {
+  const p = await desktop();
+  await p.goto(BASE + route, { waitUntil: 'load' });
+  await settle(p);
+  const found = await p.evaluate(() => {
+    const hits = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (n.parentElement?.closest('script,style')) continue;
+      if (/[—–]/.test(n.nodeValue)) hits.push(n.nodeValue.trim().slice(0, 70));
+    }
+    if (/[—–]/.test(document.title)) hits.push(`<title> ${document.title}`);
+    document.querySelectorAll('meta[property^="og:"],meta[name^="twitter:"]').forEach((m) => {
+      if (/[—–]/.test(m.content)) hits.push(`${m.getAttribute('property') || m.name} ${m.content}`);
+    });
+    return hits;
+  });
+  ok(found.length === 0, `${route} no em/en dashes in visible copy${found.length ? ' — ' + found.join(' | ') : ''}`);
+  await p.close();
+}
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  const chips = await p.$$eval('#founders .cred-chip', (n) => n.length);
+  ok(chips === 0, `founder cards carry no credential chips (${chips})`);
+  // Headshot: the layer only paints if the file actually resolves, so assert on
+  // the request, not just on the inline style.
+  const shot = await p.evaluate(async () => {
+    const el = document.querySelector('.founder-card:nth-child(2) .founder-photo');
+    const url = getComputedStyle(el).backgroundImage.match(/url\("?([^")]+)"?\)/)?.[1];
+    if (!url) return { url: null };
+    const r = await fetch(url);
+    return { url, status: r.status, bytes: (await r.blob()).size };
+  });
+  ok(shot.status === 200 && shot.bytes > 5000,
+    `Kenneth headshot loads (${shot.url} → ${shot.status}, ${shot.bytes}b)`);
+  const mono = await p.$$eval('.founder-monogram', (n) => n.map((e) => e.textContent.trim()));
+  ok(mono.join() === 'SG,KO', `monograms still render underneath (${mono.join(' / ')})`);
+  await p.close();
+}
+
 await browser.close();
 console.log(fail ? `\n${fail} CHECK(S) FAILED` : '\nALL E2E CHECKS PASSED');
 process.exit(fail ? 1 : 0);

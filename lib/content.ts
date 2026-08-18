@@ -35,7 +35,7 @@ export const pillars = [
   {
     num: '01',
     title: 'AI Opportunity Discovery & Audit',
-    body: 'We spend real time inside your operations — mapping where hours disappear, where handoffs fail, and what the status quo is quietly costing you.',
+    body: 'We spend real time inside your operations, working out where the hours go, where handoffs break, and what that costs you every month.',
   },
   {
     num: '02',
@@ -45,7 +45,7 @@ export const pillars = [
   {
     num: '03',
     title: 'Custom AI Tooling',
-    body: 'Agents, copilots, and internal tools built around the way your team actually works — not a generic wrapper bolted onto a chatbot.',
+    body: 'Agents, copilots and internal tools shaped around how your team already works, using your data and your process.',
   },
   {
     num: '04',
@@ -56,22 +56,22 @@ export const pillars = [
 
 export const phases = [
   {
-    index: '01 / 03 — Discover',
+    index: '01 / 03 · Discover',
     ghost: 'Discover',
     title: 'Discover',
-    body: 'We embed with your team for a defined period, audit day-to-day operations, and quantify what the bottlenecks are actually costing — in hours, in errors, in opportunity.',
+    body: 'We embed with your team for a defined period, audit how the day-to-day actually runs, and put a number on what the bottlenecks are costing you in hours and in rework.',
   },
   {
-    index: '02 / 03 — Build',
+    index: '02 / 03 · Build',
     ghost: 'Build',
     title: 'Build',
-    body: 'We design and ship the fix. Automations and quick wins first, then the deeper tooling — internal apps, agents, integrations — built around how your team already operates.',
+    body: 'We design and ship the fix. Quick automation wins first, then the deeper tooling: internal apps, agents and integrations, built around how your team already operates.',
   },
   {
-    index: '03 / 03 — Forward‑Deploy',
+    index: '03 / 03 · Forward‑Deploy',
     ghost: 'Forward‑Deploy',
     title: 'Forward-Deploy',
-    body: 'We integrate what we built into your real systems and workflows, train your people to own it, and stay embedded until it’s simply how things run.',
+    body: 'We wire what we built into your real systems, train your people to own it, and stay embedded until your team runs it without us.',
   },
 ] as const;
 
@@ -82,12 +82,11 @@ export const founders = [
     name: 'Sameer Gul',
     points: [
       'Digital Market Infrastructure at <strong>LSEG</strong>',
-      'Software engineering at <strong>CME Group</strong> — the cloud, deployment and monitoring stack behind live market data',
+      'Software engineering at <strong>CME Group</strong>, on the cloud and monitoring stack behind live market data',
       'Founding engineer at an agentic AI audit startup serving enterprise clients',
       'First-Class BSc Computer Science',
       'AI research: blockchain-anchored provenance for open-source AI models',
     ],
-    chips: ['LSEG', 'CME Group', 'Agentic AI', 'First-Class CS'],
   },
   {
     slug: 'kenneth',
@@ -97,9 +96,8 @@ export const founders = [
       'Software engineering at <strong>Squarespace</strong>',
       'Operations at <strong>Amazon</strong>',
       'First-Class MEng Computer Science',
-      'AI research: LLM-assisted software sustainability — runner-up at the 2026 Megaw Lecture, judged by a panel including BT Digital Data &amp; AI',
+      'AI research: LLM-assisted software sustainability, runner-up at the 2026 Megaw Lecture in front of a panel including BT Digital Data &amp; AI',
     ],
-    chips: ['Squarespace', 'Amazon', 'AI research', 'First-Class MEng'],
   },
 ] as const;
 
@@ -109,7 +107,7 @@ export const clients = [
     id: 'hopeful',
     name: 'Hopeful Hearts LTD',
     logo: '/clients/c-hopeful.png',
-    work: 'Company email services — setup, configuration, and ongoing support.',
+    work: 'Company email set up, configured and supported as the team grew.',
     url: 'https://hopefulheartsltd.com',
     urlLabel: 'hopefulheartsltd.com',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
@@ -123,12 +121,12 @@ export const clients = [
     id: 'gbautos',
     name: 'GB Autos & Tyres',
     logo: '/clients/c-gbautos.png',
-    work: 'First-ever website — establishing an online presence from zero.',
+    work: 'Their first ever website, built with no online presence to start from.',
     url: 'https://gbautosandtyres.co.uk',
     urlLabel: 'gbautosandtyres.co.uk',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
     detail: [
-      'First online presence — built from nothing',
+      'First online presence, built from nothing',
       'Services, location and contact structured for local search',
       'Set up so the owner can be found and contacted directly',
     ]
@@ -137,7 +135,7 @@ export const clients = [
     id: 'ossett',
     name: 'Ossett Tyres',
     logo: '/clients/c-ossett.png',
-    work: 'Vehicle registration lookup API integration — custom UI and backend.',
+    work: 'Vehicle registration lookup API integration, with a custom front end and backend.',
     url: 'https://ossettyres.co.uk',
     urlLabel: 'ossettyres.co.uk',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
@@ -153,12 +151,12 @@ export const clients = [
     id: 'astar',
     name: 'A Star Customs',
     logo: '/clients/c-astar.png',
-    work: 'Full e-commerce build — products, payments, and checkout.',
+    work: 'Full e-commerce build covering products, payments and checkout.',
     url: 'https://astarcustoms.com',
     urlLabel: 'astarcustoms.com',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
     detail: [
-      'Custom storefront — not a template theme',
+      'Storefront built from scratch for the brand',
       'Product and inventory management',
       'Secure payment processing and checkout',
       'Built, launched and supported end to end',
@@ -168,7 +166,7 @@ export const clients = [
 
 export const studioServices = [
   { title: 'Websites & Web Apps', body: 'Marketing sites, dashboards, custom web platforms' },
-  { title: 'E-Commerce', body: 'Full storefronts — products, payments, checkout' },
+  { title: 'E-Commerce', body: 'Full storefronts with products, payments and checkout' },
   { title: 'Mobile Apps', body: 'iOS and Android, native or cross-platform' },
   { title: 'SEO, Social & Email/Domain Services', body: 'Visibility and setup that gets a business found and kept online' },
 ] as const;
@@ -176,7 +174,7 @@ export const studioServices = [
 export const stack = [
   {
     title: 'AI & automation',
-    body: 'The lead offering. Model integrations wired into real workflows, not a chatbot bolted onto a homepage.',
+    body: 'The lead offering. Model integrations wired into the workflows your team already runs on.',
     items: ['LLM integrations', 'Agentic AI', 'Workflow automation', 'Internal tools & copilots', 'AI-assisted evaluation'],
   },
   {
@@ -186,7 +184,7 @@ export const stack = [
   },
   {
     title: 'Web & apps',
-    body: 'Sites, storefronts and custom web apps — and the serverless glue that makes them do real work.',
+    body: 'Sites, storefronts and custom web apps, plus the serverless glue that makes them do real work.',
     items: ['TypeScript', 'React', 'Next.js', 'REST APIs', 'Serverless', 'E-commerce & payments', 'Mobile (iOS / Android)'],
   },
   {

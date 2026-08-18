@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Websites, web apps, e-commerce, mobile, SEO and email/domain services from SK Intelligence.',
   alternates: { canonical: '/studio' },
   openGraph: {
-    title: 'Build studio — SK Intelligence',
+    title: 'Build studio · SK Intelligence',
     description: 'Websites, web apps, e-commerce, mobile, SEO and email/domain services from SK Intelligence.',
     url: '/studio',
   },
@@ -22,7 +22,7 @@ export default function Studio() {
           <p className="eyebrow" data-head-reveal>Build studio</p>
           <h1 data-head-reveal>We still build the <em>fundamentals</em>.</h1>
           <p className="page-head-deck" data-head-reveal>
-            AI is the lead offering &mdash; but the build studio that got us here hasn&rsquo;t gone anywhere.
+            AI is the lead offering, but the build studio that got us here hasn&rsquo;t gone anywhere.
           </p>
         </div>
       </section>
@@ -45,7 +45,7 @@ export default function Studio() {
           <div className="section-head" data-reveal>
             <p className="eyebrow">Tech we work with</p>
             <h2>The stack behind the work.</h2>
-            <p>Not a badge wall &mdash; this is what we actually build and run with, day to day, on client work and in our own jobs.</p>
+            <p>This is what we actually build and run with, day to day, on client work and in our own jobs.</p>
           </div>
           <div className="stack-groups">
             {stack.map((g, i) => (
@@ -60,7 +60,7 @@ export default function Studio() {
           </div>
           <p className="stack-note" data-reveal style={{ '--d': 5 } as React.CSSProperties}>
             We&rsquo;re not precious about it. If your team already runs something else, we work in your
-            stack rather than asking you to move to ours &mdash; that&rsquo;s the whole point of forward-deploying.
+            stack instead of asking you to move to ours. That&rsquo;s the whole point of forward-deploying.
           </p>
         </div>
       </section>
