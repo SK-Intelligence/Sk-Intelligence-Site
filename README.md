@@ -86,6 +86,21 @@ The form degrades: the mailto link next to it always works, including with JS of
 - **`?__probe=1`** exposes `window.__THREE` for the browser tests that prove the
   scene does zero work at idle. It is inert without the query flag.
 
+## Tests
+
+```bash
+npm run build && npm start      # in one shell
+npx playwright install chromium # once
+npm run test:e2e                # in another
+```
+
+`tests/e2e.mjs` checks the things that have actually broken here before, not a
+generic smoke test: the tab underline tracking the right client once the strip
+scrolls, the mobile menu locking the page behind it, a stylesheet being silently
+swallowed by an unclosed comment, JSX eating the space in the hero headline, the
+3D scene doing zero work at idle, contrast, no overflow from 320px up, and the
+progressive-enhancement contract with JS disabled. Add to it when you fix a bug.
+
 ## Accessibility
 
 WCAG AA contrast throughout, keyboard-navigable tabs with roving focus, focus

@@ -103,21 +103,6 @@ export const founders = [
   },
 ] as const;
 
-export const founderPoints = [
-  {
-    title: 'AI research, not just AI tools',
-    body: 'We work in AI research across <strong>AI security and distributed ledger technology</strong> — not only applying models, but how they are secured, traced and held accountable.',
-  },
-  {
-    title: 'Built to scale, not just to look good',
-    body: 'We build robust software designed for real concurrent use. Plenty of what ships today looks right and falls over the moment more than a handful of people use it at once.',
-  },
-  {
-    title: 'A team behind the build',
-    body: 'A team of developers works alongside us to deliver and deploy client projects, so delivery never depends on two calendars.',
-  },
-] as const;
-
 /** Verbatim client words — do not reword. */
 export const clients = [
   {
@@ -128,6 +113,11 @@ export const clients = [
     url: 'https://hopefulheartsltd.com',
     urlLabel: 'hopefulheartsltd.com',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
+    detail: [
+      'Company email across Outlook / Google Workspace',
+      'Account creation, DNS and mailbox configuration',
+      'Ongoing support and changes as the team grew',
+    ]
   },
   {
     id: 'gbautos',
@@ -137,6 +127,11 @@ export const clients = [
     url: 'https://gbautosandtyres.co.uk',
     urlLabel: 'gbautosandtyres.co.uk',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
+    detail: [
+      'First online presence — built from nothing',
+      'Services, location and contact structured for local search',
+      'Set up so the owner can be found and contacted directly',
+    ]
   },
   {
     id: 'ossett',
@@ -146,6 +141,13 @@ export const clients = [
     url: 'https://ossettyres.co.uk',
     urlLabel: 'ossettyres.co.uk',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
+    detail: [
+      'DVLA registration-lookup API integration',
+      'Original-equipment tyre fitment data, matched per vehicle',
+      'Custom front end over a serverless backend on Vercel',
+      'Automated order and enquiry emails, tracked in Google Sheets',
+      'Handling 50+ customer enquiries a month',
+    ]
   },
   {
     id: 'astar',
@@ -155,6 +157,12 @@ export const clients = [
     url: 'https://astarcustoms.com',
     urlLabel: 'astarcustoms.com',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
+    detail: [
+      'Custom storefront — not a template theme',
+      'Product and inventory management',
+      'Secure payment processing and checkout',
+      'Built, launched and supported end to end',
+    ]
   },
 ] as const;
 

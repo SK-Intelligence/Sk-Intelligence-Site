@@ -34,16 +34,33 @@ export function ClientWork() {
     if (!list || !tab) return;
     const l = list.getBoundingClientRect();
     const t = tab.getBoundingClientRect();
-    setIndicator({ width: t.width, x: t.left - l.left, top: t.bottom - l.top - 2 });
+    // The strip scrolls horizontally on small screens, so offset by scrollLeft:
+    // without it the underline drifts away from its tab as soon as you scroll.
+    setIndicator({
+      width: t.width,
+      x: t.left - l.left + list.scrollLeft,
+      top: t.bottom - l.top - 2,
+    });
   }, [active]);
 
   useEffect(() => {
     measure();
+    const list = listRef.current;
     const ro = new ResizeObserver(measure);
-    if (listRef.current) ro.observe(listRef.current);
+    if (list) ro.observe(list);
     window.addEventListener('resize', measure);
-    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+    list?.addEventListener('scroll', measure, { passive: true });
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+      list?.removeEventListener('scroll', measure);
+    };
   }, [measure]);
+
+  // Bring the selected tab into view on a narrow, scrollable strip.
+  useEffect(() => {
+    tabRefs.current[active]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [active]);
 
   const onKeyDown = (e: React.KeyboardEvent, i: number) => {
     const last = clients.length - 1;
@@ -123,6 +140,9 @@ export function ClientWork() {
                   </span>
                   <h3 className="client-name">{c.name}</h3>
                   <p className="client-work">{c.work}</p>
+                  <ul className="client-detail">
+                    {c.detail.map((d) => <li key={d}>{d}</li>)}
+                  </ul>
                   <a href={c.url} target="_blank" rel="noopener">{c.urlLabel} &#8599;</a>
                 </div>
                 <figure className="panel-quote">

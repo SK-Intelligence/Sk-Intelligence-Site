@@ -259,16 +259,75 @@
   .nav-toggle[aria-expanded="true"] span::before{ top:0; transform:rotate(45deg); }
   .nav-toggle[aria-expanded="true"] span::after{ top:0; transform:rotate(-45deg); }
 
-  .nav-mobile{
-    display:none; position:fixed; top:78px; left:16px; right:16px; z-index:110;
-    padding:20px; border-radius:24px; flex-direction:column; gap:16px;
+  /* =================== Mobile menu ===================
+     A full-height sheet, not a floating translucent card. The old version was a
+     glass panel hovering mid-page with the site scrolling freely behind it —
+     hero stats and the 3D ball bled through it and the whole thing read as
+     unfinished. This covers the viewport on an opaque surface, sits above a
+     scrim, and the body is position-fixed while it is open. */
+  /* The bar has to stay above the sheet, otherwise the close button is buried
+     under it and the only way out is the scrim or Escape. */
+  body.menu-open .nav{ position:relative; z-index:130; }
+  body.menu-open .nav-wordmark{ opacity:0; transition:opacity .2s var(--ease); }
+
+  .nav-scrim{
+    position:fixed; inset:0; z-index:105; opacity:0; visibility:hidden;
+    background:rgba(var(--ink-rgb),.38);
+    -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+    transition:opacity .32s var(--ease), visibility .32s var(--ease);
   }
-  .nav-mobile a{ font-size:1.02rem; font-weight:700; color:var(--ink); }
+  body.menu-open .nav-scrim{ opacity:1; visibility:visible; }
+
+  .nav-mobile{
+    position:fixed; z-index:110; display:flex; flex-direction:column;
+    top:0; right:0; bottom:0;
+    width:min(88vw, 380px);
+    padding:calc(env(safe-area-inset-top, 0px) + 84px) 0 calc(env(safe-area-inset-bottom, 0px) + 24px);
+    background:var(--surface);
+    border-left:1px solid var(--ink-line);
+    box-shadow:-24px 0 60px -30px rgba(var(--shadow-rgb),.5);
+    transform:translateX(100%);
+    visibility:hidden;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    transition:transform .38s var(--ease), visibility .38s var(--ease);
+  }
+  body.menu-open .nav-mobile{ transform:translateX(0); visibility:visible; }
+  @media (prefers-reduced-motion: reduce){
+    .nav-mobile, .nav-scrim{ transition:none; }
+  }
+
+  .nav-mobile-links{ display:flex; flex-direction:column; }
+  .nav-mobile-links a{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    min-height:56px; padding:14px clamp(22px,6vw,30px);
+    font-family:var(--font-serif); font-size:1.28rem; font-weight:600;
+    letter-spacing:-.01em; color:var(--ink);
+    border-bottom:1px solid var(--ink-line);
+    transition:background .2s var(--ease), padding-left .2s var(--ease);
+  }
+  .nav-mobile-links a:first-child{ border-top:1px solid var(--ink-line); }
+  .nav-mobile-links a span{ color:var(--accent-deep); font-size:.9rem; opacity:.55; }
+  .nav-mobile-links a:active{ background:rgba(var(--ink-rgb),.04); }
+  .nav-mobile-links a[aria-current="page"]{ color:var(--accent-deep); }
+  .nav-mobile-links a[aria-current="page"] span{ opacity:1; }
+
+  .nav-mobile-foot{
+    margin-top:auto; padding:26px clamp(22px,6vw,30px) 0;
+    display:flex; flex-direction:column; align-items:stretch; gap:14px;
+  }
+  .nav-mobile-foot .btn{ width:100%; min-height:52px; }
+  .nav-mobile-foot > a:last-child{
+    text-align:center; min-height:44px; display:flex; align-items:center; justify-content:center;
+    font-size:.88rem; color:var(--ink-mute);
+  }
 
   @media (max-width:900px){
     .nav-links{ display:none; }
     .nav-toggle{ display:flex; }
-    body.menu-open .nav-mobile{ display:flex; }
+  }
+  /* The sheet is a mobile affordance only — never let it appear on desktop. */
+  @media (min-width:901px){
+    .nav-mobile, .nav-scrim{ display:none; }
   }
   /* Below ~560px the logo + CTA + burger no longer fit on one row, and because
      the nav is position:fixed the overflow pushes the burger off-screen without
@@ -699,3 +758,85 @@
   .cta-form-actions{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:16px; }
   .cta-form button[disabled]{ opacity:.6; cursor:progress; }
   .cta-form-error{ margin-top:14px; font-size:.88rem; color:var(--band-accent); text-align:center; }
+
+  /* =================== Mobile polish ===================
+     Everything below came out of an audit on real device widths (320-430).
+     Grouped here rather than scattered so the reasoning stays together. */
+
+  /* Notch and home-indicator. The nav is fixed to the top and the footer runs to
+     the bottom edge, so both need the safe area or they sit under system UI. */
+  .nav-wrap{ padding-top:calc(env(safe-area-inset-top, 0px) + 16px); }
+  footer{ padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 50px); }
+  .cta-section{ padding-bottom:calc(env(safe-area-inset-bottom, 0px) + clamp(72px,10vw,132px)); }
+
+  /* Tap targets. The audit found 12 interactive elements under the 44px
+     guidance on every phone width — outbound client links, the burger, footer
+     and social links were all 19-42px tall. */
+  @media (max-width:900px){
+    .nav-toggle{ width:44px; height:44px; }
+    .nav-logo{ min-height:44px; }
+    .panel-meta a,
+    .footer-links a,
+    .cta-contact a{ min-height:44px; display:inline-flex; align-items:center; }
+    .cta-socials a{ width:48px; height:48px; }
+    .studio-item{ padding-block:18px; }
+  }
+
+  /* The 3D scene is a full-bleed background layer on mobile and its -4% inset
+     makes it wider than the viewport. .hero clips it, but be explicit so it can
+     never contribute to a scrollable overflow. */
+  @media (max-width:960px){
+    .hero-scene-wrap, .hero-scene{ max-width:100%; overflow:hidden; }
+  }
+
+  /* Tighten vertical rhythm on small screens — the desktop clamp floors were
+     generous enough to make the page ~9,500px on a phone. */
+  @media (max-width:560px){
+    .section-pad{ padding:clamp(56px,13vw,80px) 0; }
+    .section-head{ margin-bottom:clamp(28px,7vw,40px); }
+    .hero{ padding-top:clamp(104px,26vw,140px); }
+    .founder-card{ padding:26px 22px; }
+  }
+
+  /* Client technical detail — what was actually built, per project. */
+  .client-detail{ margin-top:14px; }
+  .client-detail li{
+    position:relative; padding-left:16px; margin-top:7px;
+    color:var(--ink-mute); font-size:.85rem; line-height:1.55;
+  }
+  .client-detail li::before{
+    content:''; position:absolute; left:0; top:.62em;
+    width:5px; height:1px; background:var(--accent);
+  }
+
+  /* Founders closing line — prose, deliberately not another card row. */
+  .founders-note{
+    margin-top:clamp(28px,4vw,40px);
+    max-width:62ch;
+    color:var(--ink-soft); font-size:1rem; line-height:1.75;
+  }
+
+  /* The decorative phase watermark ran 425px wide on a 375px screen. It was
+     only invisible because body has overflow-x:hidden — relying on that to hide
+     real overflow is fragile, so clip it at source and size it to fit. */
+  .process-ghost{ overflow:hidden; }
+
+  @media (max-width:900px){
+    /* 13.6px is too small to read comfortably on a phone. */
+    .client-detail li{ font-size:.92rem; }
+    /* Short footer labels ("Work") were only 35px wide to hit. */
+    .footer-links a{ padding-inline:4px; }
+  }
+
+  /* The client tabs wrapped to three stacked rows on a phone, which reads as a
+     list of headings rather than a control. A single scrollable strip is the
+     conventional mobile pattern and keeps the selected-tab underline meaningful. */
+  @media (max-width:720px){
+    .tabs{
+      flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;
+      scrollbar-width:none; -webkit-overflow-scrolling:touch;
+      scroll-snap-type:x proximity;
+    }
+    .tabs::-webkit-scrollbar{ display:none; }
+    .tab{ flex:0 0 auto; scroll-snap-align:start; margin-right:20px; }
+  }
