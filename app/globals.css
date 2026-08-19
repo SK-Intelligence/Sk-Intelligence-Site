@@ -824,7 +824,7 @@
      and a left-to-right merge would describe a layout no longer on screen. */
   .founders-merge{
     display:grid; grid-template-columns:repeat(2,1fr); gap:18px;
-    height:26px; margin-top:2px;
+    height:34px; margin-top:2px;
   }
   .founders-merge span{
     width:1px; height:100%; margin:0 auto;
@@ -854,7 +854,13 @@
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
     gap:clamp(18px,3vw,34px); margin-top:clamp(16px,2.4vw,22px);
   }
-  @media (max-width:760px){
+  /* Single column from 980px down, NOT 760px. The tablet range was the worst
+     case: the cards were still side by side so the 3-track list stayed on, and
+     at 768px each track is only ~200px, which broke "First-Class Computer
+     Science" across two lines against a two-word detail. This breakpoint is
+     about the list's own text measure, so it does not have to agree with the
+     760px one where the cards stack. */
+  @media (max-width:980px){
     .common-list{ grid-template-columns:1fr; gap:16px; }
   }
   /* Each entry carries its own rule. The three details are very different
@@ -866,9 +872,9 @@
     display:flex; flex-direction:column; gap:5px;
     border-top:1px solid var(--accent-line); padding-top:14px;
   }
-  @media (max-width:760px){
+  @media (max-width:980px){
     /* Stacked, the rule rotates to the left edge so the group still reads as a
-       set without three stacked horizontal lines fighting the band's own. */
+       set without stacked horizontal lines fighting the band's own. */
     .common-list li{
       border-top:0; padding-top:0;
       padding-left:16px; border-left:1px solid var(--accent-line);
