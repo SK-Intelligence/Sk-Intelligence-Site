@@ -9,10 +9,9 @@ import { founders, sharedCreds } from '@/lib/content';
  * overlap is the argument (two engineers with the same foundation), and the
  * differences are the range. Duplicated bullets said neither.
  *
- * The fork rule between the cards and the band is decorative and hidden from
- * assistive tech; the "What we both bring" heading carries the meaning. It is
- * also hidden below 760px, where the cards stack vertically and a left-to-right
- * merge would be describing a layout that is no longer on screen.
+ * The band's own top rule is the only mark in the section whose width equals
+ * both cards at once, and that span is what says "shared". Drawn connectors
+ * between the cards and the band were tried and removed: see the CSS.
  */
 export function Founders() {
   return (
@@ -47,11 +46,6 @@ export function Founders() {
             </div>
           ))}
         </div>
-
-        {/* Two rules descending from each card into the shared band's top edge.
-            Built on the same 2-column grid as .founders-grid so they land on the
-            card centres at every width instead of at guessed percentages. */}
-        <div className="founders-merge" aria-hidden="true"><span /><span /></div>
 
         <div className="founders-common" data-reveal style={{ '--d': 3 } as React.CSSProperties}>
           <h3 className="founders-common-label">What we both bring</h3>

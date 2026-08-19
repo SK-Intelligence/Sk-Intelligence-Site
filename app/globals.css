@@ -814,29 +814,25 @@
      them hold is stated once, below, joined to the cards by a drawn fork.
      All colour comes from the theme block; nothing here is a literal. */
 
-  /* The join. Two hairlines descending from the centre of each card into the
-     top rule of the shared band. It reuses .founders-grid's own track
-     definition, so the lines sit under the card centres at every width rather
-     than at percentages that drift. An SVG was tried first and was a mistake:
-     preserveAspectRatio:none stretched the horizontal scale ~14x against the
-     vertical and the curves sheared into what looked like a stray box.
-     Decorative, so aria-hidden, and hidden below 760px where the cards stack
-     and a left-to-right merge would describe a layout no longer on screen. */
-  .founders-merge{
-    display:grid; grid-template-columns:repeat(2,1fr); gap:18px;
-    height:34px; margin-top:2px;
-  }
-  .founders-merge span{
-    width:1px; height:100%; margin:0 auto;
-    background:linear-gradient(to bottom, transparent, var(--accent-line));
-  }
-  @media (max-width:760px){ .founders-merge{ display:none; } }
-
+  /* NO drawn connector between the cards and this band. Two versions were built
+     and both removed, for the same underlying reason.
+     First an SVG fork: preserveAspectRatio:none stretched the horizontal scale
+     ~14x against the vertical and sheared the curves into what looked like a
+     stray box. Then two 1px vertical hairlines on .founders-grid's own tracks.
+     Those measured worse than they looked: the gradient's top stop is
+     transparent so they never touched the card, they sat inside .glass's
+     0 30px 60px -28px drop shadow which dropped them to roughly 1.25:1 against
+     that ground, and two equidistant parallel verticals above a horizontal is
+     the grammar of a two-column table header, which is separation, the opposite
+     of the intended meaning.
+     What actually carries "shared" is the rule below: it is the only mark in
+     the section whose width equals both cards at once. Nothing else should
+     compete with that span. */
   .founders-common{
     border-top:1px solid var(--accent-line);
+    margin-top:clamp(26px,3.5vw,34px);
     padding-top:clamp(20px,3vw,28px);
   }
-  @media (max-width:760px){ .founders-common{ margin-top:clamp(26px,6vw,34px); } }
   .founders-common-label{
     font-family:var(--font-display); font-size:.72rem; font-weight:700;
     letter-spacing:.18em; text-transform:uppercase; color:var(--accent-deep);
@@ -863,22 +859,17 @@
   @media (max-width:980px){
     .common-list{ grid-template-columns:1fr; gap:16px; }
   }
-  /* Each entry carries its own rule. The three details are very different
-     lengths ("BSc and MEng" against a two-line sentence), so the row bottom is
-     always going to be ragged. Ruling the tops makes that read as three
-     deliberate columns rather than an unfinished row, which is the honest fix:
-     the alternative is padding the short one out with filler. */
+  /* One treatment at every width: each entry hangs off a perpendicular.
+     Ruling the TOPS was the earlier attempt and it was wrong. It put two more
+     horizontals, same weight and colour, 55px under the band's 1088px spanning
+     rule while reaching only 340px, and the eye reads short parallel rules
+     failing to match a longer one as a broken row rather than as a span. A
+     perpendicular does not compete with the span, so the empty third track stops
+     mattering: a list that ends is unremarkable, columns that do not fill their
+     tracks look unfinished. */
   .common-list li{
     display:flex; flex-direction:column; gap:5px;
-    border-top:1px solid var(--accent-line); padding-top:14px;
-  }
-  @media (max-width:980px){
-    /* Stacked, the rule rotates to the left edge so the group still reads as a
-       set without stacked horizontal lines fighting the band's own. */
-    .common-list li{
-      border-top:0; padding-top:0;
-      padding-left:16px; border-left:1px solid var(--accent-line);
-    }
+    border-left:1px solid var(--accent-line); padding-left:16px;
   }
   .common-label{
     font-family:var(--font-display); font-size:.95rem; font-weight:700;
