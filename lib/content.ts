@@ -76,45 +76,65 @@ export const phases = [
 ] as const;
 
 /**
- * Founder credentials, split by whether both of them hold it.
- *
- * `shared` is stated ONCE. It used to be repeated inside both cards, which
- * spent the reader's attention twice on the same fact and made the two lists
- * look padded. `points` is now only what is true of that person alone.
+ * Founder credentials. Each card carries the full picture of that person, so
+ * the agentic AI startup, the First-Class degree and the hackathon appear on
+ * both. That repetition is deliberate: a reader who only opens one card should
+ * still get everything, and these cards are read one at a time in a carousel
+ * rather than side by side.
  */
-export const sharedCreds = [
-  {
-    label: 'Agentic AI, in production',
-    detail: 'Founding engineers at an agentic AI audit startup serving enterprise clients',
-  },
-  {
-    label: 'First-Class Computer Science',
-    detail: 'BSc and MEng',
-  },
-] as const;
-
 export const founders = [
   {
     slug: 'sameer',
     monogram: 'SG',
     name: 'Sameer Gul',
+    linkedin: 'https://www.linkedin.com/in/sameer-g-4728a3260/',
     points: [
       'Secure, scalable infrastructure at the <strong>London Stock Exchange</strong>',
       'Software engineering at <strong>CME Group</strong>, on the cloud and monitoring stack behind live market data',
+      'Founding engineer at an agentic AI audit startup serving enterprise clients',
+      'First-Class BSc Computer Science',
       'AI research specialising in AI security, using trust-explicit systems',
+      /* Sourced from vishalqub.github.io/people.html, which is a research GROUP
+         people page, not a journal, and which lists both of them under Research
+         Interns as "(MISO & Sourcing Lens, 2026)". Worded to match what that
+         page can actually be checked to say. Do not upgrade this to a
+         publication or journal claim without a citation to point at. */
+      'Named on the MISO and Sourcing Lens research project, 2026',
+      'Hackathon winner',
     ],
   },
   {
     slug: 'kenneth',
     monogram: 'KO',
     name: 'Kenneth Obanor',
+    linkedin: 'https://www.linkedin.com/in/kenneth-obanor-060609275/',
     points: [
       'Software engineering at <strong>Squarespace</strong>',
       'Operations at <strong>Amazon</strong>',
+      'Founding engineer at an agentic AI audit startup serving enterprise clients',
+      'First-Class MEng Computer Science',
       'AI research into LLM-assisted software sustainability, runner-up at the 2026 Megaw Lecture in front of a panel including BT Digital Data &amp; AI',
+      'Named on the MISO and Sourcing Lens research project, 2026',
+      'Hackathon winner',
     ],
   },
 ] as const;
+
+/**
+ * The third card in the founders carousel. Not a person, so it carries no
+ * portrait, no monogram and no outbound link, and it says nothing about
+ * headcount because no number has ever been given for it.
+ */
+export const deliveryTeam = {
+  name: 'The delivery team',
+  role: 'Developers',
+  points: [
+    'A small team of developers works with us on delivery',
+    'They build and deploy client projects alongside us',
+    'Scalable, robust software built to hold up under real concurrent use',
+    'Most of what we get called in to fix ran fine until more than a handful of people used it at once',
+  ],
+} as const;
 
 /** Verbatim client words — do not reword. */
 export const clients = [

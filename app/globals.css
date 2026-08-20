@@ -405,7 +405,9 @@
   @media (max-width:980px){ .pillars-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .pillars-grid{ grid-template-columns:1fr; } }
   .pillar{ border-radius:22px; padding:30px 26px; transition:transform .5s var(--ease); }
-  .pillar:hover{ transform:translateY(-5px); }
+  /* Same (0,4,1) fix as .founder-card: the plain .pillar:hover never fired
+     either, for the identical specificity reason. */
+  body.reveal-armed .pillar.is-visible:hover{ transform:translateY(-5px); }
   .pillar-num{ font-family:var(--font-serif); font-style:italic; color:var(--accent-deep); font-size:.95rem; font-weight:600; }
   .pillar h3{ margin-top:16px; font-size:1.1rem; font-weight:700; letter-spacing:-0.01em; color:var(--ink); line-height:1.3; }
   .pillar p{ margin-top:10px; color:var(--ink-soft); font-size:.92rem; line-height:1.65; }
@@ -610,8 +612,39 @@
   /* Home-page teaser cards */
   .founders-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
   @media (max-width:760px){ .founders-grid{ grid-template-columns:1fr; } }
-  .founder-card{ border-radius:22px; padding:30px 26px; transition:transform .5s var(--ease); }
-  .founder-card:hover{ transform:translateY(-5px); }
+  /* The card is an <a> to that founder's LinkedIn, so it has to shed the UA
+     link styling and keep the type colours the section already sets. */
+  .founder-card{
+    display:block; border-radius:22px; padding:30px 26px;
+    color:inherit; text-decoration:none;
+    transition:transform .5s var(--ease);
+  }
+  /* This selector is (0,4,1) ON PURPOSE. The plain `.founder-card:hover` it
+     replaces was (0,2,0) and lost to the reveal system's settle rule,
+     `body.reveal-armed [data-reveal].is-visible{ transform:none }` at (0,3,1),
+     which wins on specificity whatever the source order. The result was
+     backwards: reveal-armed is only added by JS, so the lift fired ONLY with
+     JavaScript disabled. Verified in Chromium, hovered and settled, computed
+     transform `none` with JS on and `matrix(1,0,0,1,0,-5)` with JS off.
+     If you ever restructure the reveal system, re-check this pair together. */
+  body.reveal-armed .founder-card.is-visible:hover{ transform:translateY(-5px); }
+  .founder-arrow{
+    margin-left:auto; align-self:flex-start;
+    font-size:1rem; line-height:1; color:var(--ink-mute);
+    transition:transform .4s var(--ease), color .4s var(--ease);
+  }
+  .founder-card:hover .founder-arrow{ color:var(--accent-deep); transform:translate(2px,-2px); }
+
+  /* Both hover lifts were previously unguarded, unlike every other motion on
+     the site. They were only unguarded-and-harmless because they never fired;
+     now that they do, they need this. Colour still changes, so the link still
+     signals itself without moving anything. */
+  @media (prefers-reduced-motion: reduce){
+    .founder-card, .pillar, .founder-arrow{ transition:none; }
+    body.reveal-armed .founder-card.is-visible:hover,
+    body.reveal-armed .pillar.is-visible:hover{ transform:none; }
+    .founder-card:hover .founder-arrow{ transform:none; }
+  }
   /* Scannable background points inside each card — deliberately terse, the
      whole section is meant to be read at a glance. */
   .founder-points{ margin-top:20px; }
@@ -809,79 +842,62 @@
     width:5px; height:1px; background:var(--accent);
   }
 
-  /* =================== Founders: shared vs individual ===================
-     The two cards carry only what is true of one person. Everything both of
-     them hold is stated once, below, joined to the cards by a drawn fork.
-     All colour comes from the theme block; nothing here is a literal. */
+  /* =================== Founders carousel ===================
+     Native overflow scrolling with CSS scroll snapping, NOT a JS transform
+     track. That is what keeps the strip swipeable, keyboard scrollable and
+     fully readable with JavaScript off: the browser does the scrolling and the
+     arrows/dots are pure enhancement layered on afterwards. */
+  .founders-track{
+    display:flex; gap:18px;
+    overflow-x:auto; overscroll-behavior-x:contain;
+    scroll-snap-type:x mandatory;
+    /* overflow-x:auto computes overflow-y to auto, so the hover lift and the
+       .glass drop shadow would be clipped without this room. */
+    padding:8px 0 26px;
+    scrollbar-width:none;
+  }
+  .founders-track::-webkit-scrollbar{ display:none; }
+  .founders-track:focus-visible{ outline:2px solid var(--accent-deep); outline-offset:4px; border-radius:24px; }
+  .founder-slide{
+    flex:0 0 min(420px,84vw);
+    scroll-snap-align:start;
+  }
 
-  /* NO drawn connector between the cards and this band. Two versions were built
-     and both removed, for the same underlying reason.
-     First an SVG fork: preserveAspectRatio:none stretched the horizontal scale
-     ~14x against the vertical and sheared the curves into what looked like a
-     stray box. Then two 1px vertical hairlines on .founders-grid's own tracks.
-     Those measured worse than they looked: the gradient's top stop is
-     transparent so they never touched the card, they sat inside .glass's
-     0 30px 60px -28px drop shadow which dropped them to roughly 1.25:1 against
-     that ground, and two equidistant parallel verticals above a horizontal is
-     the grammar of a two-column table header, which is separation, the opposite
-     of the intended meaning.
-     What actually carries "shared" is the rule below: it is the only mark in
-     the section whose width equals both cards at once. Nothing else should
-     compete with that span. */
-  .founders-common{
-    border-top:1px solid var(--accent-line);
-    margin-top:clamp(26px,3.5vw,34px);
-    padding-top:clamp(20px,3vw,28px);
-  }
-  .founders-common-label{
-    font-family:var(--font-display); font-size:.72rem; font-weight:700;
-    letter-spacing:.18em; text-transform:uppercase; color:var(--accent-deep);
-  }
-  /* THREE tracks for TWO items, on purpose. On a two-track grid the pair lands
-     directly under the two founder cards, and alignment is a strong enough
-     signal that it reads as "left one is his, right one is his" which is the
-     exact opposite of what this band says. Running them into the first two of
-     three tracks puts the second item at 1/3 across, nowhere near where
-     Kenneth's card starts, so no mapping is implied.
-     auto-fit is deliberately NOT used: the count here is content, not layout,
-     and a track that silently reflows on a copy change hides the fact that a
-     claim was added or removed. */
-  .common-list{
-    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:clamp(18px,3vw,34px); margin-top:clamp(16px,2.4vw,22px);
-  }
-  /* Single column from 980px down, NOT 760px. The tablet range was the worst
-     case: the cards were still side by side so the 3-track list stayed on, and
-     at 768px each track is only ~200px, which broke "First-Class Computer
-     Science" across two lines against a two-word detail. This breakpoint is
-     about the list's own text measure, so it does not have to agree with the
-     760px one where the cards stack. */
-  @media (max-width:980px){
-    .common-list{ grid-template-columns:1fr; gap:16px; }
-  }
-  /* One treatment at every width: each entry hangs off a perpendicular.
-     Ruling the TOPS was the earlier attempt and it was wrong. It put two more
-     horizontals, same weight and colour, 55px under the band's 1088px spanning
-     rule while reaching only 340px, and the eye reads short parallel rules
-     failing to match a longer one as a broken row rather than as a span. A
-     perpendicular does not compete with the span, so the empty third track stops
-     mattering: a list that ends is unremarkable, columns that do not fill their
-     tracks look unfinished. */
-  .common-list li{
-    display:flex; flex-direction:column; gap:5px;
-    border-left:1px solid var(--accent-line); padding-left:16px;
-  }
-  .common-label{
-    font-family:var(--font-display); font-size:.95rem; font-weight:700;
-    letter-spacing:-.01em; color:var(--ink);
-  }
-  .common-detail{ color:var(--ink-soft); font-size:.88rem; line-height:1.6; }
+  /* Not a person: no photo, no link, no initials. Three connected nodes instead,
+     because a monogram on a group card would imply a single individual. */
+  .team-mark{ width:38px; height:38px; stroke:var(--accent-deep); stroke-width:1.6; }
+  .team-mark circle{ fill:var(--accent-deep); fill-opacity:.16; }
+  .founder-card.is-team{ cursor:auto; }
 
-  /* Founders closing line — prose, deliberately not another card row. */
-  .founders-note{
-    margin-top:clamp(28px,4vw,40px);
-    max-width:62ch;
-    color:var(--ink-soft); font-size:1rem; line-height:1.75;
+  .founders-controls{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; margin-top:6px;
+  }
+  .founders-dots{ display:flex; gap:2px; }
+  /* 44px hit area with an 8px visual dot. The site asserts a 44px minimum on
+     every interactive element, and a bare 8px dot would fail it. */
+  .founders-dot{
+    width:44px; height:44px; padding:0; border:0; background:none; cursor:pointer;
+    display:grid; place-items:center;
+  }
+  .founders-dot::before{
+    content:''; width:8px; height:8px; border-radius:50%;
+    background:var(--ink-line-strong); transition:background .3s var(--ease), transform .3s var(--ease);
+  }
+  .founders-dot.is-active::before{ background:var(--accent-deep); transform:scale(1.35); }
+  .founders-arrows{ display:flex; gap:8px; }
+  .founders-nav{
+    width:44px; height:44px; border-radius:50%; cursor:pointer;
+    border:1px solid var(--chip-border); background:var(--chip-bg); color:var(--ink);
+    display:grid; place-items:center; font-size:1rem;
+    transition:border-color .3s var(--ease), color .3s var(--ease);
+  }
+  .founders-nav:hover:not(:disabled){ border-color:var(--accent-line); color:var(--accent-deep); }
+  .founders-nav:disabled{ opacity:.35; cursor:auto; }
+
+  @media (prefers-reduced-motion: reduce){
+    .founders-track{ scroll-behavior:auto; }
+    .founders-dot::before, .founders-nav{ transition:none; }
   }
 
   /* The decorative phase watermark ran 425px wide on a 375px screen. It was

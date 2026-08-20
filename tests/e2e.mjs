@@ -261,8 +261,7 @@ for (const route of ['/', '/studio']) {
     const lum = (c) => { const s = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]; };
     const parse = (s) => s.match(/[\d.]+/g).map(Number).slice(0, 3);
     const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = getComputedStyle(n).backgroundColor; const m = c.match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.7)) return parse(c); n = n.parentElement; } return [245, 241, 232]; };
-    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-points li', '.founders-note',
-      '.founders-common-label', '.common-label', '.common-detail',
+    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-points li',
       '.client-detail li', '.client-name', '.client-work', '.panel-quote blockquote', '.section-head h2',
       '.section-head p', '.eyebrow', '.studio-item small', '.stack-group p', '.nav-mobile-links a'];
     return sels.map((s) => {
@@ -344,6 +343,84 @@ for (const w of [320, 390, 768, 1440]) {
   const under = gaps.filter((g) => g.gap < 8);
   ok(under.length === 0,
     `${w}px every anchor lands clear of the nav (min ${Math.min(...gaps.map((g) => g.gap))}px)${under.length ? ' — ' + under.map((u) => `${u.a} ${u.gap}px`).join(', ') : ''}`);
+}
+
+// ─────────────────────────────────────────── hover lift actually fires
+/* This shipped broken for a long time and nothing caught it: `.founder-card:hover`
+   at (0,2,0) lost to the reveal settle rule at (0,3,1), so the lift fired only
+   with JS DISABLED, which is the progressive-enhancement contract inverted. The
+   test hovers a settled card with JS on and asserts the transform really moves. */
+head('card hover lift');
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.querySelector('#founders').scrollIntoView());
+  await p.waitForTimeout(1200);
+  for (const sel of ['.founder-card', '.pillar']) {
+    const el = p.locator(sel).first();
+    await el.scrollIntoViewIfNeeded();
+    await p.waitForTimeout(500);
+    await el.hover();
+    await p.waitForTimeout(800); // longer than the .5s transition
+    const r = await el.evaluate((n) => ({
+      t: getComputedStyle(n).transform,
+      hovered: n.matches(':hover'),
+      settled: n.classList.contains('is-visible') && document.body.classList.contains('reveal-armed'),
+    }));
+    ok(r.hovered && r.settled && r.t !== 'none',
+      `${sel} lifts on hover when settled (${r.t})`);
+  }
+  // The card is a real link to a real destination, not a div pretending.
+  const link = await p.$$eval('a.founder-card', (n) => n.map((a) => ({
+    href: a.getAttribute('href'), label: a.getAttribute('aria-label'), rel: a.getAttribute('rel'),
+  })));
+  ok(link.length === 2 && link.every((l) => /linkedin\.com/.test(l.href) && l.label && /noopener/.test(l.rel || '')),
+    `founder cards link out safely (${link.map((l) => l.label).join(', ')})`);
+  await p.close();
+}
+
+// ─────────────────────────────────────────── founders carousel
+/* The slider is native scroll-snap, so the contract is that it still works
+   without JS. If anyone ever swaps it for a transform track, this fails. */
+head('founders carousel');
+{
+  const p = await phone();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.querySelector('#founders').scrollIntoView({ block: 'center' }));
+  await p.waitForTimeout(600);
+  const r = await p.evaluate(() => {
+    const t = document.querySelector('.founders-track');
+    return { slides: t.querySelectorAll('.founder-slide').length, scrollable: t.scrollWidth > t.clientWidth + 10,
+             dots: document.querySelectorAll('.founders-dot').length };
+  });
+  ok(r.slides === 3, `three slides including the delivery team (${r.slides})`);
+  ok(r.scrollable, 'track actually overflows, so it can slide');
+  ok(r.dots === 3, `one dot per slide (${r.dots})`);
+
+  await p.click('.founders-nav[aria-label="Next"]');
+  await p.waitForTimeout(900);
+  const moved = await p.evaluate(() => document.querySelector('.founders-track').scrollLeft > 20);
+  ok(moved, 'the next arrow advances the track');
+  await p.close();
+}
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await p.waitForTimeout(700);
+  const r = await p.evaluate(() => {
+    const t = document.querySelector('.founders-track');
+    return { slides: t.querySelectorAll('.founder-slide').length,
+             scrollable: t.scrollWidth > t.clientWidth + 10,
+             overflowX: getComputedStyle(t).overflowX,
+             controls: document.querySelectorAll('.founders-nav').length };
+  });
+  ok(r.slides === 3 && r.scrollable && r.overflowX !== 'visible',
+    `JS off: all 3 cards present and the strip still scrolls (overflow-x ${r.overflowX})`);
+  ok(r.controls === 0, `JS off: no dead arrow controls rendered (${r.controls})`);
+  await ctx.close();
 }
 
 // ─────────────────────────────────────────── copy house style
