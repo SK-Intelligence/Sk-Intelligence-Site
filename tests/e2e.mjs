@@ -384,12 +384,35 @@ head('card hover lift');
 /* The slider is native scroll-snap, so the contract is that it still works
    without JS. If anyone ever swaps it for a transform track, this fails. */
 head('founders carousel');
+
+/* Geometry of the painted layer. Read .founder-depth, never .founder-slide: the
+   slide is the snap target and is deliberately left untransformed, because a
+   snap area is the target's TRANSFORMED border box and moving it makes the snap
+   position chase the scroll. Probing the slide would report a flat strip and
+   quietly pass whatever the cards were actually doing. */
+const depthGeo = (p) => p.evaluate(() => {
+  const t = document.querySelector('.founders-track');
+  const tr = t.getBoundingClientRect();
+  return {
+    trackW: Math.round(tr.width),
+    cards: [...t.querySelectorAll('.founder-depth')].map((d) => {
+      const r = d.getBoundingClientRect();
+      const cs = getComputedStyle(d);
+      return {
+        l: Math.round(r.left - tr.left), r: Math.round(r.right - tr.left),
+        w: Math.round(r.width), op: +(+cs.opacity).toFixed(2), z: +cs.zIndex,
+        front: d.classList.contains('is-front'),
+      };
+    }),
+  };
+});
+
 {
   const p = await phone();
   await p.goto(BASE + '/', { waitUntil: 'load' });
   await settle(p);
   await p.evaluate(() => document.querySelector('#founders').scrollIntoView({ block: 'center' }));
-  await p.waitForTimeout(600);
+  await p.waitForTimeout(900);
   const r = await p.evaluate(() => {
     const t = document.querySelector('.founders-track');
     return { slides: t.querySelectorAll('.founder-slide').length, scrollable: t.scrollWidth > t.clientWidth + 10,
@@ -399,10 +422,43 @@ head('founders carousel');
   ok(r.scrollable, 'track actually overflows, so it can slide');
   ok(r.dots === 3, `one dot per slide (${r.dots})`);
 
+  // The whole point of the rebuild: front card in front, the others behind it.
+  const a = await depthGeo(p);
+  const [c0, c1, c2] = a.cards;
+  ok(c0.front && c0.op === 1 && c1.op < 0.6 && c2.op < 0.6,
+    `front card is full strength, the two behind are faded (${c0.op} / ${c1.op} / ${c2.op})`);
+  ok(c1.w < c0.w && c1.z < c0.z && c2.z < c1.z,
+    `cards behind are scaled down and stacked under (${c0.w}/${c1.w}px, z ${c0.z}/${c1.z}/${c2.z})`);
+  ok(c1.l > c0.l && c1.l < c0.r && c1.r > c0.r + 8,
+    `the next card tucks behind the front card's edge and peeks ${c1.r - c0.r}px past it`);
+  ok(c1.r <= a.trackW && c2.r <= a.trackW,
+    'the peeking cards stay inside the track instead of being clipped by it');
+
   await p.click('.founders-nav[aria-label="Next"]');
-  await p.waitForTimeout(900);
+  await p.waitForTimeout(1000);
   const moved = await p.evaluate(() => document.querySelector('.founders-track').scrollLeft > 20);
   ok(moved, 'the next arrow advances the track');
+
+  const b = await depthGeo(p);
+  ok(b.cards[1].front && !b.cards[0].front && b.cards[1].op === 1,
+    'advancing promotes the next card to the front');
+  ok(b.cards[0].r < b.cards[1].r && b.cards[0].l < b.cards[1].l && b.cards[0].op < 0.6,
+    'the card it replaced drops behind the other edge, so both sides are occupied');
+
+  /* A back card is half covered, so a click on the sliver means "bring this
+     forward", not "open LinkedIn" — otherwise a mis-tap leaves the site. */
+  const before = p.url();
+  const spot = await p.evaluate(() => {
+    const t = document.querySelector('.founders-track');
+    const d = [...t.querySelectorAll('.founder-depth')][2].getBoundingClientRect();
+    const front = [...t.querySelectorAll('.founder-depth')][1].getBoundingClientRect();
+    return { x: (front.right + d.right) / 2, y: d.top + d.height / 2 };
+  });
+  await p.mouse.click(spot.x, spot.y);
+  await p.waitForTimeout(1000);
+  const after = await depthGeo(p);
+  ok(p.url() === before && p.context().pages().length === 1 && after.cards[2].front,
+    'clicking a half-hidden card brings it forward instead of following its link');
   await p.close();
 }
 {
@@ -415,11 +471,16 @@ head('founders carousel');
     return { slides: t.querySelectorAll('.founder-slide').length,
              scrollable: t.scrollWidth > t.clientWidth + 10,
              overflowX: getComputedStyle(t).overflowX,
-             controls: document.querySelectorAll('.founders-nav').length };
+             controls: document.querySelectorAll('.founders-nav').length,
+             faded: [...t.querySelectorAll('.founder-depth')]
+               .filter((d) => +getComputedStyle(d).opacity < 1).length };
   });
   ok(r.slides === 3 && r.scrollable && r.overflowX !== 'visible',
     `JS off: all 3 cards present and the strip still scrolls (overflow-x ${r.overflowX})`);
   ok(r.controls === 0, `JS off: no dead arrow controls rendered (${r.controls})`);
+  /* The depth effect is painted from JS. Without it the fallback must be a
+     plain flat row — never cards left stranded at 45% opacity behind nothing. */
+  ok(r.faded === 0, `JS off: every card falls back to full strength (${r.faded} faded)`);
   await ctx.close();
 }
 
