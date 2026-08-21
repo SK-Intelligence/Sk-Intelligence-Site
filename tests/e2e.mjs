@@ -381,25 +381,25 @@ head('card hover lift');
 }
 
 // ─────────────────────────────────────────── founders carousel
-/* The slider is native scroll-snap, so the contract is that it still works
-   without JS. If anyone ever swaps it for a transform track, this fails. */
+/* Live, this is a looping deck: one card in front and one behind each of its
+   edges, at every position. Without JS it must fall back to the flat scrolling
+   row the markup and CSS still describe. Both halves are checked here. */
 head('founders carousel');
 
 /* Geometry of the painted layer. Read .founder-depth, never .founder-slide: the
-   slide is the snap target and is deliberately left untransformed, because a
-   snap area is the target's TRANSFORMED border box and moving it makes the snap
-   position chase the scroll. Probing the slide would report a flat strip and
-   quietly pass whatever the cards were actually doing. */
+   slide is layout only and is deliberately never transformed, so probing it
+   would report three stacked cards sitting still and quietly pass whatever the
+   deck was actually doing. */
 const depthGeo = (p) => p.evaluate(() => {
   const t = document.querySelector('.founders-track');
   const tr = t.getBoundingClientRect();
   return {
     trackW: Math.round(tr.width),
-    cards: [...t.querySelectorAll('.founder-depth')].map((d) => {
+    cards: [...t.querySelectorAll('.founder-depth')].map((d, i) => {
       const r = d.getBoundingClientRect();
       const cs = getComputedStyle(d);
       return {
-        l: Math.round(r.left - tr.left), r: Math.round(r.right - tr.left),
+        i, l: Math.round(r.left - tr.left), r: Math.round(r.right - tr.left),
         w: Math.round(r.width), op: +(+cs.opacity).toFixed(2), z: +cs.zIndex,
         front: d.classList.contains('is-front'),
       };
@@ -415,50 +415,98 @@ const depthGeo = (p) => p.evaluate(() => {
   await p.waitForTimeout(900);
   const r = await p.evaluate(() => {
     const t = document.querySelector('.founders-track');
-    return { slides: t.querySelectorAll('.founder-slide').length, scrollable: t.scrollWidth > t.clientWidth + 10,
+    return { slides: t.querySelectorAll('.founder-slide').length,
+             live: t.classList.contains('is-live'),
+             scrollable: t.scrollWidth > t.clientWidth + 10,
              dots: document.querySelectorAll('.founders-dot').length };
   });
   ok(r.slides === 3, `three slides including the delivery team (${r.slides})`);
-  ok(r.scrollable, 'track actually overflows, so it can slide');
+  ok(r.live && !r.scrollable, 'JS on: the row has become a deck and no longer scrolls');
   ok(r.dots === 3, `one dot per slide (${r.dots})`);
 
-  // The whole point of the rebuild: front card in front, the others behind it.
-  const a = await depthGeo(p);
-  const [c0, c1, c2] = a.cards;
-  ok(c0.front && c0.op === 1 && c1.op < 0.6 && c2.op < 0.6,
-    `front card is full strength, the two behind are faded (${c0.op} / ${c1.op} / ${c2.op})`);
-  ok(c1.w < c0.w && c1.z < c0.z && c2.z < c1.z,
-    `cards behind are scaled down and stacked under (${c0.w}/${c1.w}px, z ${c0.z}/${c1.z}/${c2.z})`);
-  ok(c1.l > c0.l && c1.l < c0.r && c1.r > c0.r + 8,
-    `the next card tucks behind the front card's edge and peeks ${c1.r - c0.r}px past it`);
-  ok(c1.r <= a.trackW && c2.r <= a.trackW,
-    'the peeking cards stay inside the track instead of being clipped by it');
+  /* The point of the whole thing: at EVERY resting position there is a card on
+     both sides, which is only true if the deck wraps. Walking all three and
+     back to the start is what proves the loop, so one card is never stranded
+     with empty space beside it. */
+  const seen = [];
+  for (let k = 0; k < 4; k++) {
+    const g = await depthGeo(p);
+    const front = g.cards.find((c) => c.front);
+    const back = g.cards.filter((c) => !c.front);
+    const left = back.find((c) => c.l < front.l);
+    const right = back.find((c) => c.l > front.l);
+    seen.push(front ? front.i : -1);
 
-  await p.click('.founders-nav[aria-label="Next"]');
-  await p.waitForTimeout(1000);
-  const moved = await p.evaluate(() => document.querySelector('.founders-track').scrollLeft > 20);
-  ok(moved, 'the next arrow advances the track');
+    ok(!!front && !!left && !!right,
+      `position ${k}: card ${front ? front.i : '?'} in front with one card either side`);
+    ok(!!left && !!right && left.r > front.l && left.r < front.r && right.l > front.l && right.l < front.r,
+      `position ${k}: both neighbours tuck behind the front card's edges`);
+    ok(!!left && !!right && left.l < front.l - 8 && right.r > front.r + 8,
+      `position ${k}: they peek ${left ? front.l - left.l : 0}px left and ${right ? right.r - front.r : 0}px right`);
+    ok(front.op === 1 && back.every((c) => c.op < 0.6 && c.w < front.w && c.z < front.z),
+      `position ${k}: front card full strength, both neighbours faded and scaled back`);
+    ok(g.cards.every((c) => c.l >= -1 && c.r <= g.trackW + 1),
+      `position ${k}: every card stays inside the track rather than being clipped`);
 
-  const b = await depthGeo(p);
-  ok(b.cards[1].front && !b.cards[0].front && b.cards[1].op === 1,
-    'advancing promotes the next card to the front');
-  ok(b.cards[0].r < b.cards[1].r && b.cards[0].l < b.cards[1].l && b.cards[0].op < 0.6,
-    'the card it replaced drops behind the other edge, so both sides are occupied');
+    if (k < 3) { await p.click('.founders-nav[aria-label="Next"]'); await p.waitForTimeout(900); }
+  }
+  ok(seen[0] === 0 && seen[1] === 1 && seen[2] === 2 && seen[3] === 0,
+    `the deck rotates one card at a time and loops back round (${seen.join(' → ')})`);
 
-  /* A back card is half covered, so a click on the sliver means "bring this
+  // The track is no longer a scroll container, so it has to handle these itself.
+  await p.evaluate(() => document.querySelector('.founders-track').focus());
+  await p.keyboard.press('ArrowRight');
+  await p.waitForTimeout(900);
+  const kb = await depthGeo(p);
+  ok(kb.cards.find((c) => c.front).i === 1, 'arrow keys move the deck once it holds focus');
+
+  /* A back card is mostly covered, so a click on the sliver means "bring this
      forward", not "open LinkedIn" — otherwise a mis-tap leaves the site. */
   const before = p.url();
-  const spot = await p.evaluate(() => {
-    const t = document.querySelector('.founders-track');
-    const d = [...t.querySelectorAll('.founder-depth')][2].getBoundingClientRect();
-    const front = [...t.querySelectorAll('.founder-depth')][1].getBoundingClientRect();
-    return { x: (front.right + d.right) / 2, y: d.top + d.height / 2 };
-  });
+  const target = kb.cards.find((c) => !c.front && c.l < kb.cards.find((x) => x.front).l);
+  const spot = await p.evaluate((i) => {
+    const d = [...document.querySelectorAll('.founder-depth')][i].getBoundingClientRect();
+    const f = document.querySelector('.founder-depth.is-front').getBoundingClientRect();
+    return { x: (d.left + f.left) / 2, y: d.top + d.height / 2 };
+  }, target.i);
   await p.mouse.click(spot.x, spot.y);
   await p.waitForTimeout(1000);
   const after = await depthGeo(p);
-  ok(p.url() === before && p.context().pages().length === 1 && after.cards[2].front,
+  ok(p.url() === before && p.context().pages().length === 1 && after.cards[target.i].front,
     'clicking a half-hidden card brings it forward instead of following its link');
+
+  /* Swiping is the whole interaction on a phone, and it is hand-rolled now that
+     there is no scroll container underneath doing it. */
+  const drag = async (dx, steps = 10) => {
+    const b = await p.locator('.founder-depth.is-front').boundingBox();
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    await p.mouse.move(cx, cy);
+    await p.mouse.down();
+    for (let k = 1; k <= steps; k++) await p.mouse.move(cx + (dx / steps) * k, cy);
+    const mid = await depthGeo(p);
+    await p.mouse.up();
+    await p.waitForTimeout(900);
+    return { mid, end: await depthGeo(p) };
+  };
+
+  const start = (await depthGeo(p)).cards.find((c) => c.front).i;
+  const left = await drag(-180);
+  ok(left.end.cards.find((c) => c.front).i === (start + 1) % 3,
+    'dragging left brings the next card forward');
+  /* Mid-gesture the deck must be somewhere between two states, not snapped to
+     one of them: that is the difference between following the finger and
+     jumping when it lifts. */
+  ok(left.mid.cards.some((c) => c.op > 0.6 && c.op < 1),
+    `a part-finished drag sits between positions (${left.mid.cards.map((c) => c.op).join(' / ')})`);
+
+  const right = await drag(180);
+  ok(right.end.cards.find((c) => c.front).i === start,
+    'dragging back the other way returns the card it came from');
+
+  const nudge = await drag(-12, 4);
+  ok(nudge.end.cards.find((c) => c.front).i === start && p.url() === before && p.context().pages().length === 1,
+    'a nudge too small to be a swipe settles back without following the card\'s link');
   await p.close();
 }
 {
@@ -469,13 +517,14 @@ const depthGeo = (p) => p.evaluate(() => {
   const r = await p.evaluate(() => {
     const t = document.querySelector('.founders-track');
     return { slides: t.querySelectorAll('.founder-slide').length,
+             live: t.classList.contains('is-live'),
              scrollable: t.scrollWidth > t.clientWidth + 10,
              overflowX: getComputedStyle(t).overflowX,
              controls: document.querySelectorAll('.founders-nav').length,
              faded: [...t.querySelectorAll('.founder-depth')]
                .filter((d) => +getComputedStyle(d).opacity < 1).length };
   });
-  ok(r.slides === 3 && r.scrollable && r.overflowX !== 'visible',
+  ok(r.slides === 3 && !r.live && r.scrollable && r.overflowX !== 'visible',
     `JS off: all 3 cards present and the strip still scrolls (overflow-x ${r.overflowX})`);
   ok(r.controls === 0, `JS off: no dead arrow controls rendered (${r.controls})`);
   /* The depth effect is painted from JS. Without it the fallback must be a
