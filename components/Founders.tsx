@@ -277,11 +277,10 @@ export function Founders() {
                   </div>
                   <span className="founder-arrow" aria-hidden="true">&#8599;</span>
                 </div>
-                <ul className="founder-points">
-                  {f.points.map((p) => (
-                    <li key={p} dangerouslySetInnerHTML={{ __html: p }} />
-                  ))}
-                </ul>
+                <div className="founder-bio">
+                  <p>{f.bio}</p>
+                  <p dangerouslySetInnerHTML={{ __html: f.background }} />
+                </div>
               </a>
             </div></div>
           ))}
@@ -302,11 +301,10 @@ export function Founders() {
                   <p className="founder-role">{deliveryTeam.role}</p>
                 </div>
               </div>
-              <ul className="founder-points">
-                {deliveryTeam.points.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
+              <div className="founder-bio">
+                <p>{deliveryTeam.bio}</p>
+                <p>{deliveryTeam.background}</p>
+              </div>
             </article>
           </div></div>
         </div>

@@ -261,7 +261,7 @@ for (const route of ['/', '/studio']) {
     const lum = (c) => { const s = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]; };
     const parse = (s) => s.match(/[\d.]+/g).map(Number).slice(0, 3);
     const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = getComputedStyle(n).backgroundColor; const m = c.match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.7)) return parse(c); n = n.parentElement; } return [245, 241, 232]; };
-    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-points li',
+    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-bio p',
       '.client-detail li', '.client-name', '.client-work', '.panel-quote blockquote', '.section-head h2',
       '.section-head p', '.eyebrow', '.studio-item small', '.stack-group p', '.nav-mobile-links a'];
     return sels.map((s) => {

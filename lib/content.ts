@@ -76,11 +76,22 @@ export const phases = [
 ] as const;
 
 /**
- * Founder credentials. Each card carries the full picture of that person, so
- * the agentic AI startup, the First-Class degree and the hackathon appear on
- * both. That repetition is deliberate: a reader who only opens one card should
- * still get everything, and these cards are read one at a time in a carousel
- * rather than side by side.
+ * Founder cards: a short bio, then the background behind it.
+ *
+ * These were a list of seven credentials each and it did not land. A list of
+ * seven achievements reads as weaker than one fact that implies the rest,
+ * because each item dilutes the one before it and the reader stops absorbing
+ * around the fourth. So each card now makes ONE claim, the AI work, and the
+ * employers sit underneath it as ballast rather than as the pitch.
+ *
+ * Deliberately dropped, and not to be quietly reinstated: the hackathon win,
+ * the Megaw Lecture placing, the MISO research listing and the degree classes.
+ * Competition placings do not sell to the person doing the hiring, and the
+ * cards are stronger for making one point clearly. Everything cut is still on
+ * their LinkedIn, which each card links to.
+ *
+ * `bio` and `background` are one paragraph each. Keep them to that: the whole
+ * reason this section was rewritten was that there was too much to take in.
  */
 export const founders = [
   {
@@ -88,35 +99,16 @@ export const founders = [
     monogram: 'SG',
     name: 'Sameer Gul',
     linkedin: 'https://www.linkedin.com/in/sameer-g-4728a3260/',
-    points: [
-      'Secure, scalable infrastructure at the <strong>London Stock Exchange</strong>',
-      'Software engineering at <strong>CME Group</strong>, on the cloud and monitoring stack behind live market data',
-      'Founding engineer at an agentic AI audit startup serving enterprise clients',
-      'First-Class BSc Computer Science',
-      'AI research specialising in AI security, using trust-explicit systems',
-      /* Sourced from vishalqub.github.io/people.html, which is a research GROUP
-         people page, not a journal, and which lists both of them under Research
-         Interns as "(MISO & Sourcing Lens, 2026)". Worded to match what that
-         page can actually be checked to say. Do not upgrade this to a
-         publication or journal claim without a citation to point at. */
-      'Named on the MISO and Sourcing Lens research project, 2026',
-      'Hackathon winner',
-    ],
+    bio: 'I work in AI security. My research is on trust-explicit systems: building AI you can actually inspect, so you can tell what it did and why rather than taking its word for it.',
+    background: 'Before this I was writing software behind live financial markets, at the <strong>London Stock Exchange</strong> and at <strong>CME Group</strong>. I was a founding engineer at an agentic AI audit startup serving enterprise clients.',
   },
   {
     slug: 'kenneth',
     monogram: 'KO',
     name: 'Kenneth Obanor',
     linkedin: 'https://www.linkedin.com/in/kenneth-obanor-060609275/',
-    points: [
-      'Software engineering at <strong>Squarespace</strong>',
-      'Operations at <strong>Amazon</strong>',
-      'Founding engineer at an agentic AI audit startup serving enterprise clients',
-      'First-Class MEng Computer Science',
-      'AI research into LLM-assisted software sustainability, runner-up at the 2026 Megaw Lecture in front of a panel including BT Digital Data &amp; AI',
-      'Named on the MISO and Sourcing Lens research project, 2026',
-      'Hackathon winner',
-    ],
+    bio: 'I work on AI-assisted software and whether it survives contact with time: what models are genuinely good at building, where they cost more than they save, and how you keep the result something a team can maintain.',
+    background: 'I have built product software at <strong>Squarespace</strong> and run operations at <strong>Amazon</strong>. I was a founding engineer at an agentic AI audit startup serving enterprise clients.',
   },
 ] as const;
 
@@ -124,16 +116,17 @@ export const founders = [
  * The third card in the founders carousel. Not a person, so it carries no
  * portrait, no monogram and no outbound link, and it says nothing about
  * headcount because no number has ever been given for it.
+ *
+ * These developers are part of the company. Say that by describing what they
+ * do, never by denying the alternative: an earlier draft ran "not a bench we
+ * hire in", which plants the suspicion it was trying to remove. "The same
+ * developers, every project" carries it without the defensiveness.
  */
 export const deliveryTeam = {
-  name: 'The delivery team',
+  name: 'The engineering team',
   role: 'Developers',
-  points: [
-    'A small team of developers works with us on delivery',
-    'They build and deploy client projects alongside us',
-    'Scalable, robust software built to hold up under real concurrent use',
-    'Most of what we get called in to fix ran fine until more than a handful of people used it at once',
-  ],
+  bio: 'The same developers build and deploy every project we take on, working alongside us throughout.',
+  background: 'Everything is built for real concurrent use. Most of what we get called in to fix ran fine until more than a handful of people were on it at once.',
 } as const;
 
 /** Verbatim client words — do not reword. */

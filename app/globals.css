@@ -642,18 +642,18 @@
     body.reveal-armed .pillar.is-visible:hover{ transform:none; }
     .founder-card:hover .founder-arrow{ transform:none; }
   }
-  /* Scannable background points inside each card — deliberately terse, the
-     whole section is meant to be read at a glance. */
-  .founder-points{ margin-top:20px; }
-  .founder-points li{
-    position:relative; padding-left:18px; margin-top:9px;
-    color:var(--ink-soft); font-size:.9rem; line-height:1.55;
+  /* Two short paragraphs per card: who they are, then the background behind it.
+     This replaced a bulleted credential list. A dashed list invites skimming
+     and puts every entry at the same weight, which is exactly why seven of them
+     read as less convincing than two sentences. Prose makes the reader take the
+     first claim before the employers underneath it. */
+  .founder-bio{ margin-top:20px; }
+  .founder-bio p{
+    color:var(--ink-soft); font-size:.94rem; line-height:1.65;
   }
-  .founder-points li::before{
-    content:''; position:absolute; left:0; top:.6em;
-    width:6px; height:1px; background:var(--accent);
-  }
-  .founder-points strong{ color:var(--ink); font-weight:700; }
+  .founder-bio p + p{ margin-top:13px; }
+  /* The employers are the only thing set to be caught while skimming. */
+  .founder-bio strong{ color:var(--ink); font-weight:700; }
 
 
 
