@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Ossett Tyres — reg lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/*
+  Ossett Tyres — the registration lookup tool.
+
+  This is a restyle of a real build, not an invention. The live widget sits on
+  ossettyres.co.uk/order-your-tyres-online and calls ossett-tyres.vercel.app
+  /api/dvla and /api/enquiry. Every field below exists in the real thing: name,
+  phone, VRM, then make / year / engine / fuel / colour back from DVLA, then OE
+  front and rear fitment, budget tier and brand. The live version is styled in
+  system-ui with #2c3e50 headings; this is the same tool given the presentation
+  the engineering deserves.
+
+  One accent only: UK plate yellow, and only on the plate itself. A British
+  driver reads that shape before they read any label, and it keeps the rest of
+  the interface honest greyscale instead of the dark-slate-and-red that every
+  automotive template ships with.
+
+  Data values are set in mono because they are measurements. Engine capacity,
+  tyre width, aspect ratio and rim diameter are numbers you compare down a
+  column, so they get tabular figures and a face that keeps them aligned.
+*/
+
+:root{
+  --ground:#0B0C0E;
+  --raised:#16181C;
+  --raised-2:#1C1F24;
+  --line:rgba(255,255,255,.08);
+  --line-strong:rgba(255,255,255,.14);
+  --text:#F2F3F5;
+  --muted:#9BA1AA;
+  --faint:#6C727B;
+  --plate:#FFD400;
+  --plate-ink:#111111;
+  --plate-blue:#0B3A8F;
+
+  --sans:'Inter',system-ui,sans-serif;
+  --display:'Space Grotesk','Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{
+  font-family:var(--sans);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+::selection{ background:var(--plate); color:var(--plate-ink); }
+
+/* Each frame is exactly one capture. shots.mjs screenshots them by id. */
+.frame{
+  width:1280px; height:760px;
+  background:
+    radial-gradient(120% 90% at 50% -20%, #1A1D22 0%, rgba(11,12,14,0) 62%),
+    var(--ground);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* A single hairline of light across the top edge, the way a physical panel
+   catches a room light. Cheaper and more convincing than a border. */
+.frame::before{
+  content:''; position:absolute; inset:0 0 auto 0; height:1px;
+  background:linear-gradient(90deg,
+    rgba(255,255,255,0) 0%, rgba(255,255,255,.10) 30%,
+    rgba(255,255,255,.10) 70%, rgba(255,255,255,0) 100%);
+}
+
+/* ── header ─────────────────────────────────────────────────────────── */
+.bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 40px;
+  border-bottom:1px solid var(--line);
+  flex:0 0 auto;
+}
+.brand{ display:flex; align-items:center; gap:11px; }
+.brand-mark{
+  width:26px; height:26px; border-radius:50%;
+  border:2px solid var(--text);
+  position:relative;
+}
+.brand-mark::after{
+  content:''; position:absolute; inset:5px; border-radius:50%;
+  border:1px solid var(--faint);
+}
+.brand-name{
+  font-family:var(--display); font-weight:700; font-size:.86rem;
+  letter-spacing:.18em; text-transform:uppercase;
+}
+.bar-nav{ display:flex; gap:30px; }
+.bar-nav span{ font-size:.8rem; color:var(--muted); font-weight:500; }
+.bar-nav span.on{ color:var(--text); }
+
+/* ── body ───────────────────────────────────────────────────────────── */
+.body{
+  flex:1 1 auto; min-height:0;
+  padding:40px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+/* Frame 1 runs two columns: the form on the left, and on the right the size
+   explainer that the real widget carries as a paragraph of bullet points.
+   Same information, given a shape you can read at a glance. */
+.split{
+  display:grid; grid-template-columns:1.1fr .9fr;
+  gap:52px; align-items:start;
+}
+.lede{ max-width:44ch; }
+.lede h1{
+  margin:0;
+  font-family:var(--display); font-weight:700;
+  font-size:2.4rem; line-height:1.08; letter-spacing:-.028em;
+  text-wrap:balance;
+}
+.lede p{
+  margin:12px 0 0;
+  font-size:.95rem; line-height:1.62; color:var(--muted);
+}
+
+.step{
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:14px;
+}
+.step-n{
+  font-family:var(--mono); font-size:.68rem; font-weight:700;
+  letter-spacing:.1em; color:var(--faint);
+}
+.step-rule{ flex:1; height:1px; background:var(--line); }
+.step-label{
+  font-size:.68rem; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--faint);
+}
+
+/* the elevated working surface */
+.card{
+  background:var(--raised);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:0 24px 48px -24px rgba(0,0,0,.9), 0 1px 0 0 rgba(255,255,255,.04) inset;
+}
+
+/* ── plate input ────────────────────────────────────────────────────── */
+.plate-row{ display:flex; align-items:stretch; gap:14px; }
+.plate{
+  display:flex; align-items:stretch;
+  background:var(--plate);
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 2px 0 0 rgba(0,0,0,.5), 0 12px 26px -12px rgba(255,212,0,.28);
+}
+.plate-gb{
+  width:34px; background:var(--plate-blue);
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding-bottom:9px; gap:4px;
+}
+.plate-stars{
+  width:14px; height:14px; border-radius:50%;
+  border:1.5px dotted rgba(255,255,255,.85);
+}
+.plate-gb b{
+  font-family:var(--sans); font-size:.66rem; font-weight:700;
+  color:#fff; letter-spacing:.04em;
+}
+.plate-value{
+  font-family:var(--mono); font-weight:700;
+  font-size:2.05rem; letter-spacing:.06em;
+  color:var(--plate-ink);
+  padding:12px 22px 12px 18px;
+  display:flex; align-items:center;
+  font-feature-settings:'tnum' 1;
+}
+.plate-value.empty{ color:rgba(17,17,17,.34); }
+/* Caret drawn rather than relying on a real focused input, so the capture is
+   deterministic instead of depending on blink phase. */
+.caret{
+  display:inline-block; width:2px; height:1.5em;
+  background:var(--plate-ink); margin-left:3px;
+}
+
+.search{
+  font-family:var(--sans); font-weight:600; font-size:.92rem;
+  color:var(--plate-ink); background:var(--plate);
+  border:0; border-radius:8px; padding:0 30px;
+  display:flex; align-items:center; gap:9px;
+  box-shadow:0 2px 0 0 rgba(0,0,0,.5);
+}
+.search svg{ width:15px; height:15px; }
+
+/* ── plain fields ───────────────────────────────────────────────────── */
+.fields{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field label{
+  display:block; font-size:.7rem; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--faint);
+  margin-bottom:7px;
+}
+.input{
+  height:44px; padding:0 14px;
+  background:var(--raised-2);
+  border:1px solid var(--line);
+  border-radius:9px;
+  display:flex; align-items:center;
+  font-size:.9rem; color:var(--text);
+}
+.input.ph{ color:var(--faint); }
+
+/* ── resolved state ─────────────────────────────────────────────────── */
+.found{
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:.74rem; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--text);
+}
+.found svg{ width:15px; height:15px; }
+
+/* A spec strip, not a row of stat cards: hairline separators, no boxes.
+   Nesting cards inside the card would be the lazy version of this. */
+.spec{
+  display:grid; grid-template-columns:repeat(5,1fr);
+  border-top:1px solid var(--line);
+}
+.spec div{
+  padding:16px 20px;
+  border-right:1px solid var(--line);
+}
+.spec div:last-child{ border-right:0; }
+.spec dt{
+  font-size:.64rem; font-weight:600; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--faint);
+}
+.spec dd{
+  margin:8px 0 0;
+  font-family:var(--mono); font-weight:500; font-size:1.02rem;
+  letter-spacing:-.01em; color:var(--text);
+  font-feature-settings:'tnum' 1;
+}
+
+.fitment{ display:grid; grid-template-columns:1fr 1fr; }
+.fit{
+  padding:18px 22px;
+  border-top:1px solid var(--line);
+}
+.fit:first-child{ border-right:1px solid var(--line); }
+.fit-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin-bottom:11px;
+}
+.fit-pos{
+  font-size:.64rem; font-weight:700; letter-spacing:.17em;
+  text-transform:uppercase; color:var(--faint);
+}
+.fit-oe{
+  font-size:.62rem; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--faint);
+  border:1px solid var(--line-strong); border-radius:4px;
+  padding:2px 6px;
+}
+.fit-size{
+  font-family:var(--mono); font-weight:700;
+  font-size:1.5rem; letter-spacing:-.02em;
+  font-feature-settings:'tnum' 1;
+}
+.fit-meta{
+  margin-top:7px;
+  font-family:var(--mono); font-size:.76rem; color:var(--muted);
+}
+
+.choices{
+  display:grid; grid-template-columns:1fr 1fr;
+  border-top:1px solid var(--line);
+}
+.choice{ padding:16px 22px; }
+.choice:first-child{ border-right:1px solid var(--line); }
+.choice > label{
+  display:block; font-size:.64rem; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--faint);
+  margin-bottom:10px;
+}
+.segs{ display:flex; gap:6px; }
+.seg{
+  font-size:.78rem; font-weight:500; color:var(--muted);
+  padding:7px 13px; border-radius:7px;
+  border:1px solid var(--line);
+}
+.seg.on{
+  color:var(--plate-ink); background:var(--plate);
+  border-color:var(--plate); font-weight:600;
+}
+.select{
+  height:40px; padding:0 13px;
+  background:var(--raised-2); border:1px solid var(--line); border-radius:8px;
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:.86rem;
+}
+.select svg{ width:13px; height:13px; color:var(--faint); }
+
+.foot{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 22px;
+  border-top:1px solid var(--line);
+}
+.foot-note{ font-size:.78rem; color:var(--faint); }
+
+/* ── size explainer ─────────────────────────────────────────────────── */
+.explain-size{
+  font-family:var(--mono); font-weight:700;
+  font-size:2rem; letter-spacing:-.02em;
+  font-feature-settings:'tnum' 1;
+}
+.explain-size i{ font-style:normal; color:var(--faint); }
+.explain-rows{ margin-top:18px; }
+.explain-rows{ max-width:400px; }
+.explain-rows > div{
+  display:grid; grid-template-columns:52px 1fr auto;
+  align-items:baseline; gap:14px;
+  padding:11px 0;
+  border-top:1px solid var(--line);
+}
+.explain-rows b{
+  font-family:var(--mono); font-weight:700; font-size:.95rem;
+  color:var(--plate);
+  font-feature-settings:'tnum' 1;
+}
+.explain-rows span{ font-size:.86rem; color:var(--text); }
+.explain-rows em{
+  font-style:normal; font-family:var(--mono);
+  font-size:.76rem; color:var(--faint);
+}
+
+/* ── enquiry confirmation strip ─────────────────────────────────────── */
+.sent{
+  display:flex; align-items:center; gap:16px;
+  margin-top:18px; padding:15px 20px;
+  border:1px solid var(--line); border-radius:12px;
+  background:var(--raised);
+}
+.sent-tick{
+  width:26px; height:26px; border-radius:50%; flex:0 0 auto;
+  background:var(--plate); color:var(--plate-ink);
+  display:flex; align-items:center; justify-content:center;
+}
+.sent-tick svg{ width:13px; height:13px; }
+.sent-main{ font-size:.86rem; font-weight:500; }
+.sent-sub{ font-size:.78rem; color:var(--faint); margin-top:3px; }
+.sent-ref{
+  margin-left:auto; font-family:var(--mono); font-size:.76rem; color:var(--muted);
+  border:1px solid var(--line-strong); border-radius:6px; padding:5px 10px;
+}
+.cta{
+  font-size:.88rem; font-weight:600;
+  color:var(--plate-ink); background:var(--plate);
+  border-radius:8px; padding:11px 24px;
+  box-shadow:0 2px 0 0 rgba(0,0,0,.5);
+}
+</style>
+</head>
+<body>
+
+<!-- ══ FRAME 1 · empty state ══════════════════════════════════════════ -->
+<section class="frame" id="shot-empty">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">Ossett Tyres</span>
+    </div>
+    <nav class="bar-nav">
+      <span>Services</span><span>Blog</span>
+      <span class="on">Order tyres</span><span>Contact</span>
+    </nav>
+  </div>
+
+  <div class="body">
+    <div class="split">
+      <div>
+        <div class="lede">
+          <h1>Your exact fitment, from your number plate.</h1>
+          <p>Enter your registration and we return the original tyre sizes for your
+             vehicle, front and rear, straight from DVLA records.</p>
+        </div>
+
+        <div class="step" style="margin-top:34px">
+          <span class="step-n">01</span>
+          <span class="step-label">Your vehicle</span>
+          <span class="step-rule"></span>
+        </div>
+
+        <div class="card" style="padding:24px">
+          <div class="plate-row">
+            <div class="plate">
+              <div class="plate-gb"><span class="plate-stars"></span><b>UK</b></div>
+              <div class="plate-value empty">AB12 CDE<span class="caret"></span></div>
+            </div>
+            <div class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path>
+              </svg>
+              Search
+            </div>
+          </div>
+
+          <div class="fields" style="margin-top:20px">
+            <div class="field">
+              <label>Name</label>
+              <div class="input ph">Full name</div>
+            </div>
+            <div class="field">
+              <label>Phone</label>
+              <div class="input ph">07xxx xxxxxx</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside style="padding-top:6px">
+        <div class="step">
+          <span class="step-label">Reading a tyre size</span>
+          <span class="step-rule"></span>
+        </div>
+        <div class="explain-size">215<i>/</i>50 <i>R</i>17</div>
+        <div class="explain-rows">
+          <div><b>215</b><span>Width</span><em>mm</em></div>
+          <div><b>50</b><span>Sidewall height</span><em>% of width</em></div>
+          <div><b>R</b><span>Radial construction</span><em></em></div>
+          <div><b>17</b><span>Wheel diameter</span><em>inches</em></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FRAME 2 · resolved state ═══════════════════════════════════════ -->
+<section class="frame" id="shot-resolved">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">Ossett Tyres</span>
+    </div>
+    <nav class="bar-nav">
+      <span>Services</span><span>Blog</span>
+      <span class="on">Order tyres</span><span>Contact</span>
+    </nav>
+  </div>
+
+  <div class="body" style="padding-top:32px">
+    <div class="plate-row" style="align-items:center">
+      <div class="plate" style="transform:scale(.78);transform-origin:left center">
+        <div class="plate-gb"><span class="plate-stars"></span><b>UK</b></div>
+        <div class="plate-value">OS19 TYR</div>
+      </div>
+      <div style="margin-left:-32px">
+        <span class="found">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Vehicle found
+        </span>
+      </div>
+    </div>
+
+    <div class="step" style="margin-top:26px">
+      <span class="step-n">02</span>
+      <span class="step-label">Fitment</span>
+      <span class="step-rule"></span>
+    </div>
+
+    <div class="card">
+      <div style="padding:18px 20px 16px">
+        <div style="font-family:var(--display);font-weight:700;font-size:1.22rem;letter-spacing:-.02em">
+          Ford Focus
+        </div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:4px">
+          Resolved from DVLA vehicle records
+        </div>
+      </div>
+
+      <dl class="spec" style="margin:0">
+        <div><dt>Make</dt><dd>FORD</dd></div>
+        <div><dt>Year</dt><dd>2019</dd></div>
+        <div><dt>Engine</dt><dd>1497 cc</dd></div>
+        <div><dt>Fuel</dt><dd>PETROL</dd></div>
+        <div><dt>Colour</dt><dd>BLUE</dd></div>
+      </dl>
+
+      <div class="fitment">
+        <div class="fit">
+          <div class="fit-head">
+            <span class="fit-pos">Front</span>
+            <span class="fit-oe">Original</span>
+          </div>
+          <div class="fit-size">215/50 R17</div>
+          <div class="fit-meta">91W · load 91 · speed W</div>
+        </div>
+        <div class="fit">
+          <div class="fit-head">
+            <span class="fit-pos">Rear</span>
+            <span class="fit-oe">Original</span>
+          </div>
+          <div class="fit-size">215/50 R17</div>
+          <div class="fit-meta">91W · load 91 · speed W</div>
+        </div>
+      </div>
+
+      <div class="choices">
+        <div class="choice">
+          <label>Budget</label>
+          <div class="segs">
+            <span class="seg">Budget</span>
+            <span class="seg on">Mid-range</span>
+            <span class="seg">Premium</span>
+          </div>
+        </div>
+        <div class="choice">
+          <label>Preferred brand</label>
+          <div class="select">
+            <span>Michelin</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 9l7 7 7-7"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot">
+        <span class="foot-note">4 tyres · fitting at Ossett</span>
+        <span class="cta">Request a quote</span>
+      </div>
+    </div>
+
+    <!-- Step 3 in the real widget: the enquiry posts to /api/enquiry, which
+         emails the garage and appends the row to their order sheet. -->
+    <div class="sent">
+      <span class="sent-tick">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 12.5l5 5L20 6.5"></path>
+        </svg>
+      </span>
+      <span>
+        <span class="sent-main">Enquiry sent to Ossett Tyres</span>
+        <span class="sent-sub">Confirmation emailed and logged to the order sheet</span>
+      </span>
+      <span class="sent-ref">REF 4127</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

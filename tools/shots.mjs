@@ -1,0 +1,262 @@
+/**
+ * Case-bank screenshot capture.
+ *
+ *   npm run shots            everything
+ *   npm run shots -- ossett  one target
+ *
+ * Two kinds of source:
+ *
+ *   1. A Star Customs is captured from the live site. Sameer rates that build
+ *      and wants it shown as it actually is.
+ *   2. The other three are captured from the mockups in tools/mockups/. Their
+ *      live sites are basic, so those are restyled. See each file's header for
+ *      what is real content and what is presentation.
+ *
+ * Output is PNG into public/work/. It stays PNG deliberately: there is no
+ * cwebp or magick on this machine, and next/image converts and resizes at
+ * request time anyway, so an intermediate conversion would buy nothing.
+ *
+ * Nothing in tools/ ships. It exists so every asset in the case bank can be
+ * regenerated from source rather than being a binary nobody can reproduce.
+ */
+import { chromium } from 'playwright';
+import { mkdir, stat } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const OUT = resolve(HERE, '../public/work');
+const MOCKUPS = join(HERE, 'mockups');
+
+const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
+const wanted = (name) => only.length === 0 || only.some((o) => name.startsWith(o));
+
+let failed = 0;
+const done = [];
+const log = (m) => console.log(`  ${m}`);
+const bad = (m) => { failed++; console.log(` FAIL  ${m}`); };
+
+/**
+ * A silent fallback to a system font still produces a plausible-looking
+ * screenshot, which is the worst possible failure here: it looks fine in the
+ * terminal and wrong on the site. So assert the face actually loaded.
+ */
+async function assertFonts(page, families, label) {
+  const missing = await page.evaluate(async (fams) => {
+    await document.fonts.ready;
+    // The weight matters: fonts.check defaults to 400, and these families are
+    // requested at 500/700 only, so a bare `16px "Family"` reports a miss for a
+    // face that loaded perfectly well. Pass if any requested weight resolves.
+    return fams.filter((f) => ![400, 500, 600, 700]
+      .some((w) => document.fonts.check(`${w} 16px "${f}"`)));
+  }, families);
+  if (missing.length) bad(`${label}: web font did not load — ${missing.join(', ')}`);
+  else log(`fonts ok (${families.join(', ')})`);
+  return missing.length === 0;
+}
+
+/** Reject a capture that came out blank, near-blank or trivially flat. */
+async function assertNotBlank(file, label) {
+  const { size } = await stat(file);
+  if (size < 12_000) bad(`${label}: capture is only ${size}b, almost certainly blank`);
+  return size;
+}
+
+// ── mockups ────────────────────────────────────────────────────────────────
+/**
+ * Each mockup file holds one or more `.frame` sections at an exact pixel size.
+ * Capturing the element rather than the viewport means the frame size lives in
+ * the HTML next to the design, instead of being duplicated here.
+ */
+async function captureMockup(browser, file, shots, fonts) {
+  const page = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
+  await page.goto(`file://${join(MOCKUPS, file)}`, { waitUntil: 'load' });
+  await assertFonts(page, fonts, file);
+  // Let the face actually paint before the shutter, not just report ready.
+  await page.waitForTimeout(400);
+
+  for (const [id, out] of shots) {
+    const el = page.locator(`#${id}`);
+    if ((await el.count()) === 0) { bad(`${file}: no #${id}`); continue; }
+    const dest = join(OUT, `${out}.png`);
+    await el.screenshot({ path: dest });
+    const size = await assertNotBlank(dest, out);
+    log(`${out}.png  ${(size / 1024).toFixed(0)}kb`);
+    done.push(`${out}.png`);
+  }
+  await page.close();
+}
+
+// ── live site ──────────────────────────────────────────────────────────────
+/**
+ * astarcustoms.com is a Zyro site: cookie banner, lazy images, web fonts. All
+ * three have to be settled before the shutter or the capture shows a consent
+ * overlay sitting on top of half-decoded placeholders.
+ */
+async function captureLive(browser, path, out, focusContent = false) {
+  // Same frame as the mockups. Every shot in the bank shares one aspect ratio,
+  // so the showcase can declare a single intrinsic size without squashing
+  // half of them.
+  const page = await browser.newPage({ viewport: { width: 1280, height: 760 }, deviceScaleFactor: 2 });
+  const url = `https://www.astarcustoms.com${path}`;
+  // Not `networkidle`: this host keeps analytics connections open, so the page
+  // never reaches idle and every capture burns the full timeout before
+  // throwing. Load the document, then wait on the things that actually matter
+  // below — fonts, images, and the consent overlay being gone.
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  } catch {
+    bad(`${out}: could not load ${url}`);
+    await page.close();
+    return;
+  }
+  await page.waitForLoadState('load', { timeout: 45_000 }).catch(() => {});
+
+  // Dismiss consent. Several label variants across the pages, so try them all
+  // and carry on if none is present rather than failing the run.
+  for (const re of [/^(accept|allow|agree|got it|ok)/i, /accept all/i]) {
+    const btn = page.getByRole('button', { name: re }).first();
+    try {
+      if (await btn.isVisible({ timeout: 1200 })) { await btn.click({ timeout: 1200 }); break; }
+    } catch { /* not on this page */ }
+  }
+  // Strip third-party furniture: the consent bar and the floating WhatsApp
+  // launcher belong to the host platform, not to the build.
+  //
+  // Matched nodes are removed exactly as found. An earlier version climbed to
+  // `.closest('[class*="widget"]')` to catch the launcher's wrapper, and on the
+  // shop page that ancestor was the product grid — so the "cleanup" deleted the
+  // entire thing being photographed. Never widen a delete by guessing at
+  // ancestors on a page you do not control.
+  await page.evaluate(() => {
+    document.querySelectorAll(
+      '[class*="cookie" i],[id*="cookie" i],[class*="consent" i],'
+      // `whats-app-bubble`, hyphenated — a "whatsapp" substring match misses it.
+      + '[class*="whats" i],[id*="whats" i],[href*="wa.me"],[href*="api.whatsapp"]',
+    ).forEach((n) => n.remove());
+
+    // Anything else pinned to the viewport is chrome rather than content, so
+    // long as it is small. The size test is what stops this from eating a
+    // legitimate sticky header or a full-screen section.
+    document.querySelectorAll('body *').forEach((n) => {
+      const s = getComputedStyle(n);
+      if (s.position !== 'fixed' && s.position !== 'sticky') return;
+      const r = n.getBoundingClientRect();
+      if (r.width > 0 && r.width < 420 && r.height > 0 && r.height < 420) n.remove();
+    });
+  });
+
+  // Walk the page so lazy images decode, then return to the top for the shot.
+  //
+  // The step count is fixed up front rather than tested against a live
+  // scrollHeight. Lazy content makes the page grow as you scroll through it,
+  // so `y < document.body.scrollHeight` can stay true forever — and
+  // page.evaluate has no default timeout, so that hangs the run rather than
+  // failing it.
+  await page.evaluate(async () => {
+    const steps = Math.min(40, Math.ceil(document.body.scrollHeight / 700));
+    for (let i = 0; i <= steps; i++) {
+      window.scrollTo(0, i * 700);
+      await new Promise((r) => setTimeout(r, 80));
+    }
+    window.scrollTo(0, 0);
+  });
+  // The product grid and the gallery are fetched after load: this page reports
+  // 3 images immediately and 23 once it settles. Measuring or shooting before
+  // that gives an empty frame, so wait for the count to stop moving.
+  let seen = -1;
+  for (let i = 0; i < 14; i++) {
+    const n = await page.evaluate(() => document.images.length);
+    if (n === seen && n > 0) break;
+    seen = n;
+    await page.waitForTimeout(600);
+  }
+
+  await page.evaluate(
+    () => Promise.race([
+      Promise.all([...document.images].map((i) => i.decode().catch(() => {}))),
+      new Promise((r) => setTimeout(r, 4000)),
+    ]),
+  );
+  // On the interior pages the real content — the product grid, the gallery —
+  // starts around 950px down, so a viewport shot from the top is a screenshot
+  // of a background texture. Frame the first substantial row instead of
+  // hard-coding an offset per page, which would rot the moment they edit it.
+  if (focusContent) {
+    const y = await page.evaluate(() => {
+      const tops = [...document.images]
+        .filter((i) => { const r = i.getBoundingClientRect(); return r.width > 150 && r.height > 120; })
+        .map((i) => i.getBoundingClientRect().top + window.scrollY)
+        .filter((t) => t > 500)
+        .sort((a, b) => a - b);
+      return tops.length ? Math.max(0, tops[0] - 62) : 0;
+    });
+    if (y === 0) bad(`${out}: found no content row to frame, shot may be empty`);
+    await page.evaluate((to) => window.scrollTo(0, to), y);
+    await page.waitForTimeout(600);
+  }
+  // Sweep the third-party chrome again immediately before the shutter. The
+  // launcher is injected asynchronously and comes back after the first pass.
+  await page.evaluate(() => {
+    document.querySelectorAll(
+      '[class*="whats" i],[id*="whats" i],[href*="wa.me"],[href*="api.whatsapp"]',
+    ).forEach((n) => n.remove());
+    document.querySelectorAll('body *').forEach((n) => {
+      const st = getComputedStyle(n);
+      if (st.position !== 'fixed' && st.position !== 'sticky') return;
+      const r = n.getBoundingClientRect();
+      if (r.width > 0 && r.width < 420 && r.height > 0 && r.height < 420) n.remove();
+    });
+  });
+
+  const dest = join(OUT, `${out}.png`);
+  await page.screenshot({ path: dest }); // viewport only — full-page would be a strip nobody can read
+  const size = await assertNotBlank(dest, out);
+  log(`${out}.png  ${(size / 1024).toFixed(0)}kb  ← live`);
+  done.push(`${out}.png`);
+  await page.close();
+}
+
+// ── run ────────────────────────────────────────────────────────────────────
+await mkdir(OUT, { recursive: true });
+const browser = await chromium.launch();
+
+if (wanted('ossett')) {
+  console.log('\n── ossett (mockup)');
+  await captureMockup(browser, 'ossett.html', [
+    ['shot-empty', 'ossett-1'],
+    ['shot-resolved', 'ossett-2'],
+  ], ['Space Grotesk', 'JetBrains Mono', 'Inter']);
+}
+
+if (wanted('gbautos')) {
+  console.log('\n── gbautos (mockup)');
+  await captureMockup(browser, 'gbautos.html', [
+    ['shot-hero', 'gbautos-1'],
+    ['shot-services', 'gbautos-2'],
+  ], ['Archivo', 'Inter']);
+}
+
+if (wanted('hopeful')) {
+  console.log('\n── hopeful (mockup)');
+  await captureMockup(browser, 'hopeful.html', [
+    ['shot-hero', 'hopeful-1'],
+    ['shot-services', 'hopeful-2'],
+  ], ['Newsreader', 'Inter']);
+}
+
+if (wanted('astar')) {
+  console.log('\n── astar (live capture)');
+  for (const [path, out, focus] of [
+    ['/', 'astar-1', false],          // the hero is the shot on the home page
+    ['/shop', 'astar-2', true],
+    ['/gallery', 'astar-3', true],
+    ['/custom-kits', 'astar-4', true],
+  ]) await captureLive(browser, path, out, focus);
+}
+
+await browser.close();
+
+console.log(`\n${done.length} captured into public/work/`);
+if (failed) { console.log(`${failed} FAILED`); process.exit(1); }
+console.log('all shots ok');

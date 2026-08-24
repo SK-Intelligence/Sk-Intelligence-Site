@@ -478,13 +478,142 @@
   .panel{ transition:filter .2s ease, opacity .2s ease; }
 
   .panel-meta{ border-left:2px solid var(--accent); padding-left:20px; }
-  .panel-meta .client-name{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
-  .panel-meta .client-work{ margin-top:10px; color:var(--ink-soft); font-size:.93rem; }
-  .panel-meta a{
-    display:inline-flex; align-items:center; gap:6px; margin-top:16px; font-size:.82rem; font-weight:700;
-    color:var(--accent-deep); border-bottom:1px solid transparent; transition:border-color .2s ease;
+  .panel-meta .client-sector{
+    font-family:var(--font-display); font-size:.7rem; font-weight:700;
+    letter-spacing:.19em; text-transform:uppercase; color:var(--accent-deep);
+    margin-bottom:8px;
   }
-  .panel-meta a:hover{ border-color:var(--accent-deep); }
+  .panel-meta .client-name{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
+  .panel-meta .client-work{ margin-top:10px; color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
+
+  /* =================== Build screenshots =================== */
+  /* Spans the panel so the build is the first thing you see, then the meta
+     and the quote sit underneath in the two columns they already used. */
+  /* No bottom margin: the panel grid's row gap already separates this from the
+     meta row, and carrying both stacked a ~96px trench under the thumbnails. */
+  .client-showcase{ grid-column:1 / -1; }
+
+  .showcase-frame{
+    background:var(--surface-alt);
+    border:1px solid var(--ink-line);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 30px 56px -30px rgba(var(--shadow-rgb),.34);
+  }
+  .showcase-chrome{
+    display:flex; align-items:center; gap:14px;
+    padding:9px 14px;
+    border-bottom:1px solid var(--ink-line);
+    background:rgba(var(--surface-rgb),.7);
+  }
+  .showcase-dots{ display:flex; gap:6px; }
+  .showcase-dots i{
+    width:9px; height:9px; border-radius:50%;
+    background:rgba(var(--ink-rgb),.18);
+  }
+  /* Names the build, not a URL. The section deliberately sends nobody
+     off-site, so a fake address bar would be promising a link that is not
+     there. */
+  .showcase-label{
+    font-size:.74rem; font-weight:600; color:var(--ink-mute);
+    letter-spacing:.02em;
+  }
+  .showcase-frame img{ width:100%; height:auto; display:block; }
+  .showcase-open{
+    display:block; width:100%; padding:0; cursor:zoom-in;
+    background:none; border:0;
+  }
+  .showcase-open img{ transition:transform .6s var(--ease); }
+  @media (hover:hover) and (pointer:fine){
+    .showcase-open:hover img{ transform:scale(1.014); }
+  }
+  .showcase-open:focus-visible{ outline:2px solid var(--accent-deep); outline-offset:-4px; }
+
+  .client-shots{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .client-shot{
+    padding:0; border:0; background:none; cursor:pointer;
+    width:clamp(96px,15vw,132px);
+    opacity:.5; transition:opacity .25s ease;
+  }
+  .client-shot img{
+    width:100%; height:auto; display:block;
+    border-radius:7px; border:1px solid var(--ink-line);
+  }
+  .client-shot span{
+    display:block; margin-top:6px;
+    font-size:.7rem; font-weight:600; color:var(--ink-mute);
+    padding-bottom:4px; border-bottom:2px solid transparent;
+  }
+  .client-shot[data-on]{ opacity:1; }
+  .client-shot[data-on] span{ color:var(--ink); border-bottom-color:var(--accent-deep); }
+  @media (hover:hover) and (pointer:fine){ .client-shot:hover{ opacity:1; } }
+  .client-shot:focus-visible{ outline:2px solid var(--accent-deep); outline-offset:3px; border-radius:9px; }
+
+  /* A spec strip rather than three stat cards: hairline rules do the dividing,
+     so the numbers read as one row of measurements instead of three boxes. */
+  .client-metrics{
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:0 18px; margin:20px 0 0;
+  }
+  .client-metrics > div{ border-top:1px solid var(--accent-line); padding-top:11px; }
+  .client-metrics dt{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(1.5rem,1.2rem + 1.4vw,2.05rem);
+    line-height:1; letter-spacing:-.03em; color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .client-metrics dd{
+    margin:8px 0 0;
+    font-size:.7rem; font-weight:600; line-height:1.4;
+    letter-spacing:.11em; text-transform:uppercase; color:var(--ink-mute);
+  }
+
+  /* =================== Screenshot lightbox =================== */
+  .lightbox{
+    width:min(94vw,1180px); max-width:none;
+    max-height:92vh; padding:0; border:0;
+    background:transparent; color:var(--ink);
+    overflow:visible;
+  }
+  .lightbox::backdrop{ background:rgba(var(--shadow-rgb),.72); }
+  .lightbox-inner{
+    background:var(--surface);
+    border:1px solid var(--ink-line);
+    border-radius:18px; overflow:hidden;
+    box-shadow:0 40px 90px -30px rgba(var(--shadow-rgb),.6);
+  }
+  .lightbox-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:12px 16px; border-bottom:1px solid var(--ink-line);
+  }
+  .lightbox-title{
+    font-family:var(--font-display); font-size:.86rem; font-weight:700; color:var(--ink);
+  }
+  .lightbox-title span{
+    margin-left:10px; font-weight:600; color:var(--ink-mute);
+  }
+  .lightbox-x, .lightbox-nav button{
+    display:flex; align-items:center; justify-content:center;
+    width:36px; height:36px; border-radius:50%;
+    border:1px solid var(--ink-line); color:var(--ink);
+    transition:background .2s ease, border-color .2s ease;
+  }
+  .lightbox-x svg, .lightbox-nav svg{ width:16px; height:16px; }
+  @media (hover:hover) and (pointer:fine){
+    .lightbox-x:hover, .lightbox-nav button:hover{
+      background:var(--surface-alt); border-color:var(--accent);
+    }
+  }
+  .lightbox-figure{ margin:0; background:var(--surface-alt); }
+  .lightbox-img{ width:100%; height:auto; display:block; }
+  .lightbox-nav{
+    display:flex; align-items:center; justify-content:center; gap:18px;
+    padding:12px; border-top:1px solid var(--ink-line);
+  }
+  .lightbox-nav p{
+    font-size:.78rem; font-weight:600; color:var(--ink-mute);
+    font-variant-numeric:tabular-nums; min-width:5.5ch; text-align:center;
+  }
   .panel-quote blockquote{
     margin:0; font-family:var(--font-serif); font-style:italic; font-weight:500;
     font-size:clamp(1.3rem,1.1rem + 1vw,1.85rem); line-height:1.44; color:var(--ink);
@@ -497,6 +626,27 @@
   @media (max-width:720px){
     .panel{ grid-template-columns:1fr; }
     .panel-meta{ border-left:0; padding-left:0; border-top:2px solid var(--accent); padding-top:16px; }
+  }
+
+  /* Three metric labels ("Vehicle fields per lookup") cannot share a phone
+     width without wrapping to four lines each. Below this they become rows:
+     value and label on one line, which is the same information in a third of
+     the height. */
+  @media (max-width:560px){
+    .client-metrics{ grid-template-columns:1fr; gap:0; }
+    .client-metrics > div{
+      display:flex; align-items:baseline; gap:14px;
+      padding-block:10px;
+    }
+    .client-metrics dt{ font-size:1.5rem; min-width:4.5ch; }
+    .client-metrics dd{ margin-top:0; }
+  }
+
+  @media (max-width:720px){
+    /* Edge-to-edge on a phone: a 16px gutter either side of a screenshot this
+       detailed just makes it smaller for no gain. */
+    .lightbox{ width:100vw; max-height:100vh; }
+    .lightbox-inner{ border-radius:0; border-left:0; border-right:0; }
   }
 
   /* =================== Manifesto — the one charcoal inversion band =================== */

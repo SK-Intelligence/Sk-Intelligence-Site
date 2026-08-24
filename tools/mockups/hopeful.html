@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<title>Hopeful Hearts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/*
+  Hopeful Hearts Ltd — Cavan.
+
+  Every word here is theirs. The headline is their stated objective, the deck
+  is their tagline, the five services and their descriptions are lifted from
+  hopefulheartsltd.com/services, and the values come from their about page.
+  Nothing about the work of a real child and family services organisation is
+  invented, which matters more here than on any other client in the bank.
+
+  Warm and quiet, and the furthest of the three from the two garages: a serif
+  at reading weight, deep teal rather than the default charity blue, terracotta
+  for warmth. Newsreader rather than Fraunces on purpose — Fraunces is SK's own
+  display serif, and reusing it would make this look like our site wearing
+  their name.
+
+  No photography is available, so none is faked. The hero carries a toned field
+  rather than a gradient pretending to be a family photograph. Real images drop
+  into the same slot later without moving anything.
+*/
+
+:root{
+  --paper:#FBF7F2;
+  --paper-2:#F3EDE4;
+  --teal:#1F4740;
+  --teal-soft:#2E5F56;
+  --terra:#C97B5A;
+  --ink:#22201D;
+  --ink-soft:#4E4A44;
+  --ink-mute:#6E6960;
+  --line:rgba(34,32,29,.13);
+
+  --serif:'Newsreader',Georgia,serif;
+  --sans:'Inter',system-ui,sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--teal); color:var(--paper); }
+
+.frame{
+  width:1280px; height:760px;
+  background:var(--paper);
+  display:flex; flex-direction:column;
+  overflow:hidden; position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* ── header ─────────────────────────────────────────────────────────── */
+.bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 48px; flex:0 0 auto;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:34px; height:34px; border-radius:50%;
+  background:var(--teal);
+  display:flex; align-items:center; justify-content:center;
+}
+.brand-mark svg{ width:17px; height:17px; color:var(--paper); }
+.brand-name{
+  font-family:var(--serif); font-weight:600;
+  font-size:1.18rem; letter-spacing:-.015em; color:var(--teal);
+}
+.bar-nav{ display:flex; align-items:center; gap:30px; }
+.bar-nav a{
+  font-size:.86rem; font-weight:500; color:var(--ink-soft); text-decoration:none;
+}
+.bar-nav a.on{ color:var(--teal); font-weight:600; }
+.bar-cta{
+  font-size:.84rem; font-weight:600;
+  background:var(--teal); color:var(--paper);
+  border-radius:999px; padding:11px 22px;
+}
+
+/* ── hero ───────────────────────────────────────────────────────────── */
+.hero{
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.02fr .98fr;
+  gap:56px;
+  padding:0 48px 40px;
+  align-items:center;
+}
+.hero h1{
+  margin:0;
+  font-family:var(--serif); font-weight:500;
+  font-size:3.15rem; line-height:1.1; letter-spacing:-.024em;
+  color:var(--teal);
+  text-wrap:balance;
+}
+.hero h1 em{ font-style:italic; color:var(--terra); }
+.hero-deck{
+  margin:22px 0 0; max-width:44ch;
+  font-size:1.02rem; line-height:1.68; color:var(--ink-soft);
+}
+.hero-cta{ display:flex; align-items:center; gap:14px; margin-top:30px; }
+.btn-a{
+  font-size:.9rem; font-weight:600;
+  background:var(--teal); color:var(--paper);
+  border-radius:999px; padding:14px 28px;
+  display:inline-flex; align-items:center; gap:9px;
+}
+.btn-a svg{ width:15px; height:15px; }
+.btn-b{
+  font-size:.9rem; font-weight:600; color:var(--teal);
+  border-bottom:1.5px solid var(--terra); padding-bottom:3px;
+}
+
+.values{
+  display:flex; gap:28px; margin-top:40px;
+  padding-top:22px; border-top:1px solid var(--line);
+}
+.value b{
+  display:block;
+  font-family:var(--serif); font-weight:600; font-size:1rem; color:var(--teal);
+}
+.value span{
+  display:block; margin-top:4px;
+  font-size:.8rem; line-height:1.5; color:var(--ink-mute);
+}
+
+/* The image slot. A toned field, not a gradient impersonating a photograph.
+   Swapping in a real photo means replacing this block and nothing else. */
+.hero-art{
+  position:relative; align-self:stretch;
+  margin:8px 0 0;
+  border-radius:200px 200px 22px 22px;
+  overflow:hidden;
+  background:
+    radial-gradient(70% 55% at 50% 26%, rgba(201,123,90,.42) 0%, rgba(201,123,90,0) 68%),
+    linear-gradient(168deg, #2E5F56 0%, #1F4740 62%, #17352F 100%);
+}
+.hero-art::after{
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,.075) 1px, transparent 1px);
+  background-size:5px 5px;
+}
+/* Their own vision statement, carried in the image slot so the field has a
+   job while there is no photograph for it. */
+.art-vision{
+  position:absolute; left:0; right:0; top:0;
+  margin:0; padding:78px 52px 0;
+  font-family:var(--serif); font-weight:400; font-style:italic;
+  font-size:1.62rem; line-height:1.34; letter-spacing:-.015em;
+  color:rgba(251,247,242,.94);
+  text-align:center; text-wrap:balance;
+}
+.partner{
+  position:absolute; left:26px; right:26px; bottom:26px;
+  background:rgba(251,247,242,.95);
+  border-radius:14px; padding:15px 20px;
+  display:flex; align-items:center; gap:14px;
+}
+.partner-k{
+  font-size:.62rem; font-weight:700; letter-spacing:.19em;
+  text-transform:uppercase; color:var(--ink-mute);
+}
+.partner-v{
+  font-family:var(--serif); font-weight:600; font-size:1.05rem; color:var(--teal);
+}
+.partner-note{
+  margin-left:auto; font-size:.76rem; color:var(--ink-mute);
+}
+
+/* ── contact strip ──────────────────────────────────────────────────── */
+.strip{
+  flex:0 0 auto;
+  background:var(--teal); color:var(--paper);
+  padding:15px 48px;
+  display:flex; align-items:center; gap:38px;
+}
+.strip-k{
+  font-size:.66rem; font-weight:700; letter-spacing:.17em;
+  text-transform:uppercase; color:rgba(251,247,242,.6);
+  margin-right:9px;
+}
+.strip-v{ font-size:.85rem; font-weight:500; }
+.strip span.grp{ display:flex; align-items:baseline; }
+
+/* ── services ───────────────────────────────────────────────────────── */
+.svc-head{ padding:16px 48px 22px; }
+.svc-head h2{
+  margin:0;
+  font-family:var(--serif); font-weight:500;
+  font-size:2.5rem; letter-spacing:-.022em; color:var(--teal);
+}
+.svc-head p{
+  margin:12px 0 0; max-width:56ch;
+  font-size:.96rem; line-height:1.62; color:var(--ink-soft);
+}
+.svc-list{ padding:0 48px; }
+.svc{
+  display:grid; grid-template-columns:34px 1.05fr 1.5fr;
+  gap:24px; align-items:baseline;
+  padding:24px 0;
+  border-top:1px solid var(--line);
+}
+.svc:last-child{ border-bottom:1px solid var(--line); }
+.svc-n{
+  font-family:var(--serif); font-weight:600; font-size:.94rem;
+  color:var(--terra); font-variant-numeric:tabular-nums;
+}
+.svc-t{
+  font-family:var(--serif); font-weight:600;
+  font-size:1.12rem; letter-spacing:-.015em; color:var(--teal);
+  line-height:1.3;
+}
+.svc-d{ font-size:.87rem; line-height:1.58; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<!-- ══ FRAME 1 · hero ═════════════════════════════════════════════════ -->
+<section class="frame" id="shot-hero">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 20.5S3.8 14.9 3.8 9.4A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.2 2.8c0 5.5-8.2 11.1-8.2 11.1Z"></path>
+        </svg>
+      </span>
+      <span class="brand-name">Hopeful Hearts</span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#" class="on">Home</a>
+      <a href="#">About us</a>
+      <a href="#">Services</a>
+      <span class="bar-cta">Contact us</span>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <div>
+      <h1>Fostering bonds, ensuring safety, <em>rebuilding families.</em></h1>
+      <p class="hero-deck">
+        Hopeful Hearts Ltd focuses on reuniting families and empowering
+        vulnerable individuals, providing a safe and nurturing setting where
+        children can develop or renew healthy relationships.
+      </p>
+      <div class="hero-cta">
+        <span class="btn-a">
+          Learn more
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13M12 5l7 7-7 7"></path>
+          </svg>
+        </span>
+        <span class="btn-b">Talk to our team</span>
+      </div>
+
+      <div class="values">
+        <span class="value"><b>Passion</b><span>We put our hearts into our work.</span></span>
+        <span class="value"><b>Integrity</b><span>Honesty, transparency and ethical behaviour.</span></span>
+        <span class="value"><b>Respect</b><span>Each person has their own story and needs.</span></span>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <p class="art-vision">Restore hope in the individuals that use our service.</p>
+      <div class="partner">
+        <span>
+          <span class="partner-k">Our partner</span><br>
+          <span class="partner-v">Tusla</span>
+        </span>
+        <span class="partner-note">Child and Family Agency</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="grp"><span class="strip-k">Call</span><span class="strip-v">+353 87 277 9096</span></span>
+    <span class="grp"><span class="strip-k">Email</span><span class="strip-v">info@hopefulheartsltd.com</span></span>
+    <span class="grp"><span class="strip-k">Find us</span><span class="strip-v">21 Lakeview, The Fair Green, Cavan, H12 DX93</span></span>
+  </div>
+</section>
+
+<!-- ══ FRAME 2 · services ═════════════════════════════════════════════ -->
+<section class="frame" id="shot-services">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 20.5S3.8 14.9 3.8 9.4A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.2 2.8c0 5.5-8.2 11.1-8.2 11.1Z"></path>
+        </svg>
+      </span>
+      <span class="brand-name">Hopeful Hearts</span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#">About us</a>
+      <a href="#" class="on">Services</a>
+      <span class="bar-cta">Contact us</span>
+    </nav>
+  </div>
+
+  <div class="svc-head">
+    <h2>Our services</h2>
+    <p>Supervised access, transport and outreach, delivered by people trained to
+       hold the room when a family is at its most fragile.</p>
+  </div>
+
+  <div class="svc-list">
+    <div class="svc">
+      <span class="svc-n">01</span>
+      <span class="svc-t">Supervised Family Access Service</span>
+      <span class="svc-d">Facilitates supervised visitation between individuals
+        accessing our service and their families, within a controlled and safe
+        environment.</span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">02</span>
+      <span class="svc-t">Supervised Access Transport for Children</span>
+      <span class="svc-d">Provides transport for individuals who have no way to
+        attend the arranged family access with their families.</span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">03</span>
+      <span class="svc-t">Community Outreach Support</span>
+      <span class="svc-d">Person-centred community support, encouraging people to
+        develop social skills as they integrate within their communities.</span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">04</span>
+      <span class="svc-t">Emergency Outreach Support</span>
+      <span class="svc-d">Urgent community support for individuals facing sudden,
+        unplanned changes in their circumstances, whatever the notice given.</span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">05</span>
+      <span class="svc-t">Emergency Support for Funders</span>
+      <span class="svc-d">Urgent assistance for children facing sudden, unplanned
+        changes, at the same standard however short the notice period.</span>
+    </div>
+  </div>
+
+  <div class="strip" style="margin-top:auto">
+    <span class="grp"><span class="strip-k">Call</span><span class="strip-v">+353 87 277 9096</span></span>
+    <span class="grp"><span class="strip-k">Email</span><span class="strip-v">info@hopefulheartsltd.com</span></span>
+    <span class="grp"><span class="strip-k">Partner</span><span class="strip-v">Tusla, Child and Family Agency</span></span>
+  </div>
+</section>
+
+</body>
+</html>

@@ -181,6 +181,94 @@ for (const w of [375, 1440]) {
   await p.close();
 }
 
+// ─────────────────────────────────────────── case bank
+head('case bank');
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+  await p.waitForTimeout(500);
+
+  // Every client shows a build, three metrics, and no empty values.
+  for (let i = 0; i < 4; i++) {
+    await p.click(`#tab-${i}`);
+    await p.waitForTimeout(500);
+    const r = await p.evaluate((n) => {
+      const panel = document.getElementById(`panel-${n}`);
+      const img = panel.querySelector('.showcase-frame img');
+      const m = [...panel.querySelectorAll('.client-metrics > div')];
+      return {
+        name: panel.querySelector('.client-name')?.textContent,
+        w: img?.naturalWidth ?? 0,
+        alt: img?.getAttribute('alt') ?? '',
+        label: panel.querySelector('.showcase-label')?.textContent ?? '',
+        metrics: m.length,
+        empty: m.filter((d) => !d.querySelector('dt')?.textContent.trim()
+                            || !d.querySelector('dd')?.textContent.trim()).length,
+        sector: panel.querySelector('.client-sector')?.textContent ?? '',
+      };
+    }, i);
+    ok(r.w > 0, `${r.name}: build screenshot decoded (${r.w}px wide)`);
+    ok(r.alt.length > 12, `${r.name}: screenshot carries real alt text`);
+    ok(r.metrics === 3 && r.empty === 0, `${r.name}: three metrics, none empty`);
+    ok(r.sector.length > 0 && r.label.length > 0, `${r.name}: sector "${r.sector}" and frame label present`);
+  }
+
+  // Thumbnail strip swaps the primary image and moves the active marker with it.
+  await p.click('#tab-3'); // A Star, the only client with four shots
+  await p.waitForTimeout(500);
+  const before = await p.evaluate(() =>
+    document.querySelector('#panel-3 .showcase-frame img').getAttribute('src'));
+  await p.evaluate(() => document.querySelectorAll('#panel-3 .client-shot')[2].click());
+  await p.waitForTimeout(500);
+  const after = await p.evaluate(() => ({
+    src: document.querySelector('#panel-3 .showcase-frame img').getAttribute('src'),
+    onIndex: [...document.querySelectorAll('#panel-3 .client-shot')]
+      .findIndex((b) => b.hasAttribute('data-on')),
+    pressed: document.querySelectorAll('#panel-3 .client-shot[aria-pressed="true"]').length,
+  }));
+  ok(before !== after.src, 'a thumbnail swaps the primary screenshot');
+  ok(after.onIndex === 2 && after.pressed === 1, `the active marker follows it (index ${after.onIndex})`);
+
+  // Lightbox: opens, traps focus, steps, and closes on Esc.
+  await p.click('#panel-3 .showcase-open');
+  await p.waitForTimeout(450);
+  const open = await p.evaluate(() => {
+    const d = document.querySelector('dialog.lightbox');
+    return { open: !!d?.open, modal: !!d?.matches(':modal'), inside: !!d?.contains(document.activeElement) };
+  });
+  ok(open.open && open.modal, 'clicking the build opens the lightbox as a modal dialog');
+  ok(open.inside, 'focus moves inside the dialog rather than staying on the page behind');
+
+  const start = await p.evaluate(() => document.querySelector('.lightbox-img').getAttribute('src'));
+  await p.keyboard.press('ArrowRight');
+  await p.waitForTimeout(400);
+  const stepped = await p.evaluate(() => ({
+    src: document.querySelector('.lightbox-img').getAttribute('src'),
+    count: document.querySelector('.lightbox-nav p')?.textContent ?? '',
+  }));
+  ok(start !== stepped.src, `arrow keys step through the set (${stepped.count})`);
+
+  // Wrapping, not walking off the end: 4 more rights from shot 4 of 4.
+  for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(180); }
+  const wrapped = await p.evaluate(() =>
+    document.querySelector('.lightbox-img').getAttribute('src'));
+  ok(wrapped === stepped.src, 'stepping past the last shot wraps round rather than escaping the set');
+
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  ok(await p.evaluate(() => !document.querySelector('dialog.lightbox')), 'Esc closes the lightbox');
+
+  // The section deliberately sends nobody off-site.
+  const out = await p.evaluate(() => [...document.querySelectorAll('#work a[href]')]
+    .map((a) => a.getAttribute('href'))
+    .filter((h) => /astarcustoms|ossettyres|gbautosandtyres|hopefulheartsltd/i.test(h)));
+  ok(out.length === 0, `no outbound client links in the section${out.length ? ' — ' + out.join(' ') : ''}`);
+
+  await p.close();
+}
+
 // ─────────────────────────────────────────── progressive enhancement
 head('progressive enhancement');
 {
@@ -263,6 +351,7 @@ for (const route of ['/', '/studio']) {
     const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = getComputedStyle(n).backgroundColor; const m = c.match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.7)) return parse(c); n = n.parentElement; } return [245, 241, 232]; };
     const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-bio p',
       '.client-detail li', '.client-name', '.client-work', '.panel-quote blockquote', '.section-head h2',
+      '.client-metrics dt', '.client-metrics dd', '.client-sector', '.showcase-label', '.client-shot span',
       '.section-head p', '.eyebrow', '.studio-item small', '.stack-group p', '.nav-mobile-links a'];
     return sels.map((s) => {
       const el = document.querySelector(s);

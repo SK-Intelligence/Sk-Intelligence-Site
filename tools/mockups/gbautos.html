@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>GB Autos &amp; Tyres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/*
+  GB Autos & Tyres — Feltham.
+
+  Everything factual here is from the live site: the tagline, the four service
+  areas, 376 Staines Rd, 020 8844 2156, the real opening hours, established
+  2009, and their own 250+ / 150+ figures. Only the presentation is new.
+
+  Deliberately light. Ossett sits next to this in the same tab strip and is
+  near-black, so if this were also dark-with-an-accent the two would read as
+  one project shown twice and the case bank would feel smaller than it is.
+  Bone ground, oxide red, heavy condensed type: a garage with its own signage
+  rather than a template.
+
+  There is no photography available for this client, so the hero does not
+  pretend to have any. A flat oxide field with a hazard rake carries the space
+  instead — an abstract that is obviously deliberate reads better than a
+  gradient standing in for a photo nobody supplied.
+*/
+
+:root{
+  --bone:#F4F1EC;
+  --bone-2:#E8E3DA;
+  --ink:#141414;
+  --ink-soft:#3C3A37;
+  --steel:#6B7075;
+  --oxide:#A83E22;
+  --oxide-deep:#8A3019;
+  --line:rgba(20,20,20,.14);
+
+  --display:'Archivo','Inter',system-ui,sans-serif;
+  --sans:'Inter',system-ui,sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--oxide); color:var(--bone); }
+
+.frame{
+  width:1280px; height:760px;
+  background:var(--bone);
+  display:flex; flex-direction:column;
+  overflow:hidden; position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* ── header ─────────────────────────────────────────────────────────── */
+.bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 44px; flex:0 0 auto;
+  border-bottom:1px solid var(--line);
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:32px; height:32px; background:var(--oxide);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--display); font-weight:900; font-size:.86rem;
+  color:var(--bone); letter-spacing:-.03em;
+}
+.brand-name{
+  font-family:var(--display); font-weight:900;
+  font-size:1.02rem; letter-spacing:-.02em; text-transform:uppercase;
+}
+.brand-name span{ color:var(--oxide); }
+.bar-nav{ display:flex; align-items:center; gap:28px; }
+.bar-nav a{
+  font-size:.82rem; font-weight:600; color:var(--ink-soft);
+  text-decoration:none; letter-spacing:.01em;
+}
+.bar-nav a.on{ color:var(--ink); }
+.bar-call{
+  font-family:var(--display); font-weight:800; font-size:.86rem;
+  background:var(--ink); color:var(--bone);
+  padding:10px 18px; letter-spacing:.01em;
+}
+
+/* ── hero ───────────────────────────────────────────────────────────── */
+.hero{
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.08fr .92fr;
+}
+.hero-copy{
+  padding:52px 44px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.est{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--display); font-weight:700;
+  font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--oxide);
+  margin-bottom:20px;
+}
+.est::before{ content:''; width:26px; height:2px; background:var(--oxide); }
+.hero h1{
+  margin:0;
+  font-family:var(--display); font-weight:900;
+  font-size:3.5rem; line-height:.94; letter-spacing:-.035em;
+  text-transform:uppercase;
+}
+.hero h1 em{ font-style:normal; color:var(--oxide); }
+.hero-sub{
+  margin:22px 0 0; max-width:40ch;
+  font-size:1rem; line-height:1.6; color:var(--ink-soft);
+}
+.hero-cta{ display:flex; gap:12px; margin-top:30px; }
+.btn{
+  font-family:var(--display); font-weight:800; font-size:.88rem;
+  padding:14px 26px; letter-spacing:.01em;
+  display:inline-flex; align-items:center; gap:9px;
+}
+.btn-a{ background:var(--oxide); color:var(--bone); }
+.btn-b{ background:transparent; color:var(--ink); border:2px solid var(--ink); }
+.btn svg{ width:15px; height:15px; }
+
+/* The oxide field. A rake of hazard stripes gives it a trade texture without
+   pretending to be a photograph of a workshop. */
+.hero-field{
+  position:relative; overflow:hidden;
+  background:var(--oxide);
+}
+.hero-field::before{
+  content:''; position:absolute; inset:-20%;
+  background:repeating-linear-gradient(
+    -52deg,
+    rgba(0,0,0,.16) 0 26px,
+    rgba(0,0,0,0) 26px 62px);
+}
+.hero-field::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(200deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 55%);
+}
+.field-stat{
+  position:absolute; left:0; right:0; bottom:0;
+  padding:26px 34px;
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:20px;
+  background:rgba(20,20,20,.86);
+  color:var(--bone);
+}
+.field-stat b{
+  display:block;
+  font-family:var(--display); font-weight:900;
+  font-size:2rem; letter-spacing:-.03em; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.field-stat span{
+  display:block; margin-top:7px;
+  font-size:.74rem; font-weight:600; letter-spacing:.13em;
+  text-transform:uppercase; color:rgba(244,241,236,.66);
+}
+
+/* ── hours strip ────────────────────────────────────────────────────── */
+.strip{
+  flex:0 0 auto;
+  background:var(--ink); color:var(--bone);
+  padding:16px 44px;
+  display:flex; align-items:center; gap:40px;
+}
+.strip-item{ display:flex; align-items:baseline; gap:10px; }
+.strip-k{
+  font-size:.68rem; font-weight:700; letter-spacing:.16em;
+  text-transform:uppercase; color:rgba(244,241,236,.55);
+}
+.strip-v{ font-size:.86rem; font-weight:500; font-variant-numeric:tabular-nums; }
+.strip-open{
+  margin-left:auto;
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--display); font-weight:800;
+  font-size:.74rem; letter-spacing:.14em; text-transform:uppercase;
+}
+.dot{ width:8px; height:8px; border-radius:50%; background:#5CD07E; }
+
+/* ── services ───────────────────────────────────────────────────────── */
+.svc-head{ padding:40px 44px 22px; }
+.svc-head h2{
+  margin:0;
+  font-family:var(--display); font-weight:900;
+  font-size:2.6rem; line-height:1; letter-spacing:-.035em;
+  text-transform:uppercase;
+}
+.svc-head p{
+  margin:14px 0 0; max-width:52ch;
+  font-size:.96rem; line-height:1.6; color:var(--ink-soft);
+}
+.svc-list{ padding:0 44px; }
+/* Ruled rows rather than a grid of identical cards. The rule does the
+   separating that a box would, without four containers competing for edges. */
+.svc{
+  display:grid; grid-template-columns:64px 1fr 1.25fr auto;
+  gap:26px; align-items:center;
+  padding:29px 0;
+  border-top:1px solid var(--line);
+}
+.svc:last-child{ border-bottom:1px solid var(--line); }
+.svc-n{
+  font-family:var(--display); font-weight:900;
+  font-size:1.5rem; letter-spacing:-.03em; color:var(--oxide);
+  font-variant-numeric:tabular-nums;
+}
+.svc-t{
+  font-family:var(--display); font-weight:800;
+  font-size:1.18rem; letter-spacing:-.02em; text-transform:uppercase;
+}
+.svc-d{ font-size:.9rem; line-height:1.55; color:var(--ink-soft); }
+.svc-go{
+  width:38px; height:38px; border:2px solid var(--ink);
+  display:flex; align-items:center; justify-content:center;
+}
+.svc-go svg{ width:15px; height:15px; }
+</style>
+</head>
+<body>
+
+<!-- ══ FRAME 1 · hero ═════════════════════════════════════════════════ -->
+<section class="frame" id="shot-hero">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark">GB</span>
+      <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#" class="on">Home</a>
+      <a href="#">Services</a>
+      <a href="#">Contact</a>
+      <a href="#">Blog</a>
+      <span class="bar-call">020 8844 2156</span>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <div class="hero-copy">
+      <span class="est">Feltham · Established 2009</span>
+      <h1>Tyres and<br>mechanical work,<br><em>under one roof.</em></h1>
+      <p class="hero-sub">
+        Servicing, tyres, brakes and bodywork for every make. Booked in the
+        morning, back on the road the same day where we can.
+      </p>
+      <div class="hero-cta">
+        <span class="btn btn-a">
+          Book your vehicle in
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13M12 5l7 7-7 7"></path>
+          </svg>
+        </span>
+        <span class="btn btn-b">See our services</span>
+      </div>
+    </div>
+
+    <div class="hero-field">
+      <div class="field-stat">
+        <span><b>250+</b><span>Customers served</span></span>
+        <span><b>150+</b><span>Services completed</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="strip-item">
+      <span class="strip-k">Where</span>
+      <span class="strip-v">376 Staines Rd, Feltham TW14 8BT</span>
+    </span>
+    <span class="strip-item">
+      <span class="strip-k">Mon &ndash; Sat</span>
+      <span class="strip-v">9:00 &ndash; 18:30</span>
+    </span>
+    <span class="strip-item">
+      <span class="strip-k">Sun</span>
+      <span class="strip-v">10:00 &ndash; 17:00</span>
+    </span>
+    <span class="strip-open"><span class="dot"></span>Open now</span>
+  </div>
+</section>
+
+<!-- ══ FRAME 2 · services ═════════════════════════════════════════════ -->
+<section class="frame" id="shot-services">
+  <div class="bar">
+    <div class="brand">
+      <span class="brand-mark">GB</span>
+      <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#" class="on">Services</a>
+      <a href="#">Contact</a>
+      <a href="#">Blog</a>
+      <span class="bar-call">020 8844 2156</span>
+    </nav>
+  </div>
+
+  <div class="svc-head">
+    <h2>What we do</h2>
+    <p>Four things, done properly, on every make and model. Booked in first
+       thing, diagnosed the same morning, back with you the same day where
+       the job allows.</p>
+  </div>
+
+  <div class="svc-list">
+    <div class="svc">
+      <span class="svc-n">01</span>
+      <span class="svc-t">Servicing</span>
+      <span class="svc-d">Interim and full servicing, oil and filters, diagnostics
+        and everything the schedule asks for.</span>
+      <span class="svc-go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">02</span>
+      <span class="svc-t">Tyres</span>
+      <span class="svc-d">Supply and fitting, balancing and alignment, from budget
+        through to premium brands.</span>
+      <span class="svc-go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">03</span>
+      <span class="svc-t">Brakes</span>
+      <span class="svc-d">Pads, discs and fluid, checked and replaced with parts
+        that match the vehicle.</span>
+      <span class="svc-go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+    <div class="svc">
+      <span class="svc-n">04</span>
+      <span class="svc-t">Body repairs</span>
+      <span class="svc-d">Panel and body part repairs, plus the general maintenance
+        that keeps a car through its next MOT.</span>
+      <span class="svc-go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="strip" style="margin-top:auto">
+    <span class="strip-item">
+      <span class="strip-k">Where</span>
+      <span class="strip-v">376 Staines Rd, Feltham TW14 8BT</span>
+    </span>
+    <span class="strip-item">
+      <span class="strip-k">Call</span>
+      <span class="strip-v">020 8844 2156</span>
+    </span>
+    <span class="strip-open"><span class="dot"></span>Open now</span>
+  </div>
+</section>
+
+</body>
+</html>
