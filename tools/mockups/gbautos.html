@@ -60,11 +60,14 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   border-bottom:1px solid var(--line);
 }
 .brand{ display:flex; align-items:center; gap:12px; }
+/* Their real logo, the same file the case bank shows in the panel chip.
+   The PNG has an opaque white background rather than transparency, which reads
+   as a white sticker on the bone ground; `multiply` drops white to nothing and
+   leaves the black mark. */
 .brand-mark{
-  width:32px; height:32px; background:var(--oxide);
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--display); font-weight:900; font-size:.86rem;
-  color:var(--bone); letter-spacing:-.03em;
+  width:40px; height:40px;
+  object-fit:contain;
+  mix-blend-mode:multiply;
 }
 .brand-name{
   font-family:var(--display); font-weight:900;
@@ -279,7 +282,7 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 <section class="frame" id="shot-hero">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark">GB</span>
+      <img class="brand-mark" src="../../public/clients/c-gbautos.png" alt="">
       <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
     </div>
     <nav class="bar-nav">
@@ -384,7 +387,7 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 <section class="frame" id="shot-services">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark">GB</span>
+      <img class="brand-mark" src="../../public/clients/c-gbautos.png" alt="">
       <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
     </div>
     <nav class="bar-nav">

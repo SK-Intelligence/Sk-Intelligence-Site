@@ -28,15 +28,21 @@
 */
 
 :root{
-  --paper:#FBF7F2;
-  --paper-2:#F3EDE4;
-  --teal:#1F4740;
-  --teal-soft:#2E5F56;
-  --terra:#C97B5A;
-  --ink:#22201D;
-  --ink-soft:#4E4A44;
-  --ink-mute:#6E6960;
-  --line:rgba(34,32,29,.13);
+  /* Sampled straight out of public/clients/c-hopeful.png: their logo is deep
+     indigo with hot pink. The mockup used to be teal and terracotta, which is
+     a nicer palette and entirely the wrong one — dropping a client's real mark
+     onto a scheme it clashes with makes the whole thing read as ours rather
+     than theirs. Indigo and pink is also further from the two garages than
+     teal was, so the three read as three companies. */
+  --paper:#FAF7FB;
+  --paper-2:#F1ECF5;
+  --teal:#1F1053;
+  --teal-soft:#33206E;
+  --terra:#FE5DB2;
+  --ink:#1E1A2B;
+  --ink-soft:#4A4460;
+  --ink-mute:#6B6480;
+  --line:rgba(31,16,83,.14);
 
   --serif:'Newsreader',Georgia,serif;
   --sans:'Inter',system-ui,sans-serif;
@@ -61,12 +67,13 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   padding:22px 48px; flex:0 0 auto;
 }
 .brand{ display:flex; align-items:center; gap:12px; }
+/* Their real logo, the same file the case bank shows in the panel chip. It is
+   a full-bleed coloured square, so it is cropped to a circle rather than
+   recoloured — it carries its own ground. */
 .brand-mark{
-  width:34px; height:34px; border-radius:50%;
-  background:var(--teal);
-  display:flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:50%;
+  object-fit:cover; display:block;
 }
-.brand-mark svg{ width:17px; height:17px; color:var(--paper); }
 .brand-name{
   font-family:var(--serif); font-weight:600;
   font-size:1.18rem; letter-spacing:-.015em; color:var(--teal);
@@ -136,8 +143,8 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   border-radius:200px 200px 22px 22px;
   overflow:hidden;
   background:
-    radial-gradient(70% 55% at 50% 26%, rgba(201,123,90,.42) 0%, rgba(201,123,90,0) 68%),
-    linear-gradient(168deg, #2E5F56 0%, #1F4740 62%, #17352F 100%);
+    radial-gradient(70% 55% at 50% 26%, rgba(254,93,178,.34) 0%, rgba(254,93,178,0) 68%),
+    linear-gradient(168deg, #33206E 0%, #1F1053 62%, #150A38 100%);
 }
 .hero-art::after{
   content:''; position:absolute; inset:0;
@@ -151,12 +158,12 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   margin:0; padding:78px 52px 0;
   font-family:var(--serif); font-weight:400; font-style:italic;
   font-size:1.62rem; line-height:1.34; letter-spacing:-.015em;
-  color:rgba(251,247,242,.94);
+  color:rgba(250,247,251,.95);
   text-align:center; text-wrap:balance;
 }
 .partner{
   position:absolute; left:26px; right:26px; bottom:26px;
-  background:rgba(251,247,242,.95);
+  background:rgba(250,247,251,.96);
   border-radius:14px; padding:15px 20px;
   display:flex; align-items:center; gap:14px;
 }
@@ -180,7 +187,7 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 }
 .strip-k{
   font-size:.66rem; font-weight:700; letter-spacing:.17em;
-  text-transform:uppercase; color:rgba(251,247,242,.6);
+  text-transform:uppercase; color:rgba(250,247,251,.62);
   margin-right:9px;
 }
 .strip-v{ font-size:.85rem; font-weight:500; }
@@ -228,11 +235,7 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 <section class="frame" id="shot-hero">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 20.5S3.8 14.9 3.8 9.4A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.2 2.8c0 5.5-8.2 11.1-8.2 11.1Z"></path>
-        </svg>
-      </span>
+      <img class="brand-mark" src="../../public/clients/c-hopeful.png" alt="">
       <span class="brand-name">Hopeful Hearts</span>
     </div>
     <nav class="bar-nav">
@@ -292,11 +295,7 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 <section class="frame" id="shot-services">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 20.5S3.8 14.9 3.8 9.4A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8.2 2.8c0 5.5-8.2 11.1-8.2 11.1Z"></path>
-        </svg>
-      </span>
+      <img class="brand-mark" src="../../public/clients/c-hopeful.png" alt="">
       <span class="brand-name">Hopeful Hearts</span>
     </div>
     <nav class="bar-nav">

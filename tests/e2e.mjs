@@ -339,6 +339,50 @@ head('case bank');
   await p.close();
 }
 
+// ─────────────────────────────────────────── case bank on a phone
+head('case bank on a phone');
+for (const w of PHONES) {
+  const p = await phone(w);
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+  await p.waitForTimeout(500);
+
+  const r = await p.evaluate(() => {
+    const sc = document.querySelector('#panel-0 .showcase-scroll');
+    const img = document.querySelector('#panel-0 .showcase-frame img');
+    const hint = document.querySelector('#panel-0 .showcase-hint');
+    return {
+      imgW: Math.round(img.getBoundingClientRect().width),
+      scrollable: sc.scrollWidth > sc.clientWidth + 5,
+      hint: getComputedStyle(hint).display !== 'none',
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+  // Shrunk to fit, a 1280px page renders around 0.27 scale and its body text
+  // lands near 4px. The whole point of the section is that the builds are
+  // legible, so the shot keeps its size and the frame scrolls instead.
+  ok(r.imgW > 900, `${w}px the build renders big enough to read (${r.imgW}px, ${(r.imgW / 1280).toFixed(2)} scale)`);
+  ok(r.scrollable, `${w}px the frame scrolls sideways rather than clipping`);
+  ok(r.hint, `${w}px the swipe hint is shown`);
+  // A fixed-width child inside a grid item with the default min-width:auto
+  // stretched the whole section to 1182px, and only body{overflow-x:hidden}
+  // was hiding it.
+  ok(r.overflow === 0, `${w}px the oversized shot does not push the page wide (${r.overflow}px)`);
+
+  // A swipe across the shot must not be read as a tap that opens the viewer.
+  const box = await p.locator('#panel-0 .showcase-scroll').boundingBox();
+  await p.mouse.move(box.x + box.width - 20, box.y + box.height / 2);
+  await p.mouse.down();
+  await p.mouse.move(box.x + 20, box.y + box.height / 2, { steps: 12 });
+  await p.mouse.up();
+  await p.waitForTimeout(450);
+  ok(await p.evaluate(() => !document.querySelector('dialog.lightbox')),
+    `${w}px swiping the build scrolls it instead of opening the viewer`);
+
+  await p.close();
+}
+
 // ─────────────────────────────────────────── progressive enhancement
 head('progressive enhancement');
 {

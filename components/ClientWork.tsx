@@ -67,8 +67,30 @@ export function ClientWork() {
     tabRefs.current[active]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [active]);
 
+  /**
+   * The showcase scrolls sideways on a phone AND opens the viewer on tap, so a
+   * swipe would otherwise land as a click the moment the finger lifts. Record
+   * where the gesture started and treat anything past a few pixels as a scroll,
+   * not a tap. Same shape as the founders deck.
+   */
+  const swipeStart = useRef(0);
+  const swipedRef = useRef(false);
+  const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const onShotPointerDown = useCallback((e: React.PointerEvent) => {
+    swipeStart.current = e.clientX;
+    swipedRef.current = false;
+  }, []);
+
+  const onShotPointerUp = useCallback((e: React.PointerEvent) => {
+    swipedRef.current = Math.abs(e.clientX - swipeStart.current) > 8;
+  }, []);
+
   const pickShot = useCallback((client: number, shot: number) => {
     setShotIndex((prev) => prev.map((v, i) => (i === client ? shot : v)));
+    // Start a new screenshot at its left edge rather than wherever the last
+    // one happened to be scrolled to.
+    scrollRefs.current[client]?.scrollTo({ left: 0 });
   }, []);
 
   const onKeyDown = (e: React.KeyboardEvent, i: number) => {
@@ -92,9 +114,8 @@ export function ClientWork() {
           <p className="eyebrow">Client work</p>
           <h2>Four builds, still running.</h2>
           <p>
-            A number-plate lookup wired into DVLA records, a storefront that takes payments,
-            a first website, and the email infrastructure behind a growing team. The same
-            engineering goes into the AI systems we build now.
+            A tyre lookup that reads DVLA records. A shop that takes payments. A garage&rsquo;s
+            first website. Company email for a growing team.
           </p>
           <div className="client-logo-rail" aria-hidden="true">
             {clients.map((c) => (
@@ -152,27 +173,45 @@ export function ClientWork() {
                         <span className="showcase-dots"><i /><i /><i /></span>
                         <span className="showcase-label">{c.name} &middot; {shot.label}</span>
                       </div>
-                      {/* Without JS this is a plain image with no affordance
-                          claiming otherwise; the button only exists once the
-                          viewer it opens can actually run. */}
-                      {hydrated ? (
-                        <button
-                          type="button"
-                          className="showcase-open"
-                          onClick={() => setZoomed(true)}
-                          aria-label={`View ${c.name} screenshots full size`}
-                        >
+                      {/* On a phone this scrolls sideways. A 1280px-wide page
+                          shown at 348px is a 0.27 scale, which puts the body
+                          text at about 4px — legible to nobody. Inside the
+                          scroller the shot renders near its real size and you
+                          swipe across it instead. */}
+                      <div
+                        className="showcase-scroll"
+                        ref={(el) => { scrollRefs.current[i] = el; }}
+                        onPointerDown={onShotPointerDown}
+                        onPointerUp={onShotPointerUp}
+                      >
+                        {/* Without JS this is a plain image with no affordance
+                            claiming otherwise; the button only exists once the
+                            viewer it opens can actually run. */}
+                        {hydrated ? (
+                          <button
+                            type="button"
+                            className="showcase-open"
+                            onClick={(e) => {
+                              if (swipedRef.current) { e.preventDefault(); return; }
+                              setZoomed(true);
+                            }}
+                            aria-label={`View ${c.name} screenshots full size`}
+                          >
+                            <Image
+                              src={shot.src} alt={shot.alt} width={1280} height={760}
+                              sizes="(max-width: 900px) 1180px, 1100px"
+                            />
+                          </button>
+                        ) : (
                           <Image
                             src={shot.src} alt={shot.alt} width={1280} height={760}
-                            sizes="(max-width: 900px) 92vw, 1100px"
+                            sizes="(max-width: 900px) 1180px, 1100px"
                           />
-                        </button>
-                      ) : (
-                        <Image
-                          src={shot.src} alt={shot.alt} width={1280} height={760}
-                          sizes="(max-width: 900px) 92vw, 1100px"
-                        />
-                      )}
+                        )}
+                      </div>
+                      <p className="showcase-hint" aria-hidden="true">
+                        Swipe to read, tap to open
+                      </p>
                     </div>
 
                     {c.shots.length > 1 && (

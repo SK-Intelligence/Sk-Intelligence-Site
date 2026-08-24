@@ -84,14 +84,16 @@ body{
   flex:0 0 auto;
 }
 .brand{ display:flex; align-items:center; gap:11px; }
+/* Their real logo, the same file the case bank shows in the panel chip.
+   The PNG has an opaque white background, not transparency, so a plain filter
+   just turns the whole square into a white block. Inverting makes the ground
+   black and the mark white, and `screen` then drops black to nothing while
+   keeping the white — so only the tyre survives onto the graphite. */
 .brand-mark{
-  width:26px; height:26px; border-radius:50%;
-  border:2px solid var(--text);
-  position:relative;
-}
-.brand-mark::after{
-  content:''; position:absolute; inset:5px; border-radius:50%;
-  border:1px solid var(--faint);
+  width:32px; height:32px;
+  object-fit:contain;
+  filter:invert(1);
+  mix-blend-mode:screen;
 }
 .brand-name{
   font-family:var(--display); font-weight:700; font-size:.86rem;
@@ -371,7 +373,7 @@ body{
 <section class="frame" id="shot-empty">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark"></span>
+      <img class="brand-mark" src="../../public/clients/c-ossett.png" alt="">
       <span class="brand-name">Ossett Tyres</span>
     </div>
     <nav class="bar-nav">
@@ -441,7 +443,7 @@ body{
 <section class="frame" id="shot-resolved">
   <div class="bar">
     <div class="brand">
-      <span class="brand-mark"></span>
+      <img class="brand-mark" src="../../public/clients/c-ossett.png" alt="">
       <span class="brand-name">Ossett Tyres</span>
     </div>
     <nav class="bar-nav">
