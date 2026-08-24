@@ -147,7 +147,12 @@ export const deliveryTeam = {
  */
 export type Metric = { value: string; label: string };
 
-export const PLACEHOLDER_METRICS: Record<string, readonly Metric[]> = {
+/* Keyed off the clients array rather than `string`, so renaming or adding a
+   client is a type error here instead of `undefined.map` at render time — which
+   in a client component takes the whole page down, not just this section. The
+   forward reference to `clients` is fine despite it being declared below. */
+export const PLACEHOLDER_METRICS:
+  Record<(typeof clients)[number]['id'], readonly Metric[]> = {
   astar: [
     { value: '40+', label: 'Products live' },
     { value: '2.4×', label: 'Repeat order rate' },

@@ -573,7 +573,12 @@
     width:min(94vw,1180px); max-width:none;
     max-height:92vh; padding:0; border:0;
     background:transparent; color:var(--ink);
-    overflow:visible;
+    /* NOT overflow:visible. The inner block is ~823px tall at desktop width,
+       so on any viewport shorter than ~893px the excess neither clipped nor
+       scrolled — the UA centred it and the prev/next strip fell off the bottom
+       of the screen with no way to reach it. That is every 1440x800 laptop and
+       every 14" MacBook. */
+    overflow:hidden;
   }
   .lightbox::backdrop{ background:rgba(var(--shadow-rgb),.72); }
   .lightbox-inner{
@@ -581,10 +586,16 @@
     border:1px solid var(--ink-line);
     border-radius:18px; overflow:hidden;
     box-shadow:0 40px 90px -30px rgba(var(--shadow-rgb),.6);
+    /* The bar and the nav are fixed height and must always be reachable; the
+       image is the only part allowed to give way, so it takes the remaining
+       space and scrolls inside it if the viewport is too short. */
+    max-height:92vh;
+    display:flex; flex-direction:column;
   }
   .lightbox-bar{
     display:flex; align-items:center; justify-content:space-between; gap:16px;
     padding:12px 16px; border-bottom:1px solid var(--ink-line);
+    flex:0 0 auto;
   }
   .lightbox-title{
     font-family:var(--font-display); font-size:.86rem; font-weight:700; color:var(--ink);
@@ -604,16 +615,28 @@
       background:var(--surface-alt); border-color:var(--accent);
     }
   }
-  .lightbox-figure{ margin:0; background:var(--surface-alt); }
+  /* min-height:0 is the load-bearing part: without it a flex item refuses to
+     shrink below its content and the overflow goes back off the bottom. */
+  .lightbox-figure{
+    margin:0; background:var(--surface-alt);
+    flex:1 1 auto; min-height:0; overflow:auto;
+  }
   .lightbox-img{ width:100%; height:auto; display:block; }
   .lightbox-nav{
     display:flex; align-items:center; justify-content:center; gap:18px;
     padding:12px; border-top:1px solid var(--ink-line);
+    flex:0 0 auto;
   }
   .lightbox-nav p{
     font-size:.78rem; font-weight:600; color:var(--ink-mute);
     font-variant-numeric:tabular-nums; min-width:5.5ch; text-align:center;
   }
+  /* The blockquote had its margin reset but the <figure> around it never did,
+     so it was still carrying the UA default `1em 40px`. That ate 80px of the
+     quote column at desktop and 24% of the usable width at 375px, and stacked
+     on top of the grid row gap on mobile. Centring it turns what was leftover
+     stretch space under a top-stuck quote into a deliberate pull-quote. */
+  .panel-quote{ margin:0; align-self:center; }
   .panel-quote blockquote{
     margin:0; font-family:var(--font-serif); font-style:italic; font-weight:500;
     font-size:clamp(1.3rem,1.1rem + 1vw,1.85rem); line-height:1.44; color:var(--ink);

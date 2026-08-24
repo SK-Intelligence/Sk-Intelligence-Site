@@ -40,12 +40,33 @@ export function Lightbox({
     const el = ref.current;
     if (!el) return;
     el.showModal();
+    // showModal() makes the page inert but does not lock its scroll, so a
+    // wheel over the backdrop still moved the page underneath and the reader
+    // came back hundreds of pixels from where they left.
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
     // Esc dismisses the dialog natively, so React has to hear about it or the
     // parent would still think the viewer is open.
     const bye = () => closeRef.current();
     el.addEventListener('close', bye);
-    return () => { el.removeEventListener('close', bye); el.close(); };
+    return () => {
+      el.removeEventListener('close', bye);
+      el.close();
+      document.body.style.overflow = overflow;
+    };
   }, []);
+
+  /**
+   * Every dismissal goes through the element, never straight to onClose.
+   *
+   * Calling onClose() directly unmounts the dialog around the cleanup's
+   * close(), so the focused button leaves the document before the UA can run
+   * its focus restoration, and focus lands on <body>. Closing the element
+   * first lets the platform put focus back on whatever opened it, then the
+   * `close` listener drives the unmount. Esc already took this path, which is
+   * why Esc was the only one that restored focus correctly.
+   */
+  const dismiss = useCallback(() => ref.current?.close(), []);
 
   const step = useCallback((dir: -1 | 1) => {
     onIndex((index + dir + shots.length) % shots.length);
@@ -63,7 +84,7 @@ export function Lightbox({
       }}
       // A click that lands on the dialog itself came from the backdrop: every
       // click inside the content hits a child first.
-      onClick={(e) => { if (e.target === ref.current) onClose(); }}
+      onClick={(e) => { if (e.target === ref.current) dismiss(); }}
     >
       <div className="lightbox-inner">
         <div className="lightbox-bar">
@@ -71,7 +92,7 @@ export function Lightbox({
             {clientName}
             <span>{shot.label}</span>
           </p>
-          <button type="button" className="lightbox-x" onClick={onClose} aria-label="Close">
+          <button type="button" className="lightbox-x" onClick={dismiss} aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
                  strokeLinecap="round" aria-hidden="true">
               <path d="M6 6l12 12M18 6L6 18" />

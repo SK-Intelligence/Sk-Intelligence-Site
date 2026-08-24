@@ -121,41 +121,71 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 .btn-b{ background:transparent; color:var(--ink); border:2px solid var(--ink); }
 .btn svg{ width:15px; height:15px; }
 
-/* The oxide field. A rake of hazard stripes gives it a trade texture without
-   pretending to be a photograph of a workshop. */
+/* The oxide field.
+   This was a full-height panel of nothing but repeating diagonal stripes,
+   which is 45% of the frame doing no work — it read exactly as what it was, a
+   placeholder where a photo should be. It now carries the booking panel, so
+   the colour is a ground for content rather than the content itself. */
 .hero-field{
   position:relative; overflow:hidden;
   background:var(--oxide);
+  display:flex; flex-direction:column; justify-content:center;
+  padding:34px;
 }
 .hero-field::before{
   content:''; position:absolute; inset:-20%;
   background:repeating-linear-gradient(
     -52deg,
-    rgba(0,0,0,.16) 0 26px,
+    rgba(0,0,0,.10) 0 26px,
     rgba(0,0,0,0) 26px 62px);
 }
-.hero-field::after{
-  content:''; position:absolute; inset:0;
-  background:linear-gradient(200deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 55%);
+.book{
+  position:relative; z-index:1;
+  background:rgba(20,20,20,.92); color:var(--bone);
+  padding:26px 28px;
 }
+.book h3{
+  margin:0 0 4px;
+  font-family:var(--display); font-weight:900;
+  font-size:1.3rem; letter-spacing:-.025em; text-transform:uppercase;
+}
+.book > p{
+  margin:0 0 18px;
+  font-size:.84rem; color:rgba(244,241,236,.62);
+}
+.book-list{ list-style:none; margin:0; padding:0; }
+.book-list li{
+  display:flex; align-items:center; gap:11px;
+  padding:9px 0;
+  border-top:1px solid rgba(244,241,236,.14);
+  font-size:.88rem; font-weight:500;
+}
+.book-list li svg{ width:14px; height:14px; color:var(--oxide); flex:0 0 auto; }
+.book-go{
+  margin-top:18px;
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--oxide); color:var(--bone);
+  padding:13px 18px;
+  font-family:var(--display); font-weight:800; font-size:.86rem;
+}
+.book-go svg{ width:15px; height:15px; }
 .field-stat{
-  position:absolute; left:0; right:0; bottom:0;
-  padding:26px 34px;
+  position:relative; z-index:1;
+  margin-top:20px;
   display:grid; grid-template-columns:1fr 1fr;
   gap:20px;
-  background:rgba(20,20,20,.86);
   color:var(--bone);
 }
 .field-stat b{
   display:block;
   font-family:var(--display); font-weight:900;
-  font-size:2rem; letter-spacing:-.03em; line-height:1;
+  font-size:1.9rem; letter-spacing:-.03em; line-height:1;
   font-variant-numeric:tabular-nums;
 }
 .field-stat span{
-  display:block; margin-top:7px;
-  font-size:.74rem; font-weight:600; letter-spacing:.13em;
-  text-transform:uppercase; color:rgba(244,241,236,.66);
+  display:block; margin-top:6px;
+  font-size:.72rem; font-weight:700; letter-spacing:.13em;
+  text-transform:uppercase; color:rgba(244,241,236,.78);
 }
 
 /* ── hours strip ────────────────────────────────────────────────────── */
@@ -180,7 +210,13 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
 .dot{ width:8px; height:8px; border-radius:50%; background:#5CD07E; }
 
 /* ── services ───────────────────────────────────────────────────────── */
-.svc-head{ padding:40px 44px 22px; }
+/* Two-column masthead. Headline left, intro right, so the top of the frame is
+   not a third of type against two thirds of empty bone. */
+.svc-head{
+  padding:40px 44px 24px;
+  display:grid; grid-template-columns:auto 1fr;
+  gap:56px; align-items:end;
+}
 .svc-head h2{
   margin:0;
   font-family:var(--display); font-weight:900;
@@ -188,34 +224,53 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   text-transform:uppercase;
 }
 .svc-head p{
-  margin:14px 0 0; max-width:52ch;
+  margin:0 0 6px; max-width:46ch;
   font-size:.96rem; line-height:1.6; color:var(--ink-soft);
 }
-.svc-list{ padding:0 44px; }
-/* Ruled rows rather than a grid of identical cards. The rule does the
-   separating that a box would, without four containers competing for edges. */
-.svc{
-  display:grid; grid-template-columns:64px 1fr 1.25fr auto;
-  gap:26px; align-items:center;
-  padding:29px 0;
-  border-top:1px solid var(--line);
+.svc-list{
+  padding:0 44px;
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:0;
 }
-.svc:last-child{ border-bottom:1px solid var(--line); }
+/* A 2x2 of keyline tiles with an oversized ghost numeral, not a numbered list.
+   The numbered-row layout this replaced was structurally identical to the
+   Hopeful Hearts services page — same title, same two-line intro, same accent
+   numeral, same middle-name/right-description split. Two clients in the same
+   tab strip wearing one layout in different colours reads as one designer in
+   two hats, which is exactly what the case bank must not look like. Heavy
+   condensed type wants tiles anyway. */
+.svc{
+  position:relative; overflow:hidden;
+  padding:30px 30px 28px;
+  border-top:2px solid var(--ink);
+  border-right:1px solid var(--line);
+}
+.svc:nth-child(even){ border-right:0; }
+.svc:nth-child(n+3){ margin-top:-2px; }
 .svc-n{
+  position:absolute; right:14px; bottom:-22px;
   font-family:var(--display); font-weight:900;
-  font-size:1.5rem; letter-spacing:-.03em; color:var(--oxide);
+  font-size:5.4rem; line-height:1; letter-spacing:-.05em;
+  color:var(--oxide); opacity:.13;
   font-variant-numeric:tabular-nums;
+  pointer-events:none;
 }
 .svc-t{
-  font-family:var(--display); font-weight:800;
-  font-size:1.18rem; letter-spacing:-.02em; text-transform:uppercase;
+  display:block;
+  font-family:var(--display); font-weight:900;
+  font-size:1.45rem; letter-spacing:-.03em; text-transform:uppercase;
 }
-.svc-d{ font-size:.9rem; line-height:1.55; color:var(--ink-soft); }
+.svc-d{
+  display:block; margin-top:10px; max-width:34ch;
+  font-size:.9rem; line-height:1.58; color:var(--ink-soft);
+}
 .svc-go{
-  width:38px; height:38px; border:2px solid var(--ink);
-  display:flex; align-items:center; justify-content:center;
+  display:inline-flex; align-items:center; gap:8px;
+  margin-top:16px;
+  font-family:var(--display); font-weight:800; font-size:.78rem;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--oxide);
 }
-.svc-go svg{ width:15px; height:15px; }
+.svc-go svg{ width:14px; height:14px; }
 </style>
 </head>
 <body>
@@ -257,9 +312,53 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     </div>
 
     <div class="hero-field">
+      <div class="book">
+        <h3>Book your vehicle in</h3>
+        <p>Tell us the reg and what it is doing. We will come back with a time.</p>
+        <ul class="book-list">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12.5l5 5L20 6.5"></path>
+            </svg>
+            Servicing, interim or full
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12.5l5 5L20 6.5"></path>
+            </svg>
+            Tyres supplied, fitted and balanced
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12.5l5 5L20 6.5"></path>
+            </svg>
+            Brakes checked and replaced
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12.5l5 5L20 6.5"></path>
+            </svg>
+            Body and panel repairs
+          </li>
+        </ul>
+        <div class="book-go">
+          Call 020 8844 2156
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13M12 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </div>
+      <!-- "250+ customers" against "established 2009" invites arithmetic that
+           makes the business look tiny. These two say the same thing and do
+           not: both are derivable from facts already on the page. -->
       <div class="field-stat">
-        <span><b>250+</b><span>Customers served</span></span>
-        <span><b>150+</b><span>Services completed</span></span>
+        <span><b>17 yrs</b><span>Trading in Feltham</span></span>
+        <span><b>7 days</b><span>Open every week</span></span>
       </div>
     </div>
   </div>
@@ -308,9 +407,9 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <div class="svc">
       <span class="svc-n">01</span>
       <span class="svc-t">Servicing</span>
-      <span class="svc-d">Interim and full servicing, oil and filters, diagnostics
-        and everything the schedule asks for.</span>
+      <span class="svc-d">Interim and full servicing, oil and filters, diagnostics and everything the schedule asks for.</span>
       <span class="svc-go">
+        What is included
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 12h13M12 5l7 7-7 7"></path>
@@ -320,9 +419,9 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <div class="svc">
       <span class="svc-n">02</span>
       <span class="svc-t">Tyres</span>
-      <span class="svc-d">Supply and fitting, balancing and alignment, from budget
-        through to premium brands.</span>
+      <span class="svc-d">Supply and fitting, balancing and alignment, from budget through to premium brands.</span>
       <span class="svc-go">
+        What is included
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 12h13M12 5l7 7-7 7"></path>
@@ -332,9 +431,9 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <div class="svc">
       <span class="svc-n">03</span>
       <span class="svc-t">Brakes</span>
-      <span class="svc-d">Pads, discs and fluid, checked and replaced with parts
-        that match the vehicle.</span>
+      <span class="svc-d">Pads, discs and fluid, checked and replaced with parts that match the vehicle.</span>
       <span class="svc-go">
+        What is included
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 12h13M12 5l7 7-7 7"></path>
@@ -344,9 +443,9 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <div class="svc">
       <span class="svc-n">04</span>
       <span class="svc-t">Body repairs</span>
-      <span class="svc-d">Panel and body part repairs, plus the general maintenance
-        that keeps a car through its next MOT.</span>
+      <span class="svc-d">Panel and body part repairs, plus the general maintenance that keeps a car through its next MOT.</span>
       <span class="svc-go">
+        What is included
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5 12h13M12 5l7 7-7 7"></path>

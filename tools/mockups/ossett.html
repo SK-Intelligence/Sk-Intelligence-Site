@@ -112,7 +112,7 @@ body{
    Same information, given a shape you can read at a glance. */
 .split{
   display:grid; grid-template-columns:1.1fr .9fr;
-  gap:52px; align-items:start;
+  gap:52px; align-items:center;
 }
 .lede{ max-width:44ch; }
 .lede h1{
@@ -211,6 +211,10 @@ body{
   font-size:.9rem; color:var(--text);
 }
 .input.ph{ color:var(--faint); }
+.reassure{
+  margin:18px 0 0; max-width:46ch;
+  font-size:.82rem; line-height:1.6; color:var(--faint);
+}
 
 /* ── resolved state ─────────────────────────────────────────────────── */
 .found{
@@ -406,16 +410,13 @@ body{
             </div>
           </div>
 
-          <div class="fields" style="margin-top:20px">
-            <div class="field">
-              <label>Name</label>
-              <div class="input ph">Full name</div>
-            </div>
-            <div class="field">
-              <label>Phone</label>
-              <div class="input ph">07xxx xxxxxx</div>
-            </div>
-          </div>
+          <!-- Name and phone used to sit here, which asked for a number
+               before showing anything in return. They belong to the enquiry
+               step, which is what screen 2 shows. -->
+          <p class="reassure">
+            No account needed. We only ask for your details once you have seen
+            the sizes and want a price.
+          </p>
         </div>
       </div>
 

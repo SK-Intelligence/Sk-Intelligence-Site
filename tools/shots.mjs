@@ -43,7 +43,10 @@ const bad = (m) => { failed++; console.log(` FAIL  ${m}`); };
  */
 async function assertFonts(page, families, label) {
   const missing = await page.evaluate(async (fams) => {
-    await document.fonts.ready;
+    // Capped: page.evaluate has no default timeout and is not governed by
+    // setDefaultTimeout, so an unresolved fonts.ready hangs the whole run
+    // rather than failing it. Same class as the two hangs already fixed below.
+    await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 8000))]);
     // The weight matters: fonts.check defaults to 400, and these families are
     // requested at 500/700 only, so a bare `16px "Family"` reports a miss for a
     // face that loaded perfectly well. Pass if any requested weight resolves.
@@ -70,8 +73,25 @@ async function assertNotBlank(file, label) {
  */
 async function captureMockup(browser, file, shots, fonts) {
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
-  await page.goto(`file://${join(MOCKUPS, file)}`, { waitUntil: 'load' });
-  await assertFonts(page, fonts, file);
+  // The mockups pull their faces from Google Fonts, so even a file:// page can
+  // fail to load. Without this the whole run dies mid-sequence and the browser
+  // is never closed, leaving public/work/ half-regenerated.
+  try {
+    await page.goto(`file://${join(MOCKUPS, file)}`, { waitUntil: 'load', timeout: 30_000 });
+  } catch {
+    bad(`${file}: could not load the mockup`);
+    await page.close();
+    return;
+  }
+
+  // Bail BEFORE writing anything. Detecting a system-font fallback is no use
+  // if we have already overwritten six good PNGs with it — the exit code says
+  // failure while the damage sits on disk and only git checkout undoes it.
+  if (!(await assertFonts(page, fonts, file))) {
+    log(`${file}: skipped, leaving the existing captures untouched`);
+    await page.close();
+    return;
+  }
   // Let the face actually paint before the shutter, not just report ready.
   await page.waitForTimeout(400);
 
@@ -81,8 +101,7 @@ async function captureMockup(browser, file, shots, fonts) {
     const dest = join(OUT, `${out}.png`);
     await el.screenshot({ path: dest });
     const size = await assertNotBlank(dest, out);
-    log(`${out}.png  ${(size / 1024).toFixed(0)}kb`);
-    done.push(`${out}.png`);
+    if (size >= 12_000) { log(`${out}.png  ${(size / 1024).toFixed(0)}kb`); done.push(`${out}.png`); }
   }
   await page.close();
 }
@@ -165,19 +184,42 @@ async function captureLive(browser, path, out, focusContent = false) {
   // 3 images immediately and 23 once it settles. Measuring or shooting before
   // that gives an empty frame, so wait for the count to stop moving.
   let seen = -1;
+  let settled = false;
   for (let i = 0; i < 14; i++) {
     const n = await page.evaluate(() => document.images.length);
-    if (n === seen && n > 0) break;
+    if (n === seen && n > 0) { settled = true; break; }
     seen = n;
     await page.waitForTimeout(600);
   }
+  if (!settled) bad(`${out}: image count never settled (${seen}), the frame may be incomplete`);
 
   await page.evaluate(
     () => Promise.race([
       Promise.all([...document.images].map((i) => i.decode().catch(() => {}))),
-      new Promise((r) => setTimeout(r, 4000)),
+      new Promise((r) => setTimeout(r, 9000)),
     ]),
   );
+
+  // Undecoded images are why the shop capture came back with blank product
+  // tiles: the grid was laid out and the text was there, but two of the four
+  // thumbnails had not painted. Wait on the ones actually in frame.
+  const blanks = await page.evaluate(async () => {
+    for (let i = 0; i < 20; i++) {
+      const inView = [...document.images].filter((img) => {
+        const r = img.getBoundingClientRect();
+        return r.bottom > 0 && r.top < window.innerHeight && r.width > 60;
+      });
+      const bad = inView.filter((img) => !img.complete || img.naturalWidth === 0);
+      if (bad.length === 0) return 0;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    return [...document.images].filter((img) => {
+      const r = img.getBoundingClientRect();
+      return r.bottom > 0 && r.top < window.innerHeight && r.width > 60
+        && (!img.complete || img.naturalWidth === 0);
+    }).length;
+  });
+  if (blanks) bad(`${out}: ${blanks} image(s) in frame never decoded`);
   // On the interior pages the real content — the product grid, the gallery —
   // starts around 950px down, so a viewport shot from the top is a screenshot
   // of a background texture. Frame the first substantial row instead of
@@ -191,7 +233,13 @@ async function captureLive(browser, path, out, focusContent = false) {
         .sort((a, b) => a - b);
       return tops.length ? Math.max(0, tops[0] - 62) : 0;
     });
-    if (y === 0) bad(`${out}: found no content row to frame, shot may be empty`);
+    // Return rather than carry on. Shooting from the top after failing to find
+    // the content row replaces a good capture with a background texture.
+    if (y === 0) {
+      bad(`${out}: found no content row to frame, keeping the existing capture`);
+      await page.close();
+      return;
+    }
     await page.evaluate((to) => window.scrollTo(0, to), y);
     await page.waitForTimeout(600);
   }
@@ -212,8 +260,7 @@ async function captureLive(browser, path, out, focusContent = false) {
   const dest = join(OUT, `${out}.png`);
   await page.screenshot({ path: dest }); // viewport only — full-page would be a strip nobody can read
   const size = await assertNotBlank(dest, out);
-  log(`${out}.png  ${(size / 1024).toFixed(0)}kb  ← live`);
-  done.push(`${out}.png`);
+  if (size >= 12_000) { log(`${out}.png  ${(size / 1024).toFixed(0)}kb  ← live`); done.push(`${out}.png`); }
   await page.close();
 }
 

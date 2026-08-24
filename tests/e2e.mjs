@@ -215,6 +215,32 @@ head('case bank');
     ok(r.sector.length > 0 && r.label.length > 0, `${r.name}: sector "${r.sector}" and frame label present`);
   }
 
+  // Every shot, not just the one each panel happens to open on. The checks
+  // above only decode the primary image, and everything after them compares
+  // src strings — so five of the ten PNGs could be deleted and the suite would
+  // still pass. Walk each client's whole strip and decode all of them.
+  for (let i = 0; i < 4; i++) {
+    await p.click(`#tab-${i}`);
+    await p.waitForTimeout(350);
+    const shots = await p.evaluate((n) => {
+      const panel = document.getElementById(`panel-${n}`);
+      return [...panel.querySelectorAll('.client-shot')].length;
+    }, i);
+    for (let j = 0; j < shots; j++) {
+      await p.evaluate(([n, k]) => {
+        document.querySelectorAll(`#panel-${n} .client-shot`)[k].click();
+      }, [i, j]);
+      await p.waitForTimeout(320);
+      const r = await p.evaluate((n) => {
+        const img = document.querySelector(`#panel-${n} .showcase-frame img`);
+        return { w: img?.naturalWidth ?? 0, src: img?.getAttribute('src') ?? '' };
+      }, i);
+      const file = decodeURIComponent(r.src).match(/\/work\/([\w-]+\.png)/)?.[1] ?? r.src;
+      ok(r.w > 0, `${file} decodes (${r.w}px)`);
+    }
+    await p.evaluate((n) => document.querySelectorAll(`#panel-${n} .client-shot`)[0].click(), i);
+  }
+
   // Thumbnail strip swaps the primary image and moves the active marker with it.
   await p.click('#tab-3'); // A Star, the only client with four shots
   await p.waitForTimeout(500);
@@ -259,6 +285,50 @@ head('case bank');
   await p.keyboard.press('Escape');
   await p.waitForTimeout(400);
   ok(await p.evaluate(() => !document.querySelector('dialog.lightbox')), 'Esc closes the lightbox');
+
+  // Every dismissal must hand focus back, not drop it on <body>. Esc got this
+  // right for free because the UA closes the dialog itself; the X and the
+  // backdrop used to call onClose directly and lost the restoration target.
+  for (const [how, act] of [
+    ['the close button', async () => p.click('.lightbox-x')],
+    ['a backdrop click', async () => p.mouse.click(8, 8)],
+  ]) {
+    await p.click('#panel-3 .showcase-open');
+    await p.waitForTimeout(400);
+    await act();
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(() => ({
+      gone: !document.querySelector('dialog.lightbox'),
+      focus: document.activeElement?.className ?? '',
+      locked: document.body.style.overflow,
+    }));
+    ok(r.gone, `${how} closes the lightbox`);
+    ok(r.focus.includes('showcase-open'), `${how} hands focus back to what opened it (${r.focus || 'body'})`);
+    ok(r.locked !== 'hidden', `${how} releases the page scroll lock`);
+  }
+
+  // The nav strip is fixed height and must stay reachable. It used to fall off
+  // the bottom on anything shorter than ~893px, which is most laptops, and the
+  // only viewport the suite tested was the 900px where it survived by 5px.
+  for (const h of [900, 800, 745]) {
+    const s = await browser.newPage({ viewport: { width: 1440, height: h } });
+    await s.goto(BASE + '/', { waitUntil: 'load' });
+    await settle(s);
+    await s.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+    await s.waitForTimeout(400);
+    await s.click('#tab-3');
+    await s.waitForTimeout(400);
+    await s.click('#panel-3 .showcase-open');
+    await s.waitForTimeout(600);
+    const nav = await s.evaluate(() => {
+      const n = document.querySelector('.lightbox-nav');
+      const r = n.getBoundingClientRect();
+      return { bottom: Math.round(r.bottom), vh: window.innerHeight, top: Math.round(r.top) };
+    });
+    ok(nav.bottom <= nav.vh && nav.top >= 0,
+      `1440x${h}: the lightbox nav stays on screen (bottom ${nav.bottom} of ${nav.vh})`);
+    await s.close();
+  }
 
   // The section deliberately sends nobody off-site.
   const out = await p.evaluate(() => [...document.querySelectorAll('#work a[href]')]
