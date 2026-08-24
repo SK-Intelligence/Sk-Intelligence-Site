@@ -22,7 +22,7 @@ export default function Studio() {
           <p className="eyebrow" data-head-reveal>Build studio</p>
           <h1 data-head-reveal>We still build the <em>fundamentals</em>.</h1>
           <p className="page-head-deck" data-head-reveal>
-            AI is the lead offering, but the build studio that got us here hasn&rsquo;t gone anywhere.
+            AI is the lead offering. The build studio that got us here still runs alongside it.
           </p>
         </div>
       </section>
@@ -59,8 +59,8 @@ export default function Studio() {
             ))}
           </div>
           <p className="stack-note" data-reveal style={{ '--d': 5 } as React.CSSProperties}>
-            We&rsquo;re not precious about it. If your team already runs something else, we work in your
-            stack instead of asking you to move to ours. That&rsquo;s the whole point of forward-deploying.
+            If your team already runs something else, we work in your stack. That&rsquo;s the whole
+            point of forward-deploying.
           </p>
         </div>
       </section>

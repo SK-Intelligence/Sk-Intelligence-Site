@@ -12,9 +12,8 @@ export function Hero() {
             <span className="h-line"><span className="h-line-inner">Then we live <em>inside</em> the fix.</span></span>
           </h1>
           <p className="hero-sub">
-            No guesswork, and no AI for the sake of it. We embed inside your operations, find where the
-            work actually breaks down, build the automations and tools that take the friction out, then
-            stay long enough for it to stick.
+            We embed inside your operations, find where the work actually breaks down, build the
+            automations and tools that take the friction out, then stay long enough for it to stick.
           </p>
           <div className="hero-actions">
             <a href="#process" className="btn btn-glass-primary">See our process</a>

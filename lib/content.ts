@@ -50,7 +50,7 @@ export const pillars = [
   {
     num: '04',
     title: 'Forward-Deployed Engineering',
-    body: 'We don’t hand off a deck and disappear. We sit with your team, wire the fix into your real systems, and train the people who’ll own it.',
+    body: 'We sit with your team, wire the fix into your real systems, and train the people who’ll own it. We leave when they can run it.',
   },
 ] as const;
 

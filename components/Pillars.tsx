@@ -7,7 +7,7 @@ export function Pillars() {
         <div className="section-head" data-reveal>
           <p className="eyebrow">What we do</p>
           <h2>AI-native, by default</h2>
-          <p>Four ways we get inside your business and make AI practical rather than performative.</p>
+          <p>Four ways we get inside your business and put AI to work where it pays.</p>
         </div>
         <div className="pillars-grid">
           {pillars.map((p, i) => (

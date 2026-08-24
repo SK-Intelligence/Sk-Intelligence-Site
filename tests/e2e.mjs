@@ -360,14 +360,30 @@ head('card hover lift');
   for (const sel of ['.founder-card', '.pillar']) {
     const el = p.locator(sel).first();
     await el.scrollIntoViewIfNeeded();
-    await p.waitForTimeout(500);
+    /* Wait for the reveal to finish BEFORE hovering. While it is still running
+       the card is sliding up under the cursor, so the hover starts late. */
+    await el.evaluate((n) => new Promise((done) => {
+      const check = () => (n.classList.contains('is-visible') && getComputedStyle(n).transform === 'none'
+        ? done() : requestAnimationFrame(check));
+      check();
+    }));
     await el.hover();
-    await p.waitForTimeout(800); // longer than the .5s transition
-    const r = await el.evaluate((n) => ({
+    /* Then poll for the lift to stop moving, rather than sleeping a fixed 800ms
+       and hoping. A fixed wait read this mid-transition once, at -0.25px of a
+       -5px lift, and reported a working hover as broken. */
+    const read = () => el.evaluate((n) => ({
       t: getComputedStyle(n).transform,
       hovered: n.matches(':hover'),
       settled: n.classList.contains('is-visible') && document.body.classList.contains('reveal-armed'),
     }));
+    let r = await read();
+    for (let i = 0; i < 24; i++) {
+      await p.waitForTimeout(120);
+      const cur = await read();
+      const stable = cur.t === r.t;
+      r = cur;
+      if (stable && cur.t !== 'none') break;
+    }
     ok(r.hovered && r.settled && r.t !== 'none',
       `${sel} lifts on hover when settled (${r.t})`);
   }
@@ -557,6 +573,37 @@ for (const route of ['/', '/studio']) {
     return hits;
   });
   ok(found.length === 0, `${route} no em/en dashes in visible copy${found.length ? ' — ' + found.join(' | ') : ''}`);
+
+  /* Denial phrasing is banned for the same reason as em dashes: it reads as
+     machine-written, and worse, it plants the accusation it is rebutting. "We
+     don't hand off a deck and disappear" makes the reader picture exactly that.
+     Say what you DO. This caught seven instances across the two pages the first
+     time it ran, so it is a habit rather than a one-off.
+
+     Only first-person denials are banned. "rather than" and "instead of" are
+     fine when the contrast is about something other than us, as in the founder
+     bio, so they are deliberately not listed. */
+  const denials = await p.evaluate(() => {
+    const bad = [
+      /\bwe(?:'|’)?re not\b/i, /\bwe are not\b/i,
+      /\bwe don(?:'|’)?t\b/i, /\bwe do not\b/i,
+      /\bwe won(?:'|’)?t\b/i, /\bwe never\b/i,
+      /\bnot here to\b/i, /\bnot just\b/i, /\bnot a\b/i,
+      /\bunlike (?:other|most|the)\b/i, /\bno (?:account manager|middleman|hand[- ]?off)\b/i,
+    ];
+    const hits = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (n.parentElement?.closest('script,style')) continue;
+      /* Client testimonials are verbatim and are not ours to rewrite. */
+      if (n.parentElement?.closest('.panel-quote,.client-quote')) continue;
+      const t = n.nodeValue;
+      if (bad.some((re) => re.test(t))) hits.push(t.trim().slice(0, 70));
+    }
+    return hits;
+  });
+  ok(denials.length === 0,
+    `${route} says what it does rather than what it isn't${denials.length ? ' — ' + denials.join(' | ') : ''}`);
   await p.close();
 }
 {

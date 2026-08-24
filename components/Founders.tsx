@@ -234,7 +234,7 @@ export function Founders() {
         <div className="section-head" data-reveal>
           <p className="eyebrow">Co-founders</p>
           <h2>The experience we bring</h2>
-          <p>Two co-founders, both engineers. You deal with us directly, with no account manager in between.</p>
+          <p>Two co-founders, both engineers. The people you talk to are the people who build it.</p>
         </div>
 
         <div
