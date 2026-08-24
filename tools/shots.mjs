@@ -251,7 +251,7 @@ if (wanted('astar')) {
     ['/', 'astar-1', false],          // the hero is the shot on the home page
     ['/shop', 'astar-2', true],
     ['/gallery', 'astar-3', true],
-    ['/custom-kits', 'astar-4', true],
+    ['/services', 'astar-4', true],
   ]) await captureLive(browser, path, out, focus);
 }
 

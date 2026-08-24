@@ -258,7 +258,7 @@ export const clients = [
       { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
       { src: '/work/astar-2.png', alt: 'A Star Customs shop with products for sale', label: 'Shop' },
       { src: '/work/astar-3.png', alt: 'A Star Customs gallery of completed builds', label: 'Gallery' },
-      { src: '/work/astar-4.png', alt: 'A Star Customs custom kits page', label: 'Custom kits' },
+      { src: '/work/astar-4.png', alt: 'A Star Customs services page showing screen upgrades, star lights and ambient lighting', label: 'Services' },
     ],
     detail: [
       'Storefront built from scratch for the brand',
