@@ -26,7 +26,49 @@ lib/
   shaderWash.ts         GLSL background wash
 public/clients/*        client logos
 public/founders/        kenneth.jpg present; drop sameer.jpg here (see the README inside)
+public/work/*           build screenshots for the case bank — generated, see below
+tools/
+  shots.mjs             Playwright capture: regenerates every case-bank screenshot
+  mockups/*.html        standalone sources for three of the four clients
 ```
+
+## Case-bank screenshots
+
+```bash
+npm run shots              # all ten
+npm run shots -- ossett    # one target
+```
+
+Nothing in `tools/` ships. It exists so no image in `public/work/` is a binary
+nobody can reproduce.
+
+Two kinds of source. **A Star Customs** is captured from the live site, because
+that build stands up on its own. **The other three** are captured from
+`tools/mockups/*.html`, which restyle real builds using only real content — the
+actual DVLA lookup flow for Ossett, real services and opening hours for GB
+Autos, Hopeful Hearts' own service list and values verbatim. Each file's header
+records what is theirs and what is presentation. Keep it that way: invented
+copy about a named real client is the one thing that must never appear here.
+
+The three mockups are deliberately unalike, because Ossett and GB Autos are both
+automotive and sit next to each other in the same tab strip. If both were dark
+with an accent colour they would read as one project shown twice.
+
+Things the capture script already learned the hard way, all commented in place:
+
+- `waitUntil: 'networkidle'` never resolves on the live host, which keeps
+  analytics connections open.
+- A lazy-load scroll loop tested against a live `scrollHeight` never terminates,
+  because the page grows as you scroll it — and `page.evaluate` has no default
+  timeout, so that hangs the run rather than failing it.
+- Removing a floating widget by climbing to `.closest('[class*="widget"]')`
+  deleted the product grid being photographed. Never widen a delete by guessing
+  at ancestors on a page you do not control.
+- The product grid arrives after `load` (3 images, then 23), so the script waits
+  for the image count to stop moving before it measures or shoots.
+- It asserts the intended web font actually loaded. A silent fallback to a
+  system font still produces a plausible-looking screenshot, which is the worst
+  kind of failure: fine in the terminal, wrong on the site.
 
 ## Build output
 
@@ -63,6 +105,17 @@ The form degrades: the mailto link next to it always works, including with JS of
 
 ## Things that will bite you if you change them
 
+- **⚠️ THE CASE-BANK NUMBERS ARE PLACEHOLDERS.** `PLACEHOLDER_METRICS` in
+  `lib/content.ts` is invented, apart from two figures marked `// real` in
+  place: Ossett's *50+ enquiries a month*, and the *5 vehicle fields* the lookup
+  resolves. Replace the rest before this section is shown to anyone. That object
+  is the only place in the codebase any client figure lives, so it is one edit,
+  and nothing else changes when you make it.
+- **Never invent copy about a named real client.** Every string in
+  `tools/mockups/*.html` is either lifted from that client's live site or
+  obviously generic. No invented testimonials, staff, prices or accreditations.
+  This matters most for Hopeful Hearts, which is a real child and family
+  services organisation.
 - **`app/fonts.ts`** — Fraunces must not declare `weight`. next/font rejects
   `axes` unless weight is omitted or `'variable'`, and `opsz` is not included
   automatically. Without `axes: ['opsz']` the display type renders at the wrong
@@ -102,10 +155,24 @@ swallowed by an unclosed comment, JSX eating the space in the hero headline, the
 links landing clear of the fixed nav, and the progressive-enhancement contract
 with JS disabled. Add to it when you fix a bug.
 
-It also enforces one house-style rule: **no em or en dashes in anything a
+The case-bank block checks each client renders a decoded screenshot with real
+alt text, three non-empty metrics, a sector and a frame label; that a thumbnail
+swaps the primary image and the active marker follows; that the lightbox opens
+as a real modal, moves focus inside itself, wraps rather than walking off the
+end of the set, and closes on Esc; and that no outbound client link has crept
+back into the section.
+
+It also enforces two house-style rules. **No em or en dashes in anything a
 visitor sees.** They read as machine-written. The check walks rendered text
 plus `<title>` and the OG/Twitter tags, so `&mdash;` entities and interpolated
 metadata are caught too. Code comments are out of scope; they are not the site.
+
+And **say what the site does, not what it isn't.** "We're not here to sell you
+AI", "no account manager in between", "we don't hand off a deck and disappear" —
+every one of those plants the idea it is trying to dismiss, and there were seven
+of them before the check existed. Client testimonials are exempt, because they
+are verbatim and not ours to edit. "Rather than" and "instead of" are allowed:
+they are fine when the contrast is not about us.
 
 ## Accessibility
 
