@@ -354,31 +354,32 @@ for (const w of PHONES) {
     const hint = document.querySelector('#panel-0 .showcase-hint');
     return {
       imgW: Math.round(img.getBoundingClientRect().width),
+      frameW: Math.round(sc.getBoundingClientRect().width),
       scrollable: sc.scrollWidth > sc.clientWidth + 5,
       hint: getComputedStyle(hint).display !== 'none',
       overflow: document.documentElement.scrollWidth - window.innerWidth,
     };
   });
-  // Shrunk to fit, a 1280px page renders around 0.27 scale and its body text
-  // lands near 4px. The whole point of the section is that the builds are
-  // legible, so the shot keeps its size and the frame scrolls instead.
-  ok(r.imgW > 900, `${w}px the build renders big enough to read (${r.imgW}px, ${(r.imgW / 1280).toFixed(2)} scale)`);
-  ok(r.scrollable, `${w}px the frame scrolls sideways rather than clipping`);
-  ok(r.hint, `${w}px the swipe hint is shown`);
+  // The frame is the OVERVIEW; the lightbox below is where you read. A previous
+  // version rendered the shot near native size in a sideways scroller so the
+  // body text stayed legible, and it cost the section its point: you could no
+  // longer see that a client HAS a website, only a slice of one, and you had to
+  // swipe to learn even that. So the whole shot fits, and nothing scrolls.
+  ok(Math.abs(r.imgW - r.frameW) <= 2, `${w}px the whole build fits the frame (${r.imgW}px in ${r.frameW}px)`);
+  ok(!r.scrollable, `${w}px the frame does not scroll sideways`);
+  ok(r.hint, `${w}px the tap-to-open hint is shown`);
   // A fixed-width child inside a grid item with the default min-width:auto
-  // stretched the whole section to 1182px, and only body{overflow-x:hidden}
-  // was hiding it.
-  ok(r.overflow === 0, `${w}px the oversized shot does not push the page wide (${r.overflow}px)`);
+  // stretched the whole section to 1182px once, and only body{overflow-x:hidden}
+  // was hiding it. Keep checking even though nothing is oversized now.
+  ok(r.overflow === 0, `${w}px the section does not push the page wide (${r.overflow}px)`);
 
-  // A swipe across the shot must not be read as a tap that opens the viewer.
-  const box = await p.locator('#panel-0 .showcase-scroll').boundingBox();
-  await p.mouse.move(box.x + box.width - 20, box.y + box.height / 2);
-  await p.mouse.down();
-  await p.mouse.move(box.x + 20, box.y + box.height / 2, { steps: 12 });
-  await p.mouse.up();
+  // Tapping the shot is now the ONLY gesture on it, and it must open the viewer.
+  await p.click('#panel-0 .showcase-open');
   await p.waitForTimeout(450);
-  ok(await p.evaluate(() => !document.querySelector('dialog.lightbox')),
-    `${w}px swiping the build scrolls it instead of opening the viewer`);
+  ok(await p.evaluate(() => !!document.querySelector('dialog.lightbox')),
+    `${w}px tapping the build opens the viewer`);
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(300);
 
   await p.close();
 }
@@ -505,7 +506,7 @@ for (const route of ['/', '/studio']) {
     const lum = (c) => { const s = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]; };
     const parse = (s) => s.match(/[\d.]+/g).map(Number).slice(0, 3);
     const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = getComputedStyle(n).backgroundColor; const m = c.match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.7)) return parse(c); n = n.parentElement; } return [245, 241, 232]; };
-    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-bio p',
+    const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-bio p', '.founder-creds li',
       '.client-detail li', '.client-name', '.client-work', '.panel-quote blockquote', '.section-head h2',
       '.client-metrics dt', '.client-metrics dd', '.client-sector', '.showcase-label', '.client-shot span',
       '.section-head p', '.eyebrow', '.studio-item small', '.stack-group p', '.nav-mobile-links a'];

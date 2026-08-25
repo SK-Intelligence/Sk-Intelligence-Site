@@ -67,24 +67,7 @@ export function ClientWork() {
     tabRefs.current[active]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [active]);
 
-  /**
-   * The showcase scrolls sideways on a phone AND opens the viewer on tap, so a
-   * swipe would otherwise land as a click the moment the finger lifts. Record
-   * where the gesture started and treat anything past a few pixels as a scroll,
-   * not a tap. Same shape as the founders deck.
-   */
-  const swipeStart = useRef(0);
-  const swipedRef = useRef(false);
   const scrollRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const onShotPointerDown = useCallback((e: React.PointerEvent) => {
-    swipeStart.current = e.clientX;
-    swipedRef.current = false;
-  }, []);
-
-  const onShotPointerUp = useCallback((e: React.PointerEvent) => {
-    swipedRef.current = Math.abs(e.clientX - swipeStart.current) > 8;
-  }, []);
 
   const pickShot = useCallback((client: number, shot: number) => {
     setShotIndex((prev) => prev.map((v, i) => (i === client ? shot : v)));
@@ -173,16 +156,13 @@ export function ClientWork() {
                         <span className="showcase-dots"><i /><i /><i /></span>
                         <span className="showcase-label">{c.name} &middot; {shot.label}</span>
                       </div>
-                      {/* On a phone this scrolls sideways. A 1280px-wide page
-                          shown at 348px is a 0.27 scale, which puts the body
-                          text at about 4px — legible to nobody. Inside the
-                          scroller the shot renders near its real size and you
-                          swipe across it instead. */}
+                      {/* The whole shot fits this frame at every width, phone
+                          included: seeing the build as a page is what this
+                          frame is for. Reading the text in it is the
+                          lightbox's job — see globals.css. */}
                       <div
                         className="showcase-scroll"
                         ref={(el) => { scrollRefs.current[i] = el; }}
-                        onPointerDown={onShotPointerDown}
-                        onPointerUp={onShotPointerUp}
                       >
                         {/* Without JS this is a plain image with no affordance
                             claiming otherwise; the button only exists once the
@@ -191,10 +171,7 @@ export function ClientWork() {
                           <button
                             type="button"
                             className="showcase-open"
-                            onClick={(e) => {
-                              if (swipedRef.current) { e.preventDefault(); return; }
-                              setZoomed(true);
-                            }}
+                            onClick={() => setZoomed(true)}
                             aria-label={`View ${c.name} screenshots full size`}
                           >
                             <Image
@@ -210,7 +187,7 @@ export function ClientWork() {
                         )}
                       </div>
                       <p className="showcase-hint" aria-hidden="true">
-                        Swipe to read, tap to open
+                        Tap to open full size
                       </p>
                     </div>
 

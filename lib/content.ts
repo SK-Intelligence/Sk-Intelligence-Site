@@ -76,22 +76,25 @@ export const phases = [
 ] as const;
 
 /**
- * Founder cards: a short bio, then the background behind it.
+ * Founder cards: five credentials each, in a fixed order.
  *
- * These were a list of seven credentials each and it did not land. A list of
- * seven achievements reads as weaker than one fact that implies the rest,
- * because each item dilutes the one before it and the reader stops absorbing
- * around the fourth. So each card now makes ONE claim, the AI work, and the
- * employers sit underneath it as ballast rather than as the pitch.
+ * The order is the argument, and it is the same on both cards so the two read
+ * as a pair rather than as two separate pitches: where they have worked, then
+ * the enterprise AI work, then the research, then the awards. Employers first
+ * because that is what a prospective client recognises without being told why
+ * it matters; research and awards last because they only land once the reader
+ * already believes these two can build.
  *
- * Deliberately dropped, and not to be quietly reinstated: the hackathon win,
- * the Megaw Lecture placing, the MISO research listing and the degree classes.
- * Competition placings do not sell to the person doing the hiring, and the
- * cards are stronger for making one point clearly. Everything cut is still on
- * their LinkedIn, which each card links to.
+ * Five is the cap. An earlier version ran seven each and diluted itself —
+ * degree classes and hackathon placings sat alongside the LSEG and CME work and
+ * flattened it. Anything that does not survive the cut is still on their
+ * LinkedIn, which each card links to.
  *
- * `bio` and `background` are one paragraph each. Keep them to that: the whole
- * reason this section was rewritten was that there was too much to take in.
+ * <strong> is the ONLY markup allowed in these strings, and only around an
+ * organisation name. `withStrong` in lib/withStrong.tsx renders it; anything
+ * else you put here shows up as visible literal text rather than executing.
+ * That includes HTML entities — it splits on the tag rather than parsing HTML,
+ * so write a literal `&`, not `&amp;`, or the reader sees the ampersand spelt out.
  */
 export const founders = [
   {
@@ -99,16 +102,26 @@ export const founders = [
     monogram: 'SG',
     name: 'Sameer Gul',
     linkedin: 'https://www.linkedin.com/in/sameer-g-4728a3260/',
-    bio: 'I work in AI security. My research is on trust-explicit systems: building AI you can actually inspect, so you can tell what it did and why rather than taking its word for it.',
-    background: 'Before this I was writing software behind live financial markets, at the <strong>London Stock Exchange</strong> and at <strong>CME Group</strong>. I was a founding engineer at an agentic AI audit startup serving enterprise clients.',
+    credentials: [
+      'Engineering roles in global stock market systems at <strong>LSEG</strong> and <strong>CME Group</strong>',
+      'Enterprise agentic AI systems for <strong>Big Four</strong> audit firms',
+      'Agentic AI research across <strong>MISO & Sourcing Lens</strong>, including auditable net-zero procurement',
+      'Published AI security research on trust-explicit systems and secure agentic AI',
+      'Award-winning cross-border AI-native medical systems with <strong>NHS</strong> and <strong>HSE</strong> involvement',
+    ],
   },
   {
     slug: 'kenneth',
     monogram: 'KO',
     name: 'Kenneth Obanor',
     linkedin: 'https://www.linkedin.com/in/kenneth-obanor-060609275/',
-    bio: 'I work on AI-assisted software and whether it survives contact with time: what models are genuinely good at building, where they cost more than they save, and how you keep the result something a team can maintain.',
-    background: 'I have built product software at <strong>Squarespace</strong> and run operations at <strong>Amazon</strong>. I was a founding engineer at an agentic AI audit startup serving enterprise clients.',
+    credentials: [
+      'Engineering roles at <strong>Squarespace</strong> and <strong>Amazon</strong>, working with data and scalable production systems',
+      'Enterprise agentic AI systems for <strong>Big Four</strong> audit firms',
+      'Agentic AI research across <strong>MISO & Sourcing Lens</strong>, including auditable net-zero procurement',
+      'Published research on AI-driven software maintainability, longevity and sustainability, benchmarked against <strong>SonarQube</strong>',
+      'Award-winning cross-border AI-native medical systems with <strong>NHS</strong> and <strong>HSE</strong> involvement',
+    ],
   },
 ] as const;
 

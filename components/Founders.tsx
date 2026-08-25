@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { deliveryTeam, founders } from '@/lib/content';
+import { withStrong } from '@/lib/withStrong';
 
 /**
  * Co-founders as a looping deck: the active card sits in front at full size
@@ -277,10 +278,9 @@ export function Founders() {
                   </div>
                   <span className="founder-arrow" aria-hidden="true">&#8599;</span>
                 </div>
-                <div className="founder-bio">
-                  <p>{f.bio}</p>
-                  <p dangerouslySetInnerHTML={{ __html: f.background }} />
-                </div>
+                <ul className="founder-creds">
+                  {f.credentials.map((c) => <li key={c}>{withStrong(c)}</li>)}
+                </ul>
               </a>
             </div></div>
           ))}

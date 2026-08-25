@@ -528,8 +528,8 @@
     letter-spacing:.02em;
   }
   .showcase-frame img{ width:100%; height:auto; display:block; }
-  /* Desktop has room to show the whole shot, so the scroller is inert here and
-     only becomes a scroller at the phone breakpoint below. */
+  /* The whole shot fits the frame at every width — see the note at the phone
+     breakpoint for why this stays a plain clipped box rather than a scroller. */
   .showcase-scroll{ overflow:hidden; min-width:0; max-width:100%; }
   .showcase-hint{ display:none; }
   .showcase-open{
@@ -689,22 +689,24 @@
     .lightbox-img{ width:1180px; max-width:none; }
   }
 
-  /* ---- reading a desktop screenshot on a phone ----
-     Shrunk to the width of the column, a 1280px page renders at about a 0.27
-     scale and its body text lands near 4px. Nobody can read that, and the
-     screenshots are the whole point of the section. So below this width the
-     shot keeps a near-native size and the frame scrolls sideways instead. */
-  @media (max-width:900px){
-    .showcase-scroll{
-      overflow-x:auto; overflow-y:hidden;
-      overscroll-behavior-x:contain;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:none;
-    }
-    .showcase-scroll::-webkit-scrollbar{ display:none; }
-    .showcase-scroll > *{ width:1180px; }
-    .showcase-frame img{ width:1180px; max-width:none; }
+  /* ---- showing a desktop screenshot on a phone ----
+     The in-page frame is the OVERVIEW and the lightbox is the READ. That split
+     is the whole design here, and it is worth stating because the obvious fix
+     for one half breaks the other.
 
+     An earlier version made this frame render the shot near native size inside
+     a sideways scroller, reasoning that at phone width a 1280px page shrinks to
+     a ~0.27 scale and its body text lands near 4px. True, but it cost the thing
+     the section exists for: you could no longer see that a client has a
+     website, only a swipeable slice of one, and you had to scroll to learn
+     even that. Legibility is the lightbox's job — it already pans at 1180px on
+     the same breakpoint — so the frame is free to just fit.
+
+     So there is no width override below: the base rules (.showcase-frame img
+     at width:100%, .showcase-scroll at overflow:hidden) already fit the whole
+     shot to the column. All this breakpoint adds is the hint saying the shot
+     opens, which on a phone is the only affordance for it. */
+  @media (max-width:900px){
     .showcase-hint{
       display:flex; align-items:center; gap:7px;
       margin-top:9px;
@@ -860,11 +862,8 @@
     body.reveal-armed .pillar.is-visible:hover{ transform:none; }
     .founder-card:hover .founder-arrow{ transform:none; }
   }
-  /* Two short paragraphs per card: who they are, then the background behind it.
-     This replaced a bulleted credential list. A dashed list invites skimming
-     and puts every entry at the same weight, which is exactly why seven of them
-     read as less convincing than two sentences. Prose makes the reader take the
-     first claim before the employers underneath it. */
+  /* Prose, used by the delivery-team card only: it makes one point across two
+     short paragraphs and a list of one would be silly. */
   .founder-bio{ margin-top:20px; }
   .founder-bio p{
     color:var(--ink-soft); font-size:.94rem; line-height:1.65;
@@ -872,6 +871,27 @@
   .founder-bio p + p{ margin-top:13px; }
   /* The employers are the only thing set to be caught while skimming. */
   .founder-bio strong{ color:var(--ink); font-weight:700; }
+
+  /* Five credentials per founder, as a list rather than prose: the entries are
+     genuinely parallel — a role, a body of work, a paper, an award — and a
+     paragraph would have to invent an order of importance between them. Same
+     type ramp as .founder-bio so the two kinds of card read as one family. */
+  .founder-creds{
+    margin-top:20px; padding:0; list-style:none;
+    display:grid; gap:13px;
+  }
+  .founder-creds li{
+    position:relative; padding-left:22px;
+    color:var(--ink-soft); font-size:.94rem; line-height:1.65;
+  }
+  /* A drawn rule rather than a bullet glyph, matching .showcase-hint::before
+     and the rest of the marker set. `top` is in em so it tracks the first
+     line's baseline as the type scales. */
+  .founder-creds li::before{
+    content:''; position:absolute; left:0; top:.78em;
+    width:11px; height:1px; background:var(--accent);
+  }
+  .founder-creds strong{ color:var(--ink); font-weight:700; }
 
 
 
