@@ -841,8 +841,15 @@ for (const route of ['/', '/studio']) {
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       if (n.parentElement?.closest('script,style')) continue;
-      /* Client testimonials are verbatim and are not ours to rewrite. */
-      if (n.parentElement?.closest('.panel-quote,.client-quote')) continue;
+      /* Client testimonials are verbatim and are not ours to rewrite.
+
+         The manifesto is exempt for a different reason: it is the one denial on
+         the site that is a decision rather than a slip. It was rewritten to
+         "AI is the tool / Your time is the point" by the same commit that added
+         this check, and Sameer put the original back after seeing both live.
+         Scoped to that one section on purpose, so the habit this caught seven
+         times still cannot come back anywhere else. */
+      if (n.parentElement?.closest('.panel-quote,.client-quote,.manifesto')) continue;
       const t = n.nodeValue;
       if (bad.some((re) => re.test(t))) hits.push(t.trim().slice(0, 70));
     }
