@@ -427,6 +427,10 @@
     opacity:0; transition:opacity .3s linear;
   }
   .process-ghost span.is-ghost-active{ opacity:1; }
+  /* The watermark tracks whichever panel is pinned, so it only means anything
+     while the scrub is running. In the stacked layout (phones, and no-JS) it
+     sits at one fixed spot and collides with the second heading, so it goes. */
+  .process-section:not(.process-js) .process-ghost{ display:none; }
   .process-head{ position:relative; z-index:1; text-align:center; margin-bottom:clamp(2.4rem,5vw,3.6rem); }
   .process-progress{ display:flex; justify-content:center; gap:.7rem; margin-top:1.4rem; }
   .process-progress .dash{ width:42px; height:3px; border-radius:2px; background:var(--ink-line-strong); transition:background .4s var(--ease); }

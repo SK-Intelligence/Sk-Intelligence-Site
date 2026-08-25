@@ -383,6 +383,48 @@ for (const w of PHONES) {
   await p.close();
 }
 
+// ─────────────────────────────────────────── no dead screens on a phone
+head('no dead screens on a phone');
+{
+  const p = await phone(390);
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await walk(p);
+  await p.waitForTimeout(900);
+
+  const r = await p.evaluate(() => {
+    const items = [];
+    document.querySelectorAll('body *').forEach((n) => {
+      const st = getComputedStyle(n);
+      if (st.visibility === 'hidden' || st.opacity === '0' || st.display === 'none') return;
+      if (st.position === 'fixed') return;
+      const t = n.getBoundingClientRect();
+      if (t.height < 4) return;
+      const hasText = [...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim());
+      if (!hasText && !/^(IMG|CANVAS|VIDEO)$/.test(n.tagName)) return;
+      items.push([t.top + window.scrollY, t.bottom + window.scrollY]);
+    });
+    const H = window.innerHeight;
+    const dead = [];
+    for (let y = 0; y < document.body.scrollHeight - H; y += Math.round(H / 2)) {
+      const y2 = y + H;
+      let covered = 0;
+      items.forEach(([a, b]) => { const s = Math.max(a, y), e = Math.min(b, y2); if (e > s) covered += e - s; });
+      if (covered / H < 0.06) dead.push(y);
+    }
+    return { dead, docH: document.body.scrollHeight, process: Math.round(document.getElementById('process').getBoundingClientRect().height) };
+  });
+
+  // The pinned process scrub held one panel for 220% of the viewport height.
+  // On a phone that panel fills the top half and the rest is empty, so it read
+  // as roughly three screens of nothing between two sections. It is desktop
+  // only now, and the section falls back to its stacked layout below 901px.
+  ok(r.dead.length === 0,
+    `every screen down the page carries content${r.dead.length ? ` — empty at y ${r.dead.join(', ')}` : ''}`);
+  ok(r.process < 1600, `the process section is not a scroll void on a phone (${r.process}px)`);
+  await p.close();
+}
+
 // ─────────────────────────────────────────── progressive enhancement
 head('progressive enhancement');
 {
