@@ -197,6 +197,24 @@ export function initHeroNetwork(): () => void {
     core.scale.setScalar(0.01);
     group.add(core);
 
+    /* Spokes from the nucleus out to every shell node. Without these the core
+       is a sphere floating inside a web it is not part of: buildNearestNeighbourEdges
+       runs over the shell points only, so nothing in `edgePairs` ever referenced it.
+
+       One per node is a lot of ink converging on a single point, so they are
+       thinner and much fainter than the lattice edges -- at the shell's own
+       weight, 84 lines through the middle read as a solid ball rather than a
+       wired one. That ratio is the dial if this needs tuning.
+
+       Parented to `group`, like nodes/edges/core and unlike `halo`, so it
+       inherits the rotation instead of standing still inside a turning ball. */
+    var CORE_EDGE_RADIUS = EDGE_RADIUS * 0.62;
+    var CORE_EDGE_OPACITY_RATIO = 0.42;
+    var coreEdgeMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 });
+    var coreEdges = new THREE.InstancedMesh(edgeGeo, coreEdgeMat, COUNT);
+    coreEdges.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(COUNT * 3), 3);
+    group.add(coreEdges);
+
     /* Halo ring billboarded to the camera. Added to `scene`, not `group`
        -- the core sits at group's local origin, which stays put in world
        space regardless of group.rotation (rotation about the origin
@@ -227,8 +245,15 @@ export function initHeroNetwork(): () => void {
     var _dir = new THREE.Vector3();
     var _yAxis = new THREE.Vector3(0, 1, 0);
     var _quat = new THREE.Quaternion();
+    /* The nucleus in group space. It is always the origin, but writeEdgeInto
+       wants a Vector3 and allocating one per spoke per frame would churn. */
+    var _coreOrigin = new THREE.Vector3();
+    var _proj = new THREE.Vector3();
 
-    function writeEdgeInstance(e, pa, pb){
+    /* Orients and scales one unit cylinder to span pa..pb. Takes the target
+       mesh and radius so the core spokes can reuse it: the maths never cared
+       where the two points came from. */
+    function writeEdgeInto(mesh, radius, e, pa, pb){
       _dir.copy(pb).sub(pa);
       var len = _dir.length();
       if (len < 1e-5) len = 1e-5;
@@ -236,9 +261,13 @@ export function initHeroNetwork(): () => void {
       _quat.setFromUnitVectors(_yAxis, _dir);
       dummy.position.copy(pa).addScaledVector(_dir, len * 0.5);
       dummy.quaternion.copy(_quat);
-      dummy.scale.set(EDGE_RADIUS, len, EDGE_RADIUS);
+      dummy.scale.set(radius, len, radius);
       dummy.updateMatrix();
-      edges.setMatrixAt(e, dummy.matrix);
+      mesh.setMatrixAt(e, dummy.matrix);
+    }
+
+    function writeEdgeInstance(e, pa, pb){
+      writeEdgeInto(edges, EDGE_RADIUS, e, pa, pb);
     }
 
     function updateOrganize(dt){
@@ -276,6 +305,25 @@ export function initHeroNetwork(): () => void {
       }
 
       var coreT = smoothstep(0.68, 1.0, overallT);
+
+      /* Spokes ride the core's own timing, so they grow out of the nucleus as
+         it appears rather than hanging in space waiting for it. Written inside
+         this function on purpose: it only runs while !settled, so the matrices
+         stop being uploaded once the intro finishes and the idle-upload probe
+         in tests/e2e.mjs stays at zero. They still rotate after that, because
+         rotation is applied to the parent group rather than to these matrices. */
+      var coreEdgeAlpha = coreT * EDGE_MAX_OPACITY * CORE_EDGE_OPACITY_RATIO;
+      coreEdgeMat.opacity = coreEdgeAlpha;
+      if (coreEdgeAlpha > 0.001){
+        _coreOrigin.set(0, 0, 0);
+        for (var s = 0; s < COUNT; s++){
+          writeEdgeInto(coreEdges, CORE_EDGE_RADIUS, s, _coreOrigin, nodePos[s]);
+          coreEdges.instanceColor.setXYZ(s, edgeColor.r, edgeColor.g, edgeColor.b);
+        }
+        coreEdges.instanceMatrix.needsUpdate = true;
+        coreEdges.instanceColor.needsUpdate = true;
+      }
+
       core.scale.setScalar(0.01 + coreT * 0.99);
       coreMat.opacity = coreT * 1.0;
       halo.scale.setScalar(0.01 + coreT * 0.99);
@@ -442,6 +490,10 @@ export function initHeroNetwork(): () => void {
       var w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
       camera.aspect = w / h; camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      /* The chip's box is the other thing that changes with the viewport, and
+         re-measuring here is what keeps the per-frame path off the layout
+         path. Hoisted, and a no-op until the label lookup below has run. */
+      measureLabel();
     }
     if ('ResizeObserver' in window){ new ResizeObserver(resize).observe(sceneEl); }
     else { window.addEventListener('resize', resize, { signal: _signal }); }
@@ -451,7 +503,100 @@ export function initHeroNetwork(): () => void {
     var rafId = null;
     var frameParity = 0;
 
-    function renderStatic(){ renderer.render(scene, camera); }
+    /* -------------------- "Your systems" leader -------------------------
+       The label used to be pinned at top:16%/right:6% with a fixed 34px CSS
+       hairline, which pointed at whatever happened to be there. It now tracks
+       a real node on the shell.
+
+       Two things it does NOT do. It does not sit on the node: the text would
+       land on top of the lattice and vanish behind the ball for half of every
+       turn. And it does not keep a fixed offset: instead it rides the ray from
+       the sphere's centre through the node, pushed past the silhouette, so it
+       orbits the ball on that node's side and stays clear of it. The leader
+       line then lands exactly on the node, which is what makes it read as
+       attached rather than merely nearby.
+
+       Screen maths uses canvas.clientWidth/Height to match resize(). The
+       wrapper is inset -10%/-6% from the canvas; measuring that box instead
+       puts the label a few percent off the node it is drawing to. */
+    var shellLabelEl = labelsWrap ? labelsWrap.querySelector('.scene-label-shell') : null;
+    var leaderEl = labelsWrap ? labelsWrap.querySelector('.scene-leader-line') : null;
+    /* One specific node, chosen once. Any index works; this one sits off the
+       equator so the label swings through a visibly varied arc. */
+    var LABEL_NODE = 21;
+    /* Clear air between the chip and the node, which is the only part of the
+       leader you actually see. */
+    var LABEL_GAP = 46;
+    var _nodeScreen = { x: 0, y: 0, behind: false };
+    var _centreScreen = { x: 0, y: 0, behind: false };
+    /* Half the chip, cached. The leader has to start at the chip's edge rather
+       than its centre, or its whole run hides underneath the chip, and the
+       chip has to sit its own half-extent clear of the node or it covers the
+       ball. Both need the size every frame; measuring it every frame would
+       force a layout every frame, and the text is static, so it only changes
+       when the box does. */
+    var _labelHW = 0, _labelHH = 0;
+    function measureLabel(){
+      if (!shellLabelEl) return;
+      _labelHW = shellLabelEl.offsetWidth / 2;
+      _labelHH = shellLabelEl.offsetHeight / 2;
+    }
+
+    function projectToScreen(local, out){
+      _proj.copy(local).applyMatrix4(group.matrixWorld).project(camera);
+      out.x = (_proj.x * 0.5 + 0.5) * (canvas.clientWidth || 1);
+      out.y = (1 - (_proj.y * 0.5 + 0.5)) * (canvas.clientHeight || 1);
+      out.behind = _proj.z > 0;
+      return out;
+    }
+
+    function updateShellLabel(){
+      if (!shellLabelEl || !leaderEl) return;
+      /* Under 960px the whole label layer is display:none and the ball is
+         background texture. Projecting into a hidden, zero-size box would
+         write NaNs into a transform nobody can see. */
+      if (!canvas.clientWidth || !canvas.clientHeight) return;
+      if (labelsWrap && getComputedStyle(labelsWrap).display === 'none') return;
+
+      projectToScreen(nodePos[LABEL_NODE], _nodeScreen);
+      _coreOrigin.set(0, 0, 0);
+      projectToScreen(_coreOrigin, _centreScreen);
+
+      var dx = _nodeScreen.x - _centreScreen.x;
+      var dy = _nodeScreen.y - _centreScreen.y;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 1e-3){ dx = 1; dy = 0; len = 1; }
+      var ux = dx / len, uy = dy / len;
+
+      /* Distance from the chip's centre to where the ray leaves its box. The
+         ray exits through whichever side it reaches first, so it is the
+         smaller of the two axis crossings. */
+      if (!_labelHW) measureLabel();
+      var half = Math.min(
+        _labelHW / Math.max(Math.abs(ux), 1e-6),
+        _labelHH / Math.max(Math.abs(uy), 1e-6),
+      );
+
+      /* Chip centre sits a full gap plus its own half-extent beyond the node,
+         so its near edge clears the ball rather than resting on it. */
+      var lx = _centreScreen.x + ux * (len + LABEL_GAP + half);
+      var ly = _centreScreen.y + uy * (len + LABEL_GAP + half);
+
+      shellLabelEl.style.transform =
+        'translate3d(' + lx.toFixed(1) + 'px,' + ly.toFixed(1) + 'px,0) translate(-50%,-50%)';
+      leaderEl.setAttribute('x1', (lx - ux * half).toFixed(1));
+      leaderEl.setAttribute('y1', (ly - uy * half).toFixed(1));
+      leaderEl.setAttribute('x2', _nodeScreen.x.toFixed(1));
+      leaderEl.setAttribute('y2', _nodeScreen.y.toFixed(1));
+      /* Faded when the node has turned to the far side, so a leader crossing
+         the ball reads as going behind it rather than as a stray line. */
+      leaderEl.style.opacity = _nodeScreen.behind ? '0.4' : '1';
+    }
+
+    function renderStatic(){
+      renderer.render(scene, camera);
+      updateShellLabel();
+    }
 
     function loop(){
       rafId = requestAnimationFrame(loop);
@@ -471,6 +616,14 @@ export function initHeroNetwork(): () => void {
       group.rotation.x = pointer.y * 0.16 + scrollProgress * 0.35;
       camera.position.z = 7.2 - scrollProgress * 0.9;
       renderer.render(scene, camera);
+      /* After the render, which is what refreshes group.matrixWorld for this
+         frame's rotation. Projecting before it would trail one frame behind
+         and the leader would visibly lag the node it points at.
+
+         A style write is not a BufferAttribute upload, so this does not affect
+         the idle-upload probe: the scene keeps rotating once settled, and the
+         label has to keep up with it. */
+      updateShellLabel();
     }
 
     function start(){

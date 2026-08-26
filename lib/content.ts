@@ -240,89 +240,6 @@ export type Shot = { src: string; alt: string; label: string };
 
 export const clients = [
   {
-    id: 'hopeful',
-    name: 'Hopeful Hearts LTD',
-    sector: 'Family services',
-    logo: '/clients/c-hopeful.png',
-    work: 'Company email set up, configured and supported as the team grew.',
-    outcome: 'Company email for a Cavan family services team, authenticating properly and landing in the inbox.',
-    quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
-    shots: [
-      { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
-      { src: '/work/hopeful-2.png', alt: 'Hopeful Hearts services page listing their five support services', label: 'Services' },
-    ],
-    detail: [
-      'Company email across Outlook and Google Workspace',
-      'Domain records configured for SPF, DKIM and DMARC',
-      'Mailbox provisioning and account creation for the team',
-      'Ongoing support and changes as the team grew',
-    ],
-  },
-  {
-    id: 'gbautos',
-    name: 'GB Autos & Tyres',
-    sector: 'Vehicle servicing',
-    logo: '/clients/c-gbautos.png',
-    work: 'Their first ever website, built with no online presence to start from.',
-    outcome: 'A Feltham garage trading since 2009, findable online for the first time by the people already looking for it.',
-    quote: 'Great job by SK on our first-ever website! I had no online presence before.',
-    shots: [
-      { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
-      { src: '/work/gbautos-2.png', alt: 'GB Autos services page listing servicing, tyres, brakes and body repairs', label: 'Services' },
-    ],
-    detail: [
-      'First online presence, built from nothing',
-      'Services, location and hours structured for local search',
-      'Opening times and phone surfaced on every screen',
-      'Set up so the owner can be found and contacted directly',
-    ],
-  },
-  {
-    id: 'ossett',
-    name: 'Ossett Tyres',
-    sector: 'Tyre retail',
-    logo: '/clients/c-ossett.png',
-    work: 'A registration lookup that returns the exact tyre fitment for any vehicle.',
-    outcome: 'A customer types their number plate. The tool resolves the vehicle against DVLA records and returns the original front and rear tyre sizes, with nobody in the garage looking them up.',
-    quote: 'Highly impressed with the services they provided. They made a top-notch website.',
-    shots: [
-      { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
-      { src: '/work/ossett-2.png', alt: 'Resolved vehicle showing make, year, engine, fuel and colour with front and rear tyre sizes', label: 'Vehicle resolved' },
-    ],
-    detail: [
-      'DVLA registration-lookup API integration',
-      'Make, year, engine, fuel and colour resolved per plate',
-      'Original-equipment tyre fitment matched front and rear',
-      'Custom front end over a serverless backend on Vercel',
-      'Automated order and enquiry emails, tracked in Google Sheets',
-    ],
-  },
-  {
-    id: 'astar',
-    name: 'A Star Customs',
-    sector: 'Automotive customisation',
-    logo: '/clients/c-astar.png',
-    work: 'Full e-commerce build covering products, payments and checkout.',
-    outcome: 'A London customs shop with a storefront that sells: products, inventory, payments and checkout, built from scratch for the brand.',
-    quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
-    shots: [
-      { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
-      { src: '/work/astar-2.png', alt: 'A Star Customs shop with products for sale', label: 'Shop' },
-      { src: '/work/astar-3.png', alt: 'A Star Customs gallery of completed builds', label: 'Gallery' },
-      { src: '/work/astar-4.png', alt: 'A Star Customs services page showing screen upgrades, star lights and ambient lighting', label: 'Services' },
-    ],
-    detail: [
-      'Storefront built from scratch for the brand',
-      'Product and inventory management',
-      'Secure payment processing and checkout',
-      'Gallery, custom kits and collaborations, all self-managed',
-      'Built, launched and supported end to end',
-    ],
-  },
-  /* Last in the array on purpose: it lands as the fifth tab and the four client
-     builds keep the running order they had. No `quote` and no `logo` — see the
-     note above the array, and leave both absent. */
-  {
     id: 'provena',
     name: 'Provena AI',
     sector: 'Regulatory compliance',
@@ -348,6 +265,90 @@ export const clients = [
       'Seven evidence templates, DPIA to Article 30',
       'Human sign-off before any binder finalises',
       'FastAPI, PostgreSQL and Redis behind a Next.js dashboard',
+    ],
+  },
+  {
+    id: 'astar',
+    name: 'A Star Customs',
+    sector: 'Automotive customisation',
+    logo: '/clients/c-astar.png',
+    work: 'Full e-commerce build covering products, payments and checkout.',
+    outcome: 'A London customs shop with a storefront that sells: products, inventory, payments and checkout, built from scratch for the brand.',
+    quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
+    shots: [
+      { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
+      { src: '/work/astar-2.png', alt: 'A Star Customs shop with products for sale', label: 'Shop' },
+      { src: '/work/astar-3.png', alt: 'A Star Customs gallery of completed builds', label: 'Gallery' },
+      { src: '/work/astar-4.png', alt: 'A Star Customs services page showing screen upgrades, star lights and ambient lighting', label: 'Services' },
+    ],
+    detail: [
+      'Storefront built from scratch for the brand',
+      'Product and inventory management',
+      'Secure payment processing and checkout',
+      'Gallery, custom kits and collaborations, all self-managed',
+      'Built, launched and supported end to end',
+    ],
+  },
+  /* First on purpose. `active` defaults to 0 in ClientWork, so whatever leads
+     this array is the mark that starts selected and the panel that greets a
+     reader who never touches the strip. No `quote` and no `logo` — see the note
+     above the array, and leave both absent. */
+  {
+    id: 'ossett',
+    name: 'Ossett Tyres',
+    sector: 'Tyre retail',
+    logo: '/clients/c-ossett.png',
+    work: 'A registration lookup that returns the exact tyre fitment for any vehicle.',
+    outcome: 'A customer types their number plate. The tool resolves the vehicle against DVLA records and returns the original front and rear tyre sizes, with nobody in the garage looking them up.',
+    quote: 'Highly impressed with the services they provided. They made a top-notch website.',
+    shots: [
+      { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
+      { src: '/work/ossett-2.png', alt: 'Resolved vehicle showing make, year, engine, fuel and colour with front and rear tyre sizes', label: 'Vehicle resolved' },
+    ],
+    detail: [
+      'DVLA registration-lookup API integration',
+      'Make, year, engine, fuel and colour resolved per plate',
+      'Original-equipment tyre fitment matched front and rear',
+      'Custom front end over a serverless backend on Vercel',
+      'Automated order and enquiry emails, tracked in Google Sheets',
+    ],
+  },
+  {
+    id: 'gbautos',
+    name: 'GB Autos & Tyres',
+    sector: 'Vehicle servicing',
+    logo: '/clients/c-gbautos.png',
+    work: 'Their first ever website, built with no online presence to start from.',
+    outcome: 'A Feltham garage trading since 2009, findable online for the first time by the people already looking for it.',
+    quote: 'Great job by SK on our first-ever website! I had no online presence before.',
+    shots: [
+      { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
+      { src: '/work/gbautos-2.png', alt: 'GB Autos services page listing servicing, tyres, brakes and body repairs', label: 'Services' },
+    ],
+    detail: [
+      'First online presence, built from nothing',
+      'Services, location and hours structured for local search',
+      'Opening times and phone surfaced on every screen',
+      'Set up so the owner can be found and contacted directly',
+    ],
+  },
+  {
+    id: 'hopeful',
+    name: 'Hopeful Hearts LTD',
+    sector: 'Family services',
+    logo: '/clients/c-hopeful.png',
+    work: 'Company email set up, configured and supported as the team grew.',
+    outcome: 'Company email for a Cavan family services team, authenticating properly and landing in the inbox.',
+    quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
+    shots: [
+      { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
+      { src: '/work/hopeful-2.png', alt: 'Hopeful Hearts services page listing their five support services', label: 'Services' },
+    ],
+    detail: [
+      'Company email across Outlook and Google Workspace',
+      'Domain records configured for SPF, DKIM and DMARC',
+      'Mailbox provisioning and account creation for the team',
+      'Ongoing support and changes as the team grew',
     ],
   },
 ] as const;

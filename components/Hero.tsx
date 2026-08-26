@@ -50,6 +50,15 @@ export function Hero() {
             </svg>
             <canvas id="hero-canvas" aria-hidden="true" />
             <div className="hero-scene-labels" id="heroSceneLabels">
+              {/* The leader is an SVG line, not the CSS hairline the labels used
+                  to carry: it needs a per-frame length AND angle as the ball
+                  turns, and steering a pseudo-element would mean rotating the
+                  label, which rotates the text with it. heroNetwork.ts sets the
+                  endpoints. "Us" keeps its ::before, being pinned to the
+                  rotation pivot and so always dead centre. */}
+              <svg className="scene-leader" aria-hidden="true">
+                <line className="scene-leader-line" x1="0" y1="0" x2="0" y2="0" />
+              </svg>
               <p className="scene-label scene-label-shell"><span>Your systems</span></p>
               <p className="scene-label scene-label-core"><span>Us</span></p>
             </div>

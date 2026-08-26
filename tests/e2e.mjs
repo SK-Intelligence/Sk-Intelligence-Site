@@ -25,6 +25,12 @@ const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable
 const desktop = () => browser.newPage({ viewport: { width: 1440, height: 900 } });
 const phone = (w = 390) => browser.newPage({ viewport: { width: w, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
 const settle = async (p, ms = 3500) => p.waitForTimeout(ms);
+/* Resolve a build's tab index from its name. The strip has been reordered twice,
+   and a hardcoded index does not fail on a reorder: it silently runs the test
+   against a different company. The A Star blocks below care which one they get,
+   because it is the only build with four shots. */
+const indexOf = (p, name) => p.evaluate((n) =>
+  [...document.querySelectorAll('.tab')].findIndex((t) => t.textContent.trim() === n), name);
 const walk = async (p) => {
   const h = await p.evaluate(() => document.documentElement.scrollHeight);
   for (let y = 0; y < h; y += 450) { await p.evaluate((v) => window.scrollTo(0, v), y); await p.waitForTimeout(45); }
@@ -301,23 +307,27 @@ head('case bank');
   }
 
   // Thumbnail strip swaps the primary image and moves the active marker with it.
-  await p.click('#tab-3'); // A Star, the only client with four shots
+  // Resolved by name: this block needs the build with four shots specifically,
+  // and it has been at three different indices across two reorders.
+  const astar = await indexOf(p, 'A Star Customs');
+  ok(astar !== -1, `found A Star in the strip (index ${astar})`);
+  await p.click(`#tab-${astar}`);
   await p.waitForTimeout(500);
-  const before = await p.evaluate(() =>
-    document.querySelector('#panel-3 .showcase-frame img').getAttribute('src'));
-  await p.evaluate(() => document.querySelectorAll('#panel-3 .client-shot')[2].click());
+  const before = await p.evaluate((n) =>
+    document.querySelector(`#panel-${n} .showcase-frame img`).getAttribute('src'), astar);
+  await p.evaluate((n) => document.querySelectorAll(`#panel-${n} .client-shot`)[2].click(), astar);
   await p.waitForTimeout(500);
-  const after = await p.evaluate(() => ({
-    src: document.querySelector('#panel-3 .showcase-frame img').getAttribute('src'),
-    onIndex: [...document.querySelectorAll('#panel-3 .client-shot')]
+  const after = await p.evaluate((n) => ({
+    src: document.querySelector(`#panel-${n} .showcase-frame img`).getAttribute('src'),
+    onIndex: [...document.querySelectorAll(`#panel-${n} .client-shot`)]
       .findIndex((b) => b.hasAttribute('data-on')),
-    pressed: document.querySelectorAll('#panel-3 .client-shot[aria-pressed="true"]').length,
-  }));
+    pressed: document.querySelectorAll(`#panel-${n} .client-shot[aria-pressed="true"]`).length,
+  }), astar);
   ok(before !== after.src, 'a thumbnail swaps the primary screenshot');
   ok(after.onIndex === 2 && after.pressed === 1, `the active marker follows it (index ${after.onIndex})`);
 
   // Lightbox: opens, traps focus, steps, and closes on Esc.
-  await p.click('#panel-3 .showcase-open');
+  await p.click(`#panel-${astar} .showcase-open`);
   await p.waitForTimeout(450);
   const open = await p.evaluate(() => {
     const d = document.querySelector('dialog.lightbox');
@@ -352,7 +362,7 @@ head('case bank');
     ['the close button', async () => p.click('.lightbox-x')],
     ['a backdrop click', async () => p.mouse.click(8, 8)],
   ]) {
-    await p.click('#panel-3 .showcase-open');
+    await p.click(`#panel-${astar} .showcase-open`);
     await p.waitForTimeout(400);
     await act();
     await p.waitForTimeout(400);
@@ -375,9 +385,12 @@ head('case bank');
     await settle(s);
     await s.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
     await s.waitForTimeout(400);
-    await s.click('#tab-3');
+    /* Resolved by name because .lightbox-nav only renders above one shot: land
+       this on the single-shot build and the assertion below reads null. */
+    const multi = await indexOf(s, 'A Star Customs');
+    await s.click(`#tab-${multi}`);
     await s.waitForTimeout(400);
-    await s.click('#panel-3 .showcase-open');
+    await s.click(`#panel-${multi} .showcase-open`);
     await s.waitForTimeout(600);
     const nav = await s.evaluate(() => {
       const n = document.querySelector('.lightbox-nav');
