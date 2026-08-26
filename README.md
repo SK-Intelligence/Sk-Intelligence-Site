@@ -29,7 +29,7 @@ public/founders/        kenneth.jpg present; drop sameer.jpg here (see the READM
 public/work/*           build screenshots for the case bank — generated, see below
 tools/
   shots.mjs             Playwright capture: regenerates every case-bank screenshot
-  mockups/*.html        standalone sources for three of the four clients
+  mockups/*.html        standalone sources for three of the five builds
 ```
 
 Provena AI has no mockup: it is our own product and is captured from its own
@@ -64,7 +64,7 @@ PROVENA_OUT=/path/to/Provena-AI/dashboard-next/out npm run shots -- provena
 ```
 
 The default is where it sits on Sameer's machine. On any checkout without it,
-that target logs a skip and the four clients still regenerate. Two details are
+that target logs a skip and the four client builds still regenerate. Two details are
 deliberate and worth keeping: it is served rather than opened over `file://`,
 because the export references its assets by absolute path, and it is captured
 with JavaScript **off**, because every figure is baked into the HTML at export

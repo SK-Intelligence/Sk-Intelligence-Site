@@ -226,6 +226,12 @@
     border-radius:16px; background:var(--chip-bg); border:1px solid var(--chip-border);
   }
   .client-chip img{ width:100%; height:100%; object-fit:contain; display:block; }
+  /* Four chips hold a client's own logo as an <img>. The fifth build has no
+     client and so no mark to borrow, and gets one drawn instead; an <svg> is
+     not sized by the rule above, so it carries its own. Stroke treatment
+     matches the delivery-team mark on the founder cards. */
+  .client-mark{ display:block; stroke:var(--accent-deep); stroke-width:1.6; }
+  .client-mark circle{ fill:var(--accent-deep); fill-opacity:.16; }
   .client-logo-rail{ display:flex; align-items:center; gap:16px; margin-top:24px; flex-wrap:wrap; }
   .client-logo-rail .client-chip{ width:52px; height:52px; padding:9px; margin-bottom:0; }
 
@@ -481,22 +487,30 @@
   .js-tabs .panel.is-transitioning{ filter:blur(3px); opacity:.55; }
   .panel{ transition:filter .2s ease, opacity .2s ease; }
 
-  /* .own-build-meta rides along on all four of these. The Provena section is a
-     panel with the client parts taken out, so it wants exactly this typography;
-     widening the selector keeps one definition rather than a copy that drifts
-     the first time either section is restyled. */
-  .panel-meta,
-  .own-build-meta{ border-left:2px solid var(--accent); padding-left:20px; }
-  .panel-meta .client-sector,
-  .own-build-meta .client-sector{
+  .panel-meta{ border-left:2px solid var(--accent); padding-left:20px; }
+  /* A build with no client carries no testimonial, so .panel-meta is the last
+     child and the column the quote used to fill sits empty beside it. Span the
+     row and flow the meta into two columns instead of leaving half the panel
+     blank. `:last-child` IS the condition: the quote, when there is one, always
+     follows the meta. */
+  .panel-meta:last-child{
+    grid-column:1 / -1;
+    columns:2; column-gap:clamp(28px,5vw,56px);
+  }
+  /* Nothing splits across the break: a metrics row cut in half, or a bullet
+     with its first line in one column and its second in the next, reads as a
+     rendering fault. */
+  .panel-meta:last-child > *{ break-inside:avoid; }
+  @media (max-width:720px){
+    .panel-meta:last-child{ columns:1; }
+  }
+  .panel-meta .client-sector{
     font-family:var(--font-display); font-size:.7rem; font-weight:700;
     letter-spacing:.19em; text-transform:uppercase; color:var(--accent-deep);
     margin-bottom:8px;
   }
-  .panel-meta .client-name,
-  .own-build-meta .client-name{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
-  .panel-meta .client-work,
-  .own-build-meta .client-work{ margin-top:10px; color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
+  .panel-meta .client-name{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
+  .panel-meta .client-work{ margin-top:10px; color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
 
   /* =================== Build screenshots =================== */
   /* Spans the panel so the build is the first thing you see, then the meta
@@ -1075,39 +1089,6 @@
   }
 
   /* Client technical detail — what was actually built, per project. */
-  /* =================== Our own build (Provena AI) =================== */
-  /* One build with no client behind it, so it gets a section rather than a
-     fifth tab in the case bank: no tab strip to put a single item in, no logo
-     rail, and no testimonial. The grid deliberately matches .panel so the two
-     sections line up down the page and read as siblings. */
-  /* Shot across the top, prose in two columns beneath it. Laid out side by side
-     like a .panel, the single screenshot ran out about a third of the way down
-     the copy next to it and left a hole under it the size of the shot; this
-     also gives the dashboard about double the width, which a screen carrying
-     four stat cards and two tables needs to be legible at all. */
-  .own-build{ display:grid; gap:clamp(26px,4vw,44px); }
-  /* .client-metrics carries a 20px top margin for sitting under prose in a
-     panel. Here it is a spec strip in its own row and the grid gap spaces it. */
-  .own-build-facts{ margin-top:0; }
-  .own-build-meta{
-    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-    gap:clamp(24px,4vw,52px); align-items:start;
-  }
-  /* The detail list already has its top margin from .client-detail, which is
-     meant for sitting under prose. In its own column it starts at the top. */
-  .own-build-meta > .client-detail{ margin-top:0; }
-  @media (max-width:720px){
-    .own-build-meta{
-      grid-template-columns:1fr; gap:20px;
-      border-left:0; padding-left:0;
-      border-top:2px solid var(--accent); padding-top:16px;
-    }
-  }
-  /* The client chips hold an <img>, which .client-chip img sizes. This holds an
-     <svg> instead, so it carries its own sizing and takes the stroke treatment
-     from the delivery-team mark it is drawn to match. */
-  .own-build-mark{ width:100%; height:100%; stroke:var(--accent-deep); stroke-width:1.6; }
-  .own-build-mark circle{ fill:var(--accent-deep); fill-opacity:.16; }
 
   .client-detail{ margin-top:14px; }
   .client-detail li{

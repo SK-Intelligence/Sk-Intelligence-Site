@@ -6,6 +6,28 @@ import { clients, PLACEHOLDER_METRICS } from '@/lib/content';
 import { Lightbox } from './Lightbox';
 
 /**
+ * A client's own logo, or a drawn mark for the one build that has no client.
+ *
+ * The four logos are real marks belonging to real companies. Provena AI has no
+ * client and therefore no mark to borrow, so rather than inventing one it gets
+ * provenance drawn directly: two records chaining down into a third sealed
+ * inside a ring. Same idiom as the delivery-team mark on the founder cards.
+ */
+function ClientMark({ logo, name, size }: { logo: string | null; name: string; size: number }) {
+  if (logo) return <Image src={logo} alt={name ? `${name} logo` : ''} width={84} height={84} />;
+  return (
+    <svg viewBox="0 0 40 40" className="client-mark" fill="none" aria-hidden="true" width={size} height={size}>
+      <circle cx="11.5" cy="10" r="3.6" />
+      <circle cx="20" cy="18" r="3.6" />
+      <path d="M14.1 12.4 L17.4 15.6" />
+      <path d="M22.6 20.4 L24.6 22.3" />
+      <circle cx="27.5" cy="27" r="6.2" />
+      <circle cx="27.5" cy="27" r="2.3" />
+    </svg>
+  );
+}
+
+/**
  * Tabbed client work.
  *
  * Two bugs from the static build are fixed here by construction rather than by
@@ -94,16 +116,20 @@ export function ClientWork() {
     <section className="section-pad" id="work" style={{ background: 'var(--surface-alt)' }}>
       <div className="container">
         <div className="section-head" data-reveal>
-          <p className="eyebrow">Client work</p>
-          <h2>Four builds, still running.</h2>
+          {/* "Client work" until Provena joined the strip. Four of the five are
+              client work and one is a platform with no client behind it, so the
+              heading no longer asserts what it cannot for all of them. */}
+          <p className="eyebrow">Work</p>
+          <h2>Five builds, still running.</h2>
           <p>
             A tyre lookup that reads DVLA records. A shop that takes payments. A garage&rsquo;s
-            first website. Company email for a growing team.
+            first website. Company email for a growing team. A compliance platform that reads
+            an AI stack and produces the binder an auditor asks for.
           </p>
           <div className="client-logo-rail" aria-hidden="true">
             {clients.map((c) => (
               <span key={c.id} className="client-chip">
-                <Image src={c.logo} alt="" width={84} height={84} />
+                <ClientMark logo={c.logo} name="" size={34} />
               </span>
             ))}
           </div>
@@ -212,7 +238,7 @@ export function ClientWork() {
 
                   <div className="panel-meta">
                     <span className="client-chip">
-                      <Image src={c.logo} alt={`${c.name} logo`} width={84} height={84} />
+                      <ClientMark logo={c.logo} name={c.name} size={56} />
                     </span>
                     <p className="client-sector">{c.sector}</p>
                     <h3 className="client-name">{c.name}</h3>
@@ -230,10 +256,17 @@ export function ClientWork() {
                     </ul>
                   </div>
 
-                  <figure className="panel-quote">
-                    <blockquote>{c.quote}&rdquo;</blockquote>
-                    <figcaption>{c.name}</figcaption>
-                  </figure>
+                  {/* Only where there is a client to quote. Provena has none, so
+                      this block is absent rather than filled: a testimonial
+                      attributed to a company that does not exist would be a
+                      fabricated endorsement sitting beside four real ones.
+                      tests/e2e.mjs asserts exactly four of the five carry it. */}
+                  {c.quote && (
+                    <figure className="panel-quote">
+                      <blockquote>{c.quote}&rdquo;</blockquote>
+                      <figcaption>{c.name}</figcaption>
+                    </figure>
+                  )}
                 </div>
               );
             })}
