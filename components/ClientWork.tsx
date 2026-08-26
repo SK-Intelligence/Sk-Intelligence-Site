@@ -28,15 +28,23 @@ function ClientMark({ logo, name, size }: { logo: string | null; name: string; s
 }
 
 /**
- * Tabbed client work.
+ * Client work, picked by logo.
  *
- * Two bugs from the static build are fixed here by construction rather than by
- * patching, so they cannot come back:
- *   - the indicator tracks the selected tab's own row. `.tabs` wraps to 2-3 rows
- *     below ~900px, and pinning the underline to the bottom of the whole list
- *     drew it under a different client's tab.
- *   - React owns which panel is visible, so a fast keyboard repeat can never
- *     leave several panels shown at once or desynced from the selected tab.
+ * The selector used to be a row of company names with a sliding underline
+ * beneath them, sitting under a second, decorative row of the same companies'
+ * logos. Two rows saying the same thing, and the section led with a wall of
+ * text before you reached anything worth looking at. The logos ARE the control
+ * now: one row, no duplicate, and a mark is quicker to recognise than its name.
+ *
+ * That deletes the underline and every line that positioned it — a measure
+ * pass, a ResizeObserver and a scroll listener that existed because `.tabs`
+ * wrapped to two or three rows below ~900px and a single underline pinned to
+ * the bottom of the list would draw under the wrong company. A selected chip
+ * marks itself, so none of that has to be true any more.
+ *
+ * What survives from that design, because it was load-bearing: React owns which
+ * panel is visible, so a fast keyboard repeat cannot leave several panels shown
+ * at once or desynced from the selection.
  *
  * Progressive enhancement: with JS off this component never hydrates, so the
  * server-rendered markup shows every panel and carries no tab ARIA — nothing
@@ -49,40 +57,10 @@ export function ClientWork() {
    *  tabs and coming back does not silently reset what you were looking at. */
   const [shotIndex, setShotIndex] = useState<number[]>(() => clients.map(() => 0));
   const [zoomed, setZoomed] = useState(false);
-  const [indicator, setIndicator] = useState<{ width: number; x: number; top: number } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => setHydrated(true), []);
-
-  const measure = useCallback(() => {
-    const list = listRef.current;
-    const tab = tabRefs.current[active];
-    if (!list || !tab) return;
-    const l = list.getBoundingClientRect();
-    const t = tab.getBoundingClientRect();
-    // The strip scrolls horizontally on small screens, so offset by scrollLeft:
-    // without it the underline drifts away from its tab as soon as you scroll.
-    setIndicator({
-      width: t.width,
-      x: t.left - l.left + list.scrollLeft,
-      top: t.bottom - l.top - 2,
-    });
-  }, [active]);
-
-  useEffect(() => {
-    measure();
-    const list = listRef.current;
-    const ro = new ResizeObserver(measure);
-    if (list) ro.observe(list);
-    window.addEventListener('resize', measure);
-    list?.addEventListener('scroll', measure, { passive: true });
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', measure);
-      list?.removeEventListener('scroll', measure);
-    };
-  }, [measure]);
 
   // Bring the selected tab into view on a narrow, scrollable strip.
   useEffect(() => {
@@ -126,29 +104,19 @@ export function ClientWork() {
             first website. Company email for a growing team. A compliance platform that reads
             an AI stack and produces the binder an auditor asks for.
           </p>
-          <div className="client-logo-rail" aria-hidden="true">
-            {clients.map((c) => (
-              <span key={c.id} className="client-chip">
-                <ClientMark logo={c.logo} name="" size={34} />
-              </span>
-            ))}
-          </div>
         </div>
 
         <div>
+          {/* One row, and it is the control rather than decoration. The name
+              each logo stands for is not dropped, only moved: it is the
+              accessible name of the button, and it appears in full at the top
+              of the panel the moment you pick one. */}
           <div
             className="tabs"
             id="tabList"
             ref={listRef}
-            {...(hydrated ? { role: 'tablist', 'aria-label': 'Client testimonials' } : {})}
+            {...(hydrated ? { role: 'tablist', 'aria-label': 'Choose a build' } : {})}
           >
-            <div
-              className="tab-indicator"
-              id="tabIndicator"
-              role="presentation"
-              aria-hidden="true"
-              style={indicator ? { width: indicator.width, transform: `translateX(${indicator.x}px)`, top: indicator.top } : undefined}
-            />
             {clients.map((c, i) => (
               <button
                 key={c.id}
@@ -158,9 +126,15 @@ export function ClientWork() {
                 onClick={() => setActive(i)}
                 onKeyDown={(e) => onKeyDown(e, i)}
                 tabIndex={hydrated ? (i === active ? 0 : -1) : undefined}
+                data-on={hydrated && i === active ? '' : undefined}
                 {...(hydrated ? { role: 'tab', 'aria-selected': i === active, 'aria-controls': `panel-${i}` } : {})}
               >
-                {c.name}
+                <span className="client-chip">
+                  <ClientMark logo={c.logo} name="" size={30} />
+                </span>
+                {/* The button would otherwise be an unlabelled image to a
+                    screen reader, and to Google. */}
+                <span className="visually-hidden">{c.name}</span>
               </button>
             ))}
           </div>
@@ -176,6 +150,18 @@ export function ClientWork() {
                   {...(hydrated ? { role: 'tabpanel', 'aria-labelledby': `tab-${i}` } : {})}
                   {...(!hydrated || i === active ? { 'data-active': '' } : {})}
                 >
+                  {/* The name and sector lead the panel, directly under the row
+                      of logos, so picking a mark names what you picked before
+                      anything else loads into view. They used to sit below the
+                      screenshot, which put the label a scroll away from the
+                      control that set it. Rendered per panel rather than once
+                      above the strip so the no-JS fallback, which shows every
+                      panel at once, labels each of them. */}
+                  <div className="panel-head">
+                    <p className="client-sector">{c.sector}</p>
+                    <h3 className="client-name">{c.name}</h3>
+                  </div>
+
                   <div className="client-showcase">
                     <div className="showcase-frame">
                       <div className="showcase-chrome" aria-hidden="true">
@@ -236,12 +222,10 @@ export function ClientWork() {
                     )}
                   </div>
 
+                  {/* No logo here any more: the chip is the control above, and
+                      repeating it inside the panel it selected said nothing
+                      twice. Name and sector have moved to .panel-head. */}
                   <div className="panel-meta">
-                    <span className="client-chip">
-                      <ClientMark logo={c.logo} name={c.name} size={56} />
-                    </span>
-                    <p className="client-sector">{c.sector}</p>
-                    <h3 className="client-name">{c.name}</h3>
                     <p className="client-work">{c.outcome}</p>
                     <dl className="client-metrics">
                       {PLACEHOLDER_METRICS[c.id].map((m) => (
@@ -251,9 +235,21 @@ export function ClientWork() {
                         </div>
                       ))}
                     </dl>
-                    <ul className="client-detail">
-                      {c.detail.map((d) => <li key={d}>{d}</li>)}
-                    </ul>
+                    {/* Folded away by default. What the build DOES is the
+                        outcome line and the numbers above; this is the
+                        implementation, which is worth having but not worth
+                        spending the reader's first ten seconds on.
+
+                        A native <details> rather than a hook: it opens with JS
+                        off, is a real disclosure widget to a screen reader, and
+                        is findable by in-page search in browsers that support
+                        it. None of that is true of a useState toggle. */}
+                    <details className="client-more">
+                      <summary>What was built</summary>
+                      <ul className="client-detail">
+                        {c.detail.map((d) => <li key={d}>{d}</li>)}
+                      </ul>
+                    </details>
                   </div>
 
                   {/* Only where there is a client to quote. Provena has none, so

@@ -301,10 +301,12 @@ export function Founders() {
                   <p className="founder-role">{deliveryTeam.role}</p>
                 </div>
               </div>
-              <div className="founder-bio">
-                <p>{deliveryTeam.bio}</p>
-                <p>{deliveryTeam.background}</p>
-              </div>
+              {/* Same list as the founder cards. It used to be two paragraphs,
+                  which made the third card read as a footnote to the other two
+                  rather than a third member of the set. */}
+              <ul className="founder-creds">
+                {deliveryTeam.credentials.map((c) => <li key={c}>{withStrong(c)}</li>)}
+              </ul>
             </article>
           </div></div>
         </div>

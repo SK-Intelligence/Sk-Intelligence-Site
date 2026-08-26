@@ -232,8 +232,9 @@
      matches the delivery-team mark on the founder cards. */
   .client-mark{ display:block; stroke:var(--accent-deep); stroke-width:1.6; }
   .client-mark circle{ fill:var(--accent-deep); fill-opacity:.16; }
-  .client-logo-rail{ display:flex; align-items:center; gap:16px; margin-top:24px; flex-wrap:wrap; }
-  .client-logo-rail .client-chip{ width:52px; height:52px; padding:9px; margin-bottom:0; }
+  /* The decorative rail under the section deck is gone: those same logos are
+     the tab strip now, so showing them twice was the section introducing
+     itself, then introducing itself again. See .tabs. */
 
   /* =================== Nav =================== */
   .nav-wrap{ position:fixed; top:0; left:0; right:0; z-index:120; display:flex; justify-content:center; padding:16px clamp(14px,4vw,32px) 0; }
@@ -469,15 +470,55 @@
     .studio-item:hover .studio-item-arrow{ transform:rotate(45deg); border-color:var(--band-bg); background:var(--band-bg); color:var(--band-ink); }
   }
 
-  /* =================== Client work — tabbed (ported from 06) =================== */
-  .tabs{ position:relative; display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--ink-line-strong); }
-  .tab{ position:relative; padding:12px 4px; margin-right:24px; font-size:.92rem; font-weight:700; color:var(--ink-mute); transition:color .2s ease; }
-  .tab[aria-selected="true"]{ color:var(--ink); }
-  @media (hover:hover) and (pointer:fine){ .tab:hover{ color:var(--ink); } }
-  /* `top` is set by moveTabIndicator() so the underline follows the selected tab
-     onto its own row once .tabs wraps (2-3 rows below ~900px). Do not swap this
-     back to `bottom` — that pins it to the whole list and mislabels the tab. */
-  .tab-indicator{ position:absolute; top:0; left:0; height:2px; background:var(--accent-deep); box-shadow:0 1px 8px 0 var(--accent-bright); transition:transform .32s var(--ease), width .32s var(--ease), top .32s var(--ease), box-shadow .32s var(--ease); }
+  /* =================== Client work — picked by logo =================== */
+  /* The row of company marks IS the tab strip. It replaced a row of names with
+     a sliding underline, which sat under a second, decorative row of the same
+     logos: two controls' worth of height saying one thing.
+
+     Nothing positions a shared indicator any more, so the wrapping problem that
+     rule existed for is gone with it — a selected chip marks itself, wherever
+     it lands. */
+  .tabs{ display:flex; flex-wrap:wrap; gap:10px; padding-bottom:20px; border-bottom:1px solid var(--ink-line-strong); }
+  .tab{
+    /* Positioned so the .visually-hidden label inside resolves its containing
+       block HERE. Without it the label, being position:absolute, hangs off a
+       distant ancestor instead, which puts it outside the scroll container and
+       therefore outside its clipping: the fifth chip's label then sat past the
+       right edge of a 320px viewport and pushed the whole page 28px wide. */
+    position:relative;
+    padding:4px; border-radius:18px; background:none; border:0; cursor:pointer;
+    /* 44px minimum target, met by the chip alone, but stated here so trimming
+       the chip later cannot silently drop it under. */
+    min-width:44px; min-height:44px;
+    opacity:.42; transition:opacity .25s ease, transform .25s var(--ease);
+  }
+  .tab .client-chip{ margin-bottom:0; width:56px; height:56px; padding:10px; }
+  .tab[aria-selected="true"], .tab[data-on]{ opacity:1; }
+  .tab[data-on] .client-chip{
+    border-color:var(--accent-deep);
+    box-shadow:0 0 0 1px var(--accent-deep), 0 8px 20px -12px rgba(var(--shadow-rgb),.5);
+  }
+  /* No JS, no selection: every panel is shown, so dimming four of five would
+     be marking a state that is not real. The role is only added on hydration,
+     which makes its absence the cleanest test for it. */
+  .tabs:not([role="tablist"]) .tab{ opacity:1; }
+  @media (hover:hover) and (pointer:fine){
+    .tab:hover{ opacity:1; transform:translateY(-2px); }
+  }
+  .tab:focus-visible{ outline:2px solid var(--accent-deep); outline-offset:2px; }
+  @media (prefers-reduced-motion:reduce){ .tab{ transition:none; } .tab:hover{ transform:none; } }
+
+  /* Sector and name lead the panel, right under the marks. */
+  .panel-head{ grid-column:1 / -1; }
+  .panel-head .client-sector{
+    font-family:var(--font-display); font-size:.7rem; font-weight:700;
+    letter-spacing:.19em; text-transform:uppercase; color:var(--accent-deep);
+    margin-bottom:6px;
+  }
+  .panel-head .client-name{
+    font-family:var(--font-serif); font-weight:600; letter-spacing:-.01em; color:var(--ink);
+    font-size:clamp(1.5rem,1.2rem + 1.1vw,2.1rem); line-height:1.15;
+  }
 
   .tab-panels{ margin-top:40px; position:relative; }
   .panel{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:clamp(28px,5vw,56px); padding-block:8px; }
@@ -504,13 +545,9 @@
   @media (max-width:720px){
     .panel-meta:last-child{ columns:1; }
   }
-  .panel-meta .client-sector{
-    font-family:var(--font-display); font-size:.7rem; font-weight:700;
-    letter-spacing:.19em; text-transform:uppercase; color:var(--accent-deep);
-    margin-bottom:8px;
-  }
-  .panel-meta .client-name{ font-family:var(--font-display); font-size:1.35rem; font-weight:700; letter-spacing:-.01em; color:var(--ink); }
-  .panel-meta .client-work{ margin-top:10px; color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
+  /* Sector and name used to live here; they lead the panel now, so the only
+     prose left in this column is the outcome line. */
+  .panel-meta .client-work{ color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
 
   /* =================== Build screenshots =================== */
   /* Spans the panel so the build is the first thing you see, then the meta
@@ -1090,6 +1127,37 @@
 
   /* Client technical detail — what was actually built, per project. */
 
+  /* The implementation list, folded away. The outcome line and the numbers
+     carry the panel; this is for the reader who wants to know how. */
+  .client-more{ margin-top:20px; border-top:1px solid var(--ink-line); }
+  .client-more summary{
+    display:flex; align-items:center; gap:9px;
+    /* Padded to a 44px target. The suite's tap-target sweep only looks at
+       a/button/[role=tab], so a bare summary would slip past it while still
+       being the thing a thumb has to hit. */
+    padding:15px 0; cursor:pointer; list-style:none;
+    font-family:var(--font-display); font-size:.72rem; font-weight:700;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink-mute);
+    transition:color .2s ease;
+  }
+  /* Safari still paints its own triangle without this. */
+  .client-more summary::-webkit-details-marker{ display:none; }
+  /* Drawn marker, matching the icon set: a plus that becomes a minus. */
+  .client-more summary::after{
+    content:''; width:10px; height:10px; flex:none;
+    background:
+      linear-gradient(var(--accent-deep),var(--accent-deep)) center/10px 1px no-repeat,
+      linear-gradient(var(--accent-deep),var(--accent-deep)) center/1px 10px no-repeat;
+    transition:transform .25s var(--ease);
+  }
+  .client-more[open] summary::after{
+    background:linear-gradient(var(--accent-deep),var(--accent-deep)) center/10px 1px no-repeat;
+    transform:rotate(180deg);
+  }
+  @media (hover:hover) and (pointer:fine){ .client-more summary:hover{ color:var(--ink); } }
+  .client-more summary:focus-visible{ outline:2px solid var(--accent-deep); outline-offset:3px; border-radius:4px; }
+  @media (prefers-reduced-motion:reduce){ .client-more summary::after{ transition:none; } }
+
   .client-detail{ margin-top:14px; }
   .client-detail li{
     position:relative; padding-left:16px; margin-top:7px;
@@ -1244,5 +1312,7 @@
       scroll-snap-type:x proximity;
     }
     .tabs::-webkit-scrollbar{ display:none; }
-    .tab{ flex:0 0 auto; scroll-snap-align:start; margin-right:20px; }
+    /* margin-right went with the text tabs; .tabs has a gap now, and adding
+       both put a 30px hole between five chips that should read as one row. */
+    .tab{ flex:0 0 auto; scroll-snap-align:start; }
   }

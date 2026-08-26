@@ -103,11 +103,11 @@ export const founders = [
     name: 'Sameer Gul',
     linkedin: 'https://www.linkedin.com/in/sameer-g-4728a3260/',
     credentials: [
-      'Engineering roles in global stock market systems at <strong>LSEG</strong> and <strong>CME Group</strong>',
-      'Enterprise agentic AI systems for <strong>Big Four</strong> audit firms',
-      'Agentic AI research across <strong>MISO & Sourcing Lens</strong>, including auditable net-zero procurement',
-      'Published AI security research on trust-explicit systems and secure agentic AI',
-      'Award-winning cross-border AI-native medical systems with <strong>NHS</strong> and <strong>HSE</strong> involvement',
+      'Stock market systems at <strong>LSEG</strong> and <strong>CME Group</strong>',
+      'Enterprise agentic AI for <strong>Big Four</strong> audit firms',
+      'Agentic AI research at <strong>MISO & Sourcing Lens</strong>: auditable net-zero procurement',
+      'Published AI security research on trust-explicit systems',
+      'Award-winning AI medical systems with <strong>NHS</strong> and <strong>HSE</strong>',
     ],
   },
   {
@@ -116,11 +116,11 @@ export const founders = [
     name: 'Kenneth Obanor',
     linkedin: 'https://www.linkedin.com/in/kenneth-obanor-060609275/',
     credentials: [
-      'Engineering roles at <strong>Squarespace</strong> and <strong>Amazon</strong>, working with data and scalable production systems',
-      'Enterprise agentic AI systems for <strong>Big Four</strong> audit firms',
-      'Agentic AI research across <strong>MISO & Sourcing Lens</strong>, including auditable net-zero procurement',
-      'Published research on AI-driven software maintainability, longevity and sustainability, benchmarked against <strong>SonarQube</strong>',
-      'Award-winning cross-border AI-native medical systems with <strong>NHS</strong> and <strong>HSE</strong> involvement',
+      'Data and production systems at <strong>Squarespace</strong> and <strong>Amazon</strong>',
+      'Enterprise agentic AI for <strong>Big Four</strong> audit firms',
+      'Agentic AI research at <strong>MISO & Sourcing Lens</strong>: auditable net-zero procurement',
+      'Published research on AI code maintainability, benchmarked against <strong>SonarQube</strong>',
+      'Award-winning AI medical systems with <strong>NHS</strong> and <strong>HSE</strong>',
     ],
   },
 ] as const;
@@ -136,10 +136,18 @@ export const founders = [
  * developers, every project" carries it without the defensiveness.
  */
 export const deliveryTeam = {
-  name: 'The engineering team',
+  name: 'The delivery team',
   role: 'Developers',
-  bio: 'The same developers build and deploy every project we take on, working alongside us throughout.',
-  background: 'Everything is built for real concurrent use. Most of what we get called in to fix ran fine until more than a handful of people were on it at once.',
+  /* Same `credentials` shape as a founder card, so all three read as one set
+     rather than two people and a paragraph. It has no monogram or LinkedIn
+     because it is a group, not a person. */
+  credentials: [
+    'Engineers working directly alongside the co-founders',
+    'AI-native product and software development',
+    'Agentic AI, automation and workflow systems',
+    'Cloud infrastructure and production deployment',
+    'Scalable systems built beyond proof-of-concept stage',
+  ],
 } as const;
 
 /**
@@ -235,7 +243,7 @@ export const clients = [
     sector: 'Family services',
     logo: '/clients/c-hopeful.png',
     work: 'Company email set up, configured and supported as the team grew.',
-    outcome: 'A family services team in Cavan moved onto company email that authenticates properly and lands in the inbox.',
+    outcome: 'Company email for a Cavan family services team, authenticating properly and landing in the inbox.',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
     shots: [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
@@ -254,7 +262,7 @@ export const clients = [
     sector: 'Vehicle servicing',
     logo: '/clients/c-gbautos.png',
     work: 'Their first ever website, built with no online presence to start from.',
-    outcome: 'A Feltham garage trading since 2009 went from no online presence at all to being findable by the people already looking for them.',
+    outcome: 'A Feltham garage trading since 2009, findable online for the first time by the people already looking for it.',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
     shots: [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
@@ -273,7 +281,7 @@ export const clients = [
     sector: 'Tyre retail',
     logo: '/clients/c-ossett.png',
     work: 'A registration lookup that returns the exact tyre fitment for any vehicle.',
-    outcome: 'A customer types their number plate and the tool resolves the vehicle against DVLA records, then returns the original front and rear tyre sizes without anyone in the garage looking them up.',
+    outcome: 'A customer types their number plate. The tool resolves the vehicle against DVLA records and returns the original front and rear tyre sizes, with nobody in the garage looking them up.',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
     shots: [
       { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
@@ -293,7 +301,7 @@ export const clients = [
     sector: 'Automotive customisation',
     logo: '/clients/c-astar.png',
     work: 'Full e-commerce build covering products, payments and checkout.',
-    outcome: 'A London customs shop got a storefront that sells: products, inventory, payments and checkout, built from scratch for the brand.',
+    outcome: 'A London customs shop with a storefront that sells: products, inventory, payments and checkout, built from scratch for the brand.',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
     shots: [
       { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
@@ -323,7 +331,7 @@ export const clients = [
        says out loud that there is nobody to quote. */
     quote: null,
     work: 'A compliance platform that turns a live AI stack into an auditor-ready binder.',
-    outcome: 'An AI deployer connects their stack and answers five questions. Each use case comes back classified against the EU AI Act, GDPR and DORA, with the evidence a regulator asks for generated underneath it and held behind human sign-off.',
+    outcome: 'Connect an AI stack, answer five questions, get the auditor-ready binder. Every use case comes back classified, evidenced and held behind human sign-off.',
     shots: [
       {
         src: '/work/provena-1.png',
@@ -332,12 +340,12 @@ export const clients = [
       },
     ],
     detail: [
-      'Five-question onboarding that classifies each AI use case against EU AI Act Annex III, GDPR Articles 22 and 35, and DORA',
-      'A deterministic rule engine written against specific regulation clauses, snapshot-pinned whenever a binder is generated',
-      'Three connectors reading live usage from the Anthropic API, LangSmith traces and the Anthropic Trust Center',
-      'Seven evidence templates covering DPIA, Article 26 deployer evidence and Article 30 records of processing',
-      'Human approval before any binder finalises, with every clause citation and sign-off recorded',
-      'FastAPI and PostgreSQL behind a Next.js dashboard, with Redis-backed background workers',
+      'Use cases classified against EU AI Act Annex III, GDPR and DORA',
+      'Deterministic rule engine, pinned to the clause it cites',
+      'Connectors for Anthropic API, LangSmith and Trust Center',
+      'Seven evidence templates, DPIA to Article 30',
+      'Human sign-off before any binder finalises',
+      'FastAPI, PostgreSQL and Redis behind a Next.js dashboard',
     ],
   },
 ] as const;

@@ -2,7 +2,7 @@
  * End-to-end checks for the things that have actually broken before.
  *
  * Every assertion here exists because something regressed at some point: the
- * tab underline pointing at the wrong client, the mobile menu letting the page
+ * selector marking the wrong client, the mobile menu letting the page
  * scroll behind it, a stylesheet silently swallowed by an unclosed comment, the
  * 3D scene burning CPU while idle. Keep them.
  *
@@ -157,16 +157,41 @@ for (const w of [375, 1440]) {
   await p.click('#tab-3');
   await p.waitForTimeout(700);
   const r = await p.evaluate(() => {
-    const sel = document.querySelector('.tab[aria-selected="true"]');
-    const ind = document.getElementById('tabIndicator');
-    const s = sel.getBoundingClientRect(), i = ind.getBoundingClientRect();
+    const sels = [...document.querySelectorAll('.tab[aria-selected="true"]')];
     const shown = [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none');
-    return { dx: Math.round(i.left - s.left), dy: Math.round(i.top - s.bottom), shown: shown.length, id: shown[0]?.id, detail: shown[0]?.querySelectorAll('.client-detail li').length };
+    const tabs = [...document.querySelectorAll('.tab')];
+    return {
+      // Exactly one chip marked, and it is the one that was clicked. This
+      // replaces the sliding underline, which had to be measured because it was
+      // one element standing in for five and could end up over the wrong one.
+      selCount: sels.length,
+      selIndex: tabs.indexOf(sels[0]),
+      // Every chip is a real, labelled control rather than a bare image.
+      labelled: tabs.every((t) => t.textContent.trim().length > 0),
+      dimmed: tabs.filter((t) => Number(getComputedStyle(t).opacity) < 0.9).length,
+      shown: shown.length,
+      id: shown[0]?.id,
+      detail: shown[0]?.querySelectorAll('.client-detail li').length,
+      // The list is behind a disclosure and starts closed, so the panel opens
+      // on the outcome and the numbers rather than on an implementation dump.
+      openByDefault: shown[0]?.querySelectorAll('.client-more[open]').length,
+    };
   });
-  // The underline once sat on a different client's tab once the list wrapped.
-  ok(Math.abs(r.dx) <= 2 && Math.abs(r.dy) <= 4, `${w}px underline sits on the selected tab (dx ${r.dx}, dy ${r.dy})`);
+  ok(r.selCount === 1 && r.selIndex === 3, `${w}px exactly the clicked logo is marked (index ${r.selIndex}, ${r.selCount} marked)`);
+  ok(r.labelled, `${w}px every logo carries its company name for assistive tech`);
+  ok(r.dimmed === 4, `${w}px the four unselected logos are dimmed back (${r.dimmed})`);
   ok(r.shown === 1 && r.id === 'panel-3', `${w}px exactly one panel shown and it matches (${r.id})`);
   ok(r.detail > 0, `${w}px technical detail rendered (${r.detail} points)`);
+  ok(r.openByDefault === 0, `${w}px the detail list starts folded away (${r.openByDefault} open)`);
+
+  // The disclosure opens, and what it reveals is the list.
+  await p.click('#panel-3 .client-more summary');
+  await p.waitForTimeout(350);
+  const opened = await p.evaluate(() => {
+    const li = document.querySelector('#panel-3 .client-detail li');
+    return { open: document.querySelectorAll('#panel-3 .client-more[open]').length, visible: !!li?.getClientRects().length };
+  });
+  ok(opened.open === 1 && opened.visible, `${w}px the detail opens on click`);
 
   // held arrow key must not desync tab and panel
   await p.focus('#tab-0');
