@@ -99,11 +99,10 @@ export function ClientWork() {
               heading no longer asserts what it cannot for all of them. */}
           <p className="eyebrow">Work</p>
           <h2>Five builds, still running.</h2>
-          <p>
-            A tyre lookup that reads DVLA records. A shop that takes payments. A garage&rsquo;s
-            first website. Company email for a growing team. A compliance platform that reads
-            an AI stack and produces the binder an auditor asks for.
-          </p>
+          {/* No deck paragraph. It named each build by trade, which the strip of
+              logos and the panel under it then said again, at length and before
+              you reached either. A section that shows five builds does not have
+              to announce that it is about to. */}
         </div>
 
         <div>

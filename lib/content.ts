@@ -138,15 +138,17 @@ export const founders = [
 export const deliveryTeam = {
   name: 'The delivery team',
   role: 'Developers',
-  /* Same `credentials` shape as a founder card, so all three read as one set
-     rather than two people and a paragraph. It has no monogram or LinkedIn
-     because it is a group, not a person. */
-  credentials: [
-    'Engineers working directly alongside the co-founders',
-    'AI-native product and software development',
-    'Agentic AI, automation and workflow systems',
-    'Cloud infrastructure and production deployment',
-    'Scalable systems built beyond proof-of-concept stage',
+  /* Prose, where the founder cards are lists. A credential list earns its
+     format because the entries are genuinely parallel and each one stands
+     alone: a role, a paper, an award. What this team does is one continuous
+     thing, and cutting it into five fragments made a description read like a
+     scorecard. Every fact from that list survives here, in two sentences.
+
+     `brief` is an array of paragraphs rather than one string so the card can
+     break where it reads best without markup in the copy. */
+  brief: [
+    'Engineers who work directly alongside the co-founders, building AI-native products and software: agentic AI, automation and workflow systems.',
+    'They own the cloud infrastructure and production deployment underneath, so what ships scales past proof-of-concept rather than stopping there.',
   ],
 } as const;
 
