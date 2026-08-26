@@ -98,7 +98,10 @@ export function ClientWork() {
               client work and one is a platform with no client behind it, so the
               heading no longer asserts what it cannot for all of them. */}
           <p className="eyebrow">Work</p>
-          <h2>Five builds, still running.</h2>
+          {/* No count in it, deliberately. "Four builds, still running" had to
+              be edited the moment a fifth arrived, and would again at a sixth.
+              The strip below already says how many there are. */}
+          <h2>What we&rsquo;ve shipped</h2>
           {/* No deck paragraph. It named each build by trade, which the strip of
               logos and the panel under it then said again, at length and before
               you reached either. A section that shows five builds does not have
