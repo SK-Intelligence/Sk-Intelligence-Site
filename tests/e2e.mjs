@@ -384,6 +384,78 @@ for (const w of PHONES) {
   await p.close();
 }
 
+// ─────────────────────────────────────────── our own build (Provena AI)
+/* Its own section rather than a fifth case-bank tab, because it has no client
+   and therefore no testimonial. These assertions exist to hold that line: the
+   day it grows a .panel-quote, somebody has written a testimonial for a
+   customer who does not exist. It also reuses the case bank's showcase frame,
+   so it inherits the same fits-in-one-view contract and is checked for it. */
+head('our own build');
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.querySelector('#own-build').scrollIntoView({ block: 'center' }));
+  await p.waitForTimeout(400);
+  const r = await p.evaluate(() => {
+    const s = document.querySelector('#own-build');
+    return {
+      shots: s.querySelectorAll('.showcase-frame img').length,
+      facts: s.querySelectorAll('.client-metrics > div').length,
+      bullets: s.querySelectorAll('.client-detail li').length,
+      name: s.querySelector('.client-name')?.textContent ?? '',
+      quote: s.querySelectorAll('.panel-quote,.client-quote').length,
+      links: s.querySelectorAll('a').length,
+      mark: !!s.querySelector('.own-build-mark'),
+      // Every label on one line. Two words fit; a longer one wraps while its
+      // neighbours do not, which reads as a layout fault rather than a label.
+      labels: [...s.querySelectorAll('.client-metrics dd')]
+        .map((d) => Math.round(d.getBoundingClientRect().height)),
+    };
+  });
+  ok(r.name === 'Provena AI', `the section names the build (${r.name})`);
+  ok(r.shots === 1, `one screenshot (${r.shots})`);
+  ok(r.facts === 3, `three product facts (${r.facts})`);
+  ok(r.bullets === 6, `six detail lines (${r.bullets})`);
+  ok(r.mark, 'the provenance mark renders');
+  ok(r.quote === 0, `no testimonial on a build with no client (${r.quote})`);
+  // Same rule the case bank follows: show the work, send nobody away mid-page.
+  ok(r.links === 0, `no outbound link out of the section (${r.links})`);
+  ok(new Set(r.labels).size === 1, `fact labels all run to one line (${r.labels.join(', ')})`);
+  await p.close();
+}
+
+for (const w of PHONES) {
+  const p = await phone(w);
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.querySelector('#own-build').scrollIntoView({ block: 'center' }));
+  await p.waitForTimeout(400);
+  const r = await p.evaluate(() => {
+    const sc = document.querySelector('#own-build .showcase-scroll');
+    const img = document.querySelector('#own-build .showcase-frame img');
+    return {
+      imgW: Math.round(img.getBoundingClientRect().width),
+      frameW: Math.round(sc.getBoundingClientRect().width),
+      scrollable: sc.scrollWidth > sc.clientWidth + 5,
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+  ok(Math.abs(r.imgW - r.frameW) <= 2, `${w}px the dashboard fits the frame (${r.imgW}px in ${r.frameW}px)`);
+  ok(!r.scrollable, `${w}px the frame does not scroll sideways`);
+  ok(r.overflow === 0, `${w}px the section does not push the page wide (${r.overflow}px)`);
+
+  await p.click('#own-build .showcase-open');
+  await p.waitForTimeout(450);
+  ok(await p.evaluate(() => !!document.querySelector('dialog.lightbox')),
+    `${w}px tapping the dashboard opens the viewer`);
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(300);
+  ok(await p.evaluate(() => !document.querySelector('dialog.lightbox')),
+    `${w}px Escape closes it again`);
+  await p.close();
+}
+
 // ─────────────────────────────────────────── no dead screens on a phone
 head('no dead screens on a phone');
 {

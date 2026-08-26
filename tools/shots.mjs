@@ -4,13 +4,16 @@
  *   npm run shots            everything
  *   npm run shots -- ossett  one target
  *
- * Two kinds of source:
+ * Three kinds of source:
  *
  *   1. A Star Customs is captured from the live site. Sameer rates that build
  *      and wants it shown as it actually is.
- *   2. The other three are captured from the mockups in tools/mockups/. Their
- *      live sites are basic, so those are restyled. See each file's header for
- *      what is real content and what is presentation.
+ *   2. The other three clients are captured from the mockups in tools/mockups/.
+ *      Their live sites are basic, so those are restyled. See each file's
+ *      header for what is real content and what is presentation.
+ *   3. Provena AI is captured from its own static export, which lives in a
+ *      different repo on this machine. Nothing is restyled: it is our product,
+ *      so the shot is the real dashboard running its demo data.
  *
  * Output is PNG into public/work/. It stays PNG deliberately: there is no
  * cwebp or magick on this machine, and next/image converts and resizes at
@@ -20,13 +23,35 @@
  * regenerated from source rather than being a binary nobody can reproduce.
  */
 import { chromium } from 'playwright';
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
+import { existsSync, statSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve } from 'node:path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, '../public/work');
 const MOCKUPS = join(HERE, 'mockups');
+
+/* Provena AI is our own product and its source is a separate repo, so the path
+   is configurable rather than assumed. The default is where it sits on
+   Sameer's machine; PROVENA_OUT overrides it anywhere else. */
+const PROVENA_OUT = process.env.PROVENA_OUT
+  ?? resolve(HERE, '../../../qub_projects/Provena-AI/dashboard-next/out');
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
+};
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 const wanted = (name) => only.length === 0 || only.some((o) => name.startsWith(o));
@@ -264,6 +289,86 @@ async function captureLive(browser, path, out, focusContent = false) {
   await page.close();
 }
 
+// ── our own build ──────────────────────────────────────────────────────────
+/**
+ * Provena AI ships as a Next.js static export, and that export lives in a
+ * different repo on this machine rather than in tools/. So this mode takes a
+ * directory, serves it, and shoots it.
+ *
+ * Serving it matters: the export references its assets by absolute path
+ * (/_next/static/...), which file:// resolves against the filesystem root and
+ * therefore cannot find. The page would load and paint unstyled.
+ *
+ * JavaScript is off on purpose. Every figure on that dashboard is baked into
+ * the HTML at export time, so a no-JS render is both complete and identical
+ * every run. With JS on, hydration tries to refresh the data from a FastAPI
+ * backend that is not running here, and the shot becomes whatever the error or
+ * empty state happens to look like.
+ */
+async function captureStatic(browser, dir, shots) {
+  let root;
+  try {
+    root = await stat(dir);
+    if (!root.isDirectory()) throw new Error('not a directory');
+  } catch {
+    // A skip, not a failure. This repo cannot assume another project is
+    // checked out beside it, and `npm run shots` has to stay useful for the
+    // four clients on a machine that has never seen Provena.
+    log(`skipped: no static export at ${dir}`);
+    log('set PROVENA_OUT to point at dashboard-next/out, or run its build first');
+    return;
+  }
+
+  const server = createServer(async (req, res) => {
+    // Static export: /foo resolves to /foo/index.html, / to /index.html.
+    const path = decodeURIComponent((req.url || '/').split('?')[0]);
+    const rel = path.endsWith('/') ? `${path}index.html` : path;
+    // Refuse anything that climbs out of the export. This only ever serves a
+    // local directory to a local browser, but a path traversal in a file
+    // server is not a thing to leave lying around whatever the blast radius.
+    const file = resolve(dir, `.${rel}`);
+    if (!file.startsWith(resolve(dir))) { res.writeHead(403).end(); return; }
+    try {
+      const body = await readFile(existsSync(file) && statSync(file).isDirectory() ? join(file, 'index.html') : file);
+      res.writeHead(200, { 'content-type': MIME[extname(file)] || 'text/html; charset=utf-8' }).end(body);
+    } catch {
+      // The export has its own 404 page; serving it keeps a wrong route
+      // obvious in the screenshot rather than silently blank.
+      try { res.writeHead(404).end(await readFile(join(dir, '404.html'))); } catch { res.writeHead(404).end(); }
+    }
+  });
+  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+  const base = `http://127.0.0.1:${server.address().port}`;
+
+  const ctx = await browser.newContext({
+    viewport: { width: 1280, height: 760 },
+    deviceScaleFactor: 2,
+    javaScriptEnabled: false,
+  });
+  for (const [route, out] of shots) {
+    const page = await ctx.newPage();
+    try {
+      await page.goto(base + route, { waitUntil: 'load', timeout: 30_000 });
+    } catch {
+      bad(`${out}: could not load ${route} from the export`);
+      await page.close();
+      continue;
+    }
+    // next/font self-hosts its faces inside the export, so they come off the
+    // same server rather than the network. Still worth asserting: a missing
+    // face here is the same silent, plausible-looking failure as anywhere else.
+    await assertFonts(page, ['Inter'], out);
+    await page.waitForTimeout(400);
+    const dest = join(OUT, `${out}.png`);
+    await page.screenshot({ path: dest });
+    const size = await assertNotBlank(dest, out);
+    if (size >= 12_000) { log(`${out}.png  ${(size / 1024).toFixed(0)}kb  ← static export`); done.push(`${out}.png`); }
+    await page.close();
+  }
+  await ctx.close();
+  await new Promise((ok) => server.close(ok));
+}
+
 // ── run ────────────────────────────────────────────────────────────────────
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch();
@@ -300,6 +405,13 @@ if (wanted('astar')) {
     ['/gallery', 'astar-3', true],
     ['/services', 'astar-4', true],
   ]) await captureLive(browser, path, out, focus);
+}
+
+if (wanted('provena')) {
+  console.log('\n── provena (static export)');
+  await captureStatic(browser, PROVENA_OUT, [
+    ['/', 'provena-1'],   // the compliance dashboard is the landing route
+  ]);
 }
 
 await browser.close();

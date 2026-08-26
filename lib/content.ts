@@ -288,6 +288,60 @@ export const clients = [
   },
 ] as const;
 
+/**
+ * Provena AI: the one build on this site with no client behind it.
+ *
+ * It is deliberately NOT in `clients` and NOT in PLACEHOLDER_METRICS, and both
+ * omissions are load-bearing.
+ *
+ * A client entry carries a sector, a logo and a `quote`, and that quote is
+ * verbatim client words. Provena has no client, so filing it there would mean
+ * writing a testimonial for a customer who does not exist. Its own section
+ * says what it is instead, which is both honest and a stronger claim: this is
+ * the thing we chose to build when nobody was paying us to build it.
+ *
+ * `facts` is the other half of that. Every client number lives in
+ * PLACEHOLDER_METRICS under a banner warning that the figures are invented
+ * until Sameer replaces them. These three are real and checkable against the
+ * project's own README: five onboarding questions, three connectors (Anthropic
+ * API, LangSmith, Trust Center), seven evidence templates. Putting real
+ * numbers under that warning would devalue them and eventually get them
+ * "corrected" by somebody trusting the comment.
+ *
+ * The screenshot is the real dashboard, captured from its static export by
+ * `npm run shots -- provena`. Nothing is restyled the way the client mockups
+ * are, because this one is ours to show as it is. It runs the project's sample
+ * data and labels itself as such on screen.
+ */
+export const ownBuild = {
+  name: 'Provena AI',
+  sector: 'Regulatory compliance',
+  work: 'Provena AI turns a company’s live AI stack into an auditor-ready compliance binder. It reads what their models are actually doing, classifies each use case against the regulation, generates the evidence a regulator asks for, and holds all of it behind human sign-off.',
+  facts: [
+    /* Kept to two words each: these sit in a three-across row, and a longer
+       label wraps to two lines while its neighbours stay on one, which reads
+       as a layout fault rather than a longer label. */
+    { value: '5', label: 'Onboarding questions' },
+    { value: '3', label: 'Live connectors' },
+    { value: '7', label: 'Evidence templates' },
+  ],
+  shots: [
+    {
+      src: '/work/provena-1.png',
+      alt: 'The Provena AI compliance dashboard showing binder readiness, progress against the EU AI Act, GDPR and DORA, and the open compliance gaps, running on sample data',
+      label: 'Compliance dashboard',
+    },
+  ],
+  detail: [
+    'Five-question onboarding that classifies each AI use case against EU AI Act Annex III, GDPR Articles 22 and 35, and DORA',
+    'A deterministic rule engine written against specific regulation clauses, snapshot-pinned whenever a binder is generated',
+    'Three connectors reading live usage from the Anthropic API, LangSmith traces and the Anthropic Trust Center',
+    'Seven evidence templates covering DPIA, Article 26 deployer evidence and Article 30 records of processing',
+    'Human approval before any binder finalises, with every clause citation and sign-off recorded',
+    'FastAPI and PostgreSQL behind a Next.js dashboard, with Redis-backed background workers',
+  ],
+} as const;
+
 export const studioServices = [
   { title: 'Websites & Web Apps', body: 'Marketing sites, dashboards, custom web platforms' },
   { title: 'E-Commerce', body: 'Full storefronts with products, payments and checkout' },

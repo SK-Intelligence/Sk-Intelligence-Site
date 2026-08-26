@@ -32,23 +32,44 @@ tools/
   mockups/*.html        standalone sources for three of the four clients
 ```
 
+Provena AI has no mockup: it is our own product and is captured from its own
+static export. See below.
+
 ## Case-bank screenshots
 
 ```bash
-npm run shots              # all ten
+npm run shots              # all eleven
 npm run shots -- ossett    # one target
 ```
 
 Nothing in `tools/` ships. It exists so no image in `public/work/` is a binary
 nobody can reproduce.
 
-Two kinds of source. **A Star Customs** is captured from the live site, because
+Three kinds of source. **A Star Customs** is captured from the live site, because
 that build stands up on its own. **The other three** are captured from
 `tools/mockups/*.html`, which restyle real builds using only real content — the
 actual DVLA lookup flow for Ossett, real services and opening hours for GB
 Autos, Hopeful Hearts' own service list and values verbatim. Each file's header
 records what is theirs and what is presentation. Keep it that way: invented
 copy about a named real client is the one thing that must never appear here.
+
+**Provena AI** is the third kind. It is our own product rather than a client
+build, so nothing about it is restyled: `captureStatic` serves its Next.js
+static export over a local HTTP server and shoots the real dashboard running its
+sample data, which the dashboard labels as such on screen. That export lives in
+a separate repo, so the path is configurable:
+
+```bash
+PROVENA_OUT=/path/to/Provena-AI/dashboard-next/out npm run shots -- provena
+```
+
+The default is where it sits on Sameer's machine. On any checkout without it,
+that target logs a skip and the four clients still regenerate. Two details are
+deliberate and worth keeping: it is served rather than opened over `file://`,
+because the export references its assets by absolute path, and it is captured
+with JavaScript **off**, because every figure is baked into the HTML at export
+time and hydration would otherwise try to refresh them from a backend that is
+not running here.
 
 The three mockups are deliberately unalike, because Ossett and GB Autos are both
 automotive and sit next to each other in the same tab strip. If both were dark
