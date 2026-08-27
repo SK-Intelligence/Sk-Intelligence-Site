@@ -549,6 +549,25 @@
      prose left in this column is the outcome line. */
   .panel-meta .client-work{ color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
 
+  /* Asked for / Approach / Impact. Labels are the same small caps as
+     .client-sector so the panel keeps one vocabulary for "this is a label",
+     and they sit in their own column on wide enough panels so the three
+     answers line up as a column of prose rather than a stack of headed
+     paragraphs. */
+  .client-qa{ display:grid; gap:14px; margin:0; }
+  .client-qa > div{ display:grid; grid-template-columns:5.5rem minmax(0,1fr); gap:0 14px; align-items:baseline; }
+  .client-qa dt{
+    font-family:var(--font-display); font-size:.64rem; font-weight:700;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--accent-deep);
+  }
+  .client-qa dd{ margin:0; color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
+  /* Under the label rather than beside it once the column is too narrow to
+     carry both: at a 5.5rem gutter the answers wrap to five or six words a line
+     and the block reads as a ransom note. */
+  @media (max-width:560px){
+    .client-qa > div{ grid-template-columns:1fr; gap:3px; }
+  }
+
   /* =================== Build screenshots =================== */
   /* Spans the panel so the build is the first thing you see, then the meta
      and the quote sit underneath in the two columns they already used. */
@@ -632,6 +651,11 @@
     font-family:var(--font-display); font-weight:700;
     font-size:clamp(1.5rem,1.2rem + 1.4vw,2.05rem);
     line-height:1; letter-spacing:-.03em; color:var(--ink);
+    /* The strip now sits inside the Impact answer rather than across the panel,
+       so each figure has about a third of that column. "3 days" broke across
+       two lines there while "90%" beside it held one, which reads as a fault
+       rather than as a longer number. These values are short by definition. */
+    white-space:nowrap;
     font-variant-numeric:tabular-nums;
   }
   .client-metrics dd{

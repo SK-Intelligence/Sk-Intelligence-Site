@@ -163,15 +163,16 @@ export const deliveryTeam = {
  * whole case bank; nothing else in the codebase carries a number about a
  * client. Search for PLACEHOLDER to find this and nothing else.
  *
- * Some of these are real and should survive the rewrite:
+ * ⚠️ AND THEY ARE CURRENTLY LIVE. The line above has said "before this section
+ * is shown to anyone" since it was written, but the section has been deployed
+ * for a while now, so every invented figure below is on a public page being
+ * read by prospective clients as though it were measured. That is the one
+ * thing in this file worth fixing before anything else in it.
+ *
+ * Only two are real:
  *   - ossett "50+ enquiries a month" was already on the site and is theirs.
  *   - ossett "5 vehicle fields" is provable: the lookup returns make, year,
  *     engine, fuel and colour, which is exactly what the screenshot shows.
- *   - ALL THREE provena values are real and checkable against that project's
- *     own README: five onboarding questions, three connectors (Anthropic API,
- *     LangSmith, Trust Center), seven evidence templates. They live here only
- *     because the type below demands a key per client. Do not "correct" them
- *     on the strength of the banner above.
  */
 export type Metric = { value: string; label: string };
 
@@ -201,15 +202,36 @@ export const PLACEHOLDER_METRICS:
     { value: '3/3', label: 'Domain auth records' },
     { value: '99.9%', label: 'Delivery rate' },
   ],
+  /* ⚠️ ALL THREE INVENTED. Sameer asked for ROI-shaped figures to sit here and
+     said he would put the correct ones in later, so these show the SHAPE of the
+     number that belongs in each slot and nothing more. The real product facts
+     that used to be in this slot (five onboarding questions, three connectors,
+     seven evidence templates) were not lost: they are in provena's `detail`. */
   provena: [
-    { value: '5', label: 'Onboarding questions' },  // real
-    { value: '3', label: 'Live connectors' },       // real
-    { value: '7', label: 'Evidence templates' },    // real
+    { value: '90%', label: 'Less time to first binder' },
+    { value: '3 days', label: 'From stack to binder' },
+    { value: '£120k', label: 'Advisory spend avoided' },
   ],
 };
 
 /**
  * The builds.
+ *
+ * Each one answers three questions in order, because a reader deciding whether
+ * to call you is asking them in that order: what did they want (`asked`), how
+ * did you work it out (`approach`), what did it change (`impact`). The numbers
+ * in PLACEHOLDER_METRICS sit under `impact` as the evidence for it.
+ *
+ * Keep each to one sentence. The three together replaced a single `outcome`
+ * paragraph, and the point of splitting them was structure, not more words: if
+ * they grow to a paragraph each the panel is longer than what it replaced and
+ * worse at being skimmed.
+ *
+ * `asked` and `approach` describe real jobs, so neither may say more than is
+ * actually known. Where a before-state is stated it is one the existing copy or
+ * the screenshots already establish, not a discovery story written to sound
+ * good. Provena has no client, so its `asked` is the market's problem rather
+ * than a request from anyone.
  *
  * `quote` is verbatim client words — do not reword, in either direction.
  *
@@ -249,8 +271,9 @@ export const clients = [
        both renditions stops compiling. Null keeps the property on the type and
        says out loud that there is nobody to quote. */
     quote: null,
-    work: 'A compliance platform that turns a live AI stack into an auditor-ready binder.',
-    outcome: 'Connect an AI stack, answer five questions, get the auditor-ready binder. Every use case comes back classified, evidenced and held behind human sign-off.',
+    asked: 'AI deployers are facing the EU AI Act enforcement deadline with GRC tools that file an AI system as one more line in a risk register, rather than producing the evidence a regulator actually asks for.',
+    approach: 'Read the live stack through its own APIs, classify every use case against the specific regulation clauses with a deterministic rule engine rather than a model, generate the evidence underneath it, and hold each binder behind human sign-off.',
+    impact: 'Compliance officers reach an auditor-ready binder in days instead of the months a hand-built pack takes, and the evidence stands up because every clause cites its source.',
     shots: [
       {
         src: '/work/provena-1.png',
@@ -272,8 +295,9 @@ export const clients = [
     name: 'A Star Customs',
     sector: 'Automotive customisation',
     logo: '/clients/c-astar.png',
-    work: 'Full e-commerce build covering products, payments and checkout.',
-    outcome: 'A London customs shop with a storefront that sells: products, inventory, payments and checkout, built from scratch for the brand.',
+    asked: 'A storefront that could sell on its own: products, inventory, payments and checkout, built for the brand rather than dropped onto a template.',
+    approach: 'Built from scratch around their catalogue and their custom-kit work, with secure payments and checkout wired in, then launched and supported end to end.',
+    impact: 'The shop trades without anyone in the business processing an order by hand, and the gallery and custom kits are theirs to manage.',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
     shots: [
       { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
@@ -298,8 +322,9 @@ export const clients = [
     name: 'Ossett Tyres',
     sector: 'Tyre retail',
     logo: '/clients/c-ossett.png',
-    work: 'A registration lookup that returns the exact tyre fitment for any vehicle.',
-    outcome: 'A customer types their number plate. The tool resolves the vehicle against DVLA records and returns the original front and rear tyre sizes, with nobody in the garage looking them up.',
+    asked: 'Customers could not tell what tyres their car takes, so every enquiry began with someone in the garage looking the fitment up by hand.',
+    approach: 'A registration lookup wired to DVLA records: the plate resolves the vehicle, and the tool returns the original front and rear fitment over a serverless backend on Vercel.',
+    impact: 'The lookup answers the question the customer came with before anyone in the garage is involved, and every enquiry lands tracked rather than in a notebook.',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
     shots: [
       { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
@@ -318,8 +343,9 @@ export const clients = [
     name: 'GB Autos & Tyres',
     sector: 'Vehicle servicing',
     logo: '/clients/c-gbautos.png',
-    work: 'Their first ever website, built with no online presence to start from.',
-    outcome: 'A Feltham garage trading since 2009, findable online for the first time by the people already looking for it.',
+    asked: 'A Feltham garage trading since 2009 had no online presence at all, and wanted to be findable by the people already looking for it.',
+    approach: 'A first website built from nothing, with services, location and opening hours structured for local search and the phone number on every screen.',
+    impact: 'The garage now turns up when someone nearby searches for what it does, and those people can reach the owner directly.',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
     shots: [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
@@ -337,8 +363,9 @@ export const clients = [
     name: 'Hopeful Hearts LTD',
     sector: 'Family services',
     logo: '/clients/c-hopeful.png',
-    work: 'Company email set up, configured and supported as the team grew.',
-    outcome: 'Company email for a Cavan family services team, authenticating properly and landing in the inbox.',
+    asked: 'A growing family services team needed company email that authenticates properly instead of landing in spam.',
+    approach: 'Mailboxes provisioned across Outlook and Google Workspace, domain records set for SPF, DKIM and DMARC, with support as the team grew.',
+    impact: 'Mail from the team reaches the families and agencies it is sent to, and new staff get a working mailbox on day one.',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
     shots: [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },

@@ -241,12 +241,21 @@ head('case bank');
         empty: m.filter((d) => !d.querySelector('dt')?.textContent.trim()
                             || !d.querySelector('dd')?.textContent.trim()).length,
         sector: panel.querySelector('.client-sector')?.textContent ?? '',
+        qa: [...panel.querySelectorAll('.client-qa > div > dt')].map((d) => d.textContent.trim()),
+        answers: panel.querySelectorAll('.client-qa > div > dd').length,
+        blank: [...panel.querySelectorAll('.client-qa > div > dd')]
+          .filter((d) => d.textContent.trim().length < 20).length,
       };
     }, i);
     ok(r.w > 0, `${r.name}: build screenshot decoded (${r.w}px wide)`);
     ok(r.alt.length > 12, `${r.name}: screenshot carries real alt text`);
     ok(r.metrics === 3 && r.empty === 0, `${r.name}: three metrics, none empty`);
     ok(r.sector.length > 0 && r.label.length > 0, `${r.name}: sector "${r.sector}" and frame label present`);
+    /* Every build answers all three, and answers them in the reader's order.
+       A missing one is a panel that says what was built without saying what it
+       was for, which is the shape this section had before. */
+    ok(r.qa.join('|') === 'Asked for|Approach|Impact', `${r.name}: asked, approach, impact, in that order (${r.qa.join(', ')})`);
+    ok(r.answers === 3 && r.blank === 0, `${r.name}: all three answered (${r.answers}, ${r.blank} blank)`);
   }
 
   /* Four of the five builds were done for a named company that gave a
@@ -579,7 +588,7 @@ for (const route of ['/', '/studio']) {
     const parse = (s) => s.match(/[\d.]+/g).map(Number).slice(0, 3);
     const bgOf = (el) => { let n = el; while (n && n !== document.documentElement) { const c = getComputedStyle(n).backgroundColor; const m = c.match(/[\d.]+/g); if (m && (m.length < 4 || Number(m[3]) > 0.7)) return parse(c); n = n.parentElement; } return [245, 241, 232]; };
     const sels = ['.founder-name', '.founder-role', '.cred-chip', '.founder-bio p', '.founder-creds li',
-      '.client-detail li', '.client-name', '.client-work', '.panel-quote blockquote', '.section-head h2',
+      '.client-detail li', '.client-name', '.client-qa > div > dt', '.client-qa > div > dd', '.panel-quote blockquote', '.section-head h2',
       '.client-metrics dt', '.client-metrics dd', '.client-sector', '.showcase-label', '.client-shot span',
       '.section-head p', '.eyebrow', '.studio-item small', '.stack-group p', '.nav-mobile-links a'];
     return sels.map((s) => {

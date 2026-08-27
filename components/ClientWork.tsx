@@ -228,14 +228,39 @@ export function ClientWork() {
                       repeating it inside the panel it selected said nothing
                       twice. Name and sector have moved to .panel-head. */}
                   <div className="panel-meta">
-                    <p className="client-work">{c.outcome}</p>
-                    <dl className="client-metrics">
-                      {PLACEHOLDER_METRICS[c.id].map((m) => (
-                        <div key={m.label}>
-                          <dt>{m.value}</dt>
-                          <dd>{m.label}</dd>
-                        </div>
-                      ))}
+                    {/* Three questions in the order a reader deciding whether to
+                        call actually asks them. The metrics below are the
+                        evidence for the third, so they sit directly under it
+                        rather than floating between sections. */}
+                    <dl className="client-qa">
+                      <div>
+                        <dt>Asked for</dt>
+                        <dd>{c.asked}</dd>
+                      </div>
+                      <div>
+                        <dt>Approach</dt>
+                        <dd>{c.approach}</dd>
+                      </div>
+                      <div>
+                        <dt>Impact</dt>
+                        <dd>
+                          {c.impact}
+                          {/* Nested inside the answer, not placed after the
+                              list. These numbers are the evidence for this one
+                              claim, and on the panel with no quote the meta
+                              column flows into two, which floated them up
+                              beside "Asked for" and detached them from the
+                              thing they are evidence of. */}
+                          <dl className="client-metrics">
+                            {PLACEHOLDER_METRICS[c.id].map((m) => (
+                              <div key={m.label}>
+                                <dt>{m.value}</dt>
+                                <dd>{m.label}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </dd>
+                      </div>
                     </dl>
                     {/* Folded away by default. What the build DOES is the
                         outcome line and the numbers above; this is the
