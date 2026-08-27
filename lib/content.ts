@@ -280,9 +280,9 @@ export const clients = [
        both renditions stops compiling. Null keeps the property on the type and
        says out loud that there is nobody to quote. */
     quote: null,
-    asked: 'Companies using AI have a legal deadline coming and the tools they own were built for a different job: they log an AI system as a risk to be noted, not as something you have to produce evidence for.',
-    approach: 'It reads what their AI is actually doing straight from the tools they already use, then checks each one against the exact wording of the law, using fixed rules rather than asking an AI to judge it. It writes the paperwork underneath, and nothing is final until a person signs it off.',
-    impact: 'A compliance officer gets a binder an auditor will accept in days rather than months, and it holds up under questioning because every claim in it points at the rule and the record behind it.',
+    asked: 'Companies using AI face a legal deadline, and the tools they own log an AI system as a risk to note rather than something they have to evidence.',
+    approach: 'It reads what their AI is doing from the tools they already use, checks each one against the wording of the law with fixed rules rather than an AI\'s judgement, and writes the paperwork. Nothing is final until a person signs it.',
+    impact: 'A binder an auditor will accept, in days rather than months, and it holds up because every claim points at the rule and the record behind it.',
     shots: [
       {
         src: '/work/provena-1.png',

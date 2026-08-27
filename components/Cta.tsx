@@ -17,7 +17,7 @@ export function Cta() {
           <div className="cta-vignette" aria-hidden="true" />
           <div className="cta-inner">
             <p className="eyebrow on-dark" style={{ justifyContent: 'center' }}>Get started</p>
-            <h2>Tell us where it&rsquo;s breaking.</h2>
+            <h2>Tell us what you want to change.</h2>
             <p>One conversation is enough to know if there&rsquo;s a fit. If there is, we scope the discovery phase from there.</p>
             <BookingEmbed />
             <p className="cta-contact">Or reach us directly at <a href={`mailto:${site.mailto}`}>{site.mailto}</a></p>

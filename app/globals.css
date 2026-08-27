@@ -400,11 +400,20 @@
     .hero-actions{ justify-content:center; }
     .hero-proof{ justify-content:center; }
     .hero-scene-wrap{ position:absolute; inset:0; height:100%; z-index:0; }
-    .hero-scene{ inset:-4%; }
+    /* inset 0, not negative. The camera holds the sphere at a fixed angular
+       size, so growing this box grows the ball past the frame: at -16% a phone
+       showed four nodes and two edges rather than a lattice. Pulling the box in
+       fits the whole sphere, which is what makes it read as one. Prominence
+       comes from the scrim below letting go earlier, not from zooming in. */
+    .hero-scene{ inset:0; }
     .hero{ align-items:flex-start; }
+    /* The scrim still has to carry the headline, so it keeps its strength
+       directly behind the text and lets go much earlier at the edges: the ball
+       now reads through the outer half of the hero instead of being washed to
+       nothing across the whole box. */
     .hero-copy::before{
       left:-20px; right:-20px; top:-32px; bottom:-32px; border-radius:26px;
-      background:radial-gradient(ellipse at 50% 32%, rgba(var(--surface-rgb),.97) 0%, rgba(var(--surface-rgb),.9) 55%, rgba(var(--surface-rgb),.68) 85%);
+      background:radial-gradient(ellipse at 50% 32%, rgba(var(--surface-rgb),.95) 0%, rgba(var(--surface-rgb),.8) 48%, rgba(var(--surface-rgb),.34) 82%, rgba(var(--surface-rgb),0) 100%);
     }
   }
 

@@ -28,25 +28,30 @@ export function Process() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     /**
-     * Desktop only, and deliberately.
+     * The same scrub on both, at two different lengths.
      *
-     * The pin holds one panel on screen for 220% of the viewport height. On a
-     * desktop that is the effect. On a phone the panel occupies the top half of
-     * a tall viewport and the rest is empty, so you scroll roughly three
-     * screens past the same void before anything changes — which is exactly
-     * what it looks like: a gap of nothing between two sections.
+     * 1af81c3 made this desktop-only after measuring what the desktop values
+     * did to a phone: the pin held one panel for 220% of the viewport height,
+     * the panel filled the top half of a tall screen, and you scrolled roughly
+     * three screens past the same view before anything changed. That was a real
+     * regression and the reason for the breakpoint.
      *
-     * Below the breakpoint the section falls back to its stacked layout, which
-     * already exists as the no-JS path: all three phases in order, readable,
-     * and about a fifth of the scroll distance. gsap.matchMedia re-evaluates on
-     * resize and reverts everything it set, so rotating the phone is clean.
+     * The fault was the LENGTH, not the effect. 220% of a 900px desktop is
+     * ~1980px of scroll for two cross-fades; 220% of an 844px phone is nearly
+     * the same distance through a viewport showing less at a time, so each
+     * transition is spread over far more thumb travel. A phone gets 110%, which
+     * is roughly a screen and a half for the whole sequence and reads as
+     * continuous rather than stalled.
+     *
+     * gsap.matchMedia re-evaluates on resize and reverts what each matcher set,
+     * so rotating the phone or dragging the window across 900px is clean and
+     * never leaves two panels invisible.
      */
-    const mm = gsap.matchMedia();
+    const dashes = gsap.utils.toArray<HTMLElement>('.process-progress .dash', section);
+    const ghosts = gsap.utils.toArray<HTMLElement>('.process-ghost span', section);
 
-    mm.add('(min-width: 901px)', () => {
+    const build = (end: string) => () => {
       setArmed(true);
-      const dashes = gsap.utils.toArray<HTMLElement>('.process-progress .dash', section);
-      const ghosts = gsap.utils.toArray<HTMLElement>('.process-ghost span', section);
 
       gsap.set(panels, { autoAlpha: 0, y: 40 });
       gsap.set(panels[0], { autoAlpha: 1, y: 0 });
@@ -57,7 +62,7 @@ export function Process() {
       };
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: section, start: 'top top', end: '+=220%', scrub: 0.6, pin: sticky, anticipatePin: 1 },
+        scrollTrigger: { trigger: section, start: 'top top', end, scrub: 0.6, pin: sticky, anticipatePin: 1 },
       });
 
       panels.forEach((panel, i) => {
@@ -66,10 +71,14 @@ export function Process() {
           .to(panel, { autoAlpha: 1, y: 0, duration: 0.4, onStart: () => setPhase(i), onReverseComplete: () => setPhase(i - 1) }, '<');
       });
 
-      // Runs when the query stops matching, so shrinking to a phone width puts
-      // the panels back to full strength rather than leaving two invisible.
+      // Runs when the query stops matching, so crossing the breakpoint puts the
+      // panels back to full strength rather than leaving two invisible.
       return () => setArmed(false);
-    });
+    };
+
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 901px)', build('+=220%'));
+    mm.add('(max-width: 900px)', build('+=110%'));
 
     return () => mm.revert();
   }, { scope });

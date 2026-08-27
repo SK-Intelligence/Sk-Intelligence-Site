@@ -496,10 +496,25 @@ head('no dead screens on a phone');
       if (!hasText && !/^(IMG|CANVAS|VIDEO)$/.test(n.tagName)) return;
       items.push([t.top + window.scrollY, t.bottom + window.scrollY]);
     });
+    /* A pinned section is empty in DOCUMENT space and busy on SCREEN: the
+       spacer holds scroll distance open while the pinned panel stays in view
+       cross-fading. Measuring geometry cannot see that, so scanning the spacer
+       reports a void the reader never experiences. Windows inside one are
+       skipped; everything outside is still swept, which is where the real
+       "gap of nothing between sections" would show up. */
+    const pinned = [...document.querySelectorAll('.pin-spacer')].map((n) => {
+      const r = n.getBoundingClientRect();
+      return [r.top + window.scrollY, r.bottom + window.scrollY];
+    });
     const H = window.innerHeight;
     const dead = [];
     for (let y = 0; y < document.body.scrollHeight - H; y += Math.round(H / 2)) {
       const y2 = y + H;
+      /* y IS the scroll position, so the test is whether the viewport at that
+         scroll sits inside a pin, not whether the whole window does. A window
+         starting just before a spacer ends is still showing the pinned panel;
+         requiring full containment flagged exactly one of those. */
+      if (pinned.some(([a, b]) => y >= a && y < b)) continue;
       let covered = 0;
       items.forEach(([a, b]) => { const s = Math.max(a, y), e = Math.min(b, y2); if (e > s) covered += e - s; });
       if (covered / H < 0.06) dead.push(y);
@@ -513,7 +528,11 @@ head('no dead screens on a phone');
   // only now, and the section falls back to its stacked layout below 901px.
   ok(r.dead.length === 0,
     `every screen down the page carries content${r.dead.length ? ` — empty at y ${r.dead.join(', ')}` : ''}`);
-  ok(r.process < 1600, `the process section is not a scroll void on a phone (${r.process}px)`);
+  /* Was < 1600, which meant "not pinned at all". The scrub is on phones again,
+     at half the desktop pin length, so the number that matters now is that the
+     pin stays bounded: one viewport of section plus about 110% of pin. Well
+     under the 2701px the desktop values produced here. */
+  ok(r.process < 2100, `the process pin stays short on a phone (${r.process}px)`);
   await p.close();
 }
 
