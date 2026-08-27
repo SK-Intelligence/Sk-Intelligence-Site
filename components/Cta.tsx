@@ -1,5 +1,5 @@
 import { site } from '@/lib/content';
-import { ContactForm } from './ContactForm';
+import { BookingEmbed } from './BookingEmbed';
 
 const icons: Record<string, React.ReactNode> = {
   linkedin: (<><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.6"/><path d="M7.2 10.4v6.1M7.2 7.6v.1M11 16.5v-6.1M11 12.6c0-1.2 1-2.2 2.2-2.2s2.2 1 2.2 2.2v3.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></>),
@@ -19,7 +19,7 @@ export function Cta() {
             <p className="eyebrow on-dark" style={{ justifyContent: 'center' }}>Get started</p>
             <h2>Tell us where it&rsquo;s breaking.</h2>
             <p>One conversation is enough to know if there&rsquo;s a fit. If there is, we scope the discovery phase from there.</p>
-            <ContactForm />
+            <BookingEmbed />
             <p className="cta-contact">Or reach us directly at <a href={`mailto:${site.mailto}`}>{site.mailto}</a></p>
             <div className="cta-socials">
               {site.socials.map((s) => (

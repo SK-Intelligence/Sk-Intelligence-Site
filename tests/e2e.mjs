@@ -43,10 +43,20 @@ head('pages');
 for (const route of ['/', '/studio']) {
   const p = await desktop();
   const errs = [];
-  p.on('pageerror', (e) => errs.push(e.message));
-  p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
+  /* Calendly's iframe asks for storage access and is refused in a headless
+     context, which surfaces here as a page error we neither caused nor can
+     fix. Named exactly rather than filtered by origin, because pageerror does
+     not carry one and a blanket ignore would gut the check. */
+  p.on('pageerror', (e) => { if (!/requestStorageAccess/.test(e.message)) errs.push(e.message); });
+  p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|requestStorageAccess/.test(m.text())) errs.push(m.text()); });
   const bad = [];
-  p.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/founders/')) bad.push(`${r.status()} ${r.url()}`); });
+  /* Same-origin only. Calendly's widget is loaded on this page and a third
+     party's 404 or console noise is not this site's failure to fix; scoping to
+     our own origin keeps the check about our own assets. */
+  p.on('response', (r) => {
+    if (!r.url().startsWith(BASE)) return;
+    if (r.status() >= 400 && !r.url().includes('/founders/')) bad.push(`${r.status()} ${r.url()}`);
+  });
   await p.goto(BASE + route, { waitUntil: 'load' });
   await settle(p);
   await walk(p);
@@ -70,7 +80,7 @@ head('stylesheet integrity');
   ok(r.label === 'flex', `hero-scene rules applied (.scene-label ${r.label})`);
   ok(r.glass && r.glass !== 'none', 'glass rules applied');
   // JSX strips whitespace between elements where HTML kept it.
-  ok(r.headline === 'We find the bottleneck. Then we live inside the fix.', `headline spacing: "${r.headline}"`);
+  ok(r.headline === 'We find the bottlenecks. Then we build the fix into the systems you already run.', `headline spacing: "${r.headline}"`);
   await p.close();
 }
 

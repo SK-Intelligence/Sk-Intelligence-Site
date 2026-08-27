@@ -143,9 +143,10 @@
     font-size:.72rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
     color:var(--accent-deep);
   }
-  .eyebrow::before{ content:''; width:20px; height:1px; background:var(--accent-deep); display:inline-block; }
+  /* The leading hairline is gone. At this size it read as a stray hyphen
+     hanging off the label rather than as a rule, and the label is doing the
+     work on its own. .eyebrow keeps its flex gap so nothing else shifts. */
   .eyebrow.on-dark{ color:var(--band-ink); }
-  .eyebrow.on-dark::before{ background:var(--band-accent); }
 
   .section-pad{ padding:clamp(72px,10vw,132px) 0; }
   .section-head{ max-width:640px; margin-bottom:clamp(36px,6vw,64px); }
@@ -1092,6 +1093,33 @@
     .scene-label{ transition:none; }
   }
 
+
+  /* =================== Booking embed ===================
+     Calendly, in place of the contact form, wearing the form's material: the
+     same translucent bone fill over the CTA gradient and the same hairline
+     border, so the panel reads as one surface rather than a third-party box
+     dropped into it. Radius is larger than an input's 14px only because this
+     is a 700px card rather than a 44px field.
+
+     The fill cannot reach inside the iframe, which is a separate document, so
+     the widget's own background is set to the opaque equivalent through a URL
+     parameter in BookingEmbed.tsx. The two have to be changed together. */
+  .booking{ margin-top:clamp(24px,3vw,34px); }
+  .booking .calendly-inline-widget{
+    border-radius:18px; overflow:hidden;
+    background:rgba(var(--band-ink-rgb),.07);
+    border:1px solid rgba(var(--band-ink-rgb),.18);
+  }
+  /* Shown when the script is blocked or JavaScript is off. A form that fails
+     still shows its fields; a widget that fails shows an empty 700px hole, so
+     this one says what happened and gives the two ways round it. */
+  .booking-fallback{
+    margin:0; padding:22px 20px; border-radius:18px; text-align:center;
+    font-size:.92rem; line-height:1.6; color:rgba(var(--band-ink-rgb),.88);
+    background:rgba(var(--band-ink-rgb),.07);
+    border:1px solid rgba(var(--band-ink-rgb),.18);
+  }
+  .booking-fallback a{ color:var(--band-accent); text-decoration:underline; text-underline-offset:3px; }
 
   /* =================== Contact form ===================
      Lives on the dark CTA panel, so it uses the band-ink family rather than the

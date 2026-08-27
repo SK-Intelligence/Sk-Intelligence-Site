@@ -101,7 +101,7 @@ export function ClientWork() {
           {/* No count in it, deliberately. "Four builds, still running" had to
               be edited the moment a fifth arrived, and would again at a sixth.
               The strip below already says how many there are. */}
-          <h2>What we&rsquo;ve shipped</h2>
+          <h2>What we&rsquo;ve shipped so far</h2>
           {/* No deck paragraph. It named each build by trade, which the strip of
               logos and the panel under it then said again, at length and before
               you reached either. A section that shows five builds does not have

@@ -8,8 +8,8 @@ export function Hero() {
         <div className="hero-copy">
           <p className="eyebrow" style={{ marginBottom: '1rem' }}>AI-native consultancy</p>
           <h1 className="hero-head">
-            <span className="h-line"><span className="h-line-inner">We find the bottleneck.</span></span>{' '}
-            <span className="h-line"><span className="h-line-inner">Then we live <em>inside</em> the fix.</span></span>
+            <span className="h-line"><span className="h-line-inner">We find the bottlenecks.</span></span>{' '}
+            <span className="h-line"><span className="h-line-inner">Then we build the fix <em>into</em> the systems you already run.</span></span>
           </h1>
           <p className="hero-sub">
             We embed inside your operations, find where the work actually breaks down, build the

@@ -280,9 +280,9 @@ export const clients = [
        both renditions stops compiling. Null keeps the property on the type and
        says out loud that there is nobody to quote. */
     quote: null,
-    asked: 'AI deployers are facing the EU AI Act enforcement deadline with GRC tools that file an AI system as one more line in a risk register, rather than producing the evidence a regulator actually asks for.',
-    approach: 'Read the live stack through its own APIs, classify every use case against the specific regulation clauses with a deterministic rule engine rather than a model, generate the evidence underneath it, and hold each binder behind human sign-off.',
-    impact: 'Compliance officers reach an auditor-ready binder in days instead of the months a hand-built pack takes, and the evidence stands up because every clause cites its source.',
+    asked: 'Companies using AI have a legal deadline coming and the tools they own were built for a different job: they log an AI system as a risk to be noted, not as something you have to produce evidence for.',
+    approach: 'It reads what their AI is actually doing straight from the tools they already use, then checks each one against the exact wording of the law, using fixed rules rather than asking an AI to judge it. It writes the paperwork underneath, and nothing is final until a person signs it off.',
+    impact: 'A compliance officer gets a binder an auditor will accept in days rather than months, and it holds up under questioning because every claim in it points at the rule and the record behind it.',
     shots: [
       {
         src: '/work/provena-1.png',
@@ -305,8 +305,8 @@ export const clients = [
     sector: 'Automotive customisation',
     logo: '/clients/c-astar.png',
     asked: 'A storefront that could sell on its own: products, inventory, payments and checkout, built for the brand rather than dropped onto a template.',
-    approach: 'Built from scratch around their catalogue and their custom-kit work, with secure payments and checkout wired in, then launched and supported end to end.',
-    impact: 'The shop trades without anyone in the business processing an order by hand, and the gallery and custom kits are theirs to manage.',
+    approach: 'Built from scratch around their own products and custom-kit work, with card payments and checkout wired in, then launched and looked after end to end.',
+    impact: 'The shop takes orders and money on its own, with nobody in the business keying anything in, and they update the gallery and kits themselves.',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
     shots: [
       { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
@@ -332,8 +332,8 @@ export const clients = [
     sector: 'Tyre retail',
     logo: '/clients/c-ossett.png',
     asked: 'Customers could not tell what tyres their car takes, so every enquiry began with someone in the garage looking the fitment up by hand.',
-    approach: 'A registration lookup wired to DVLA records: the plate resolves the vehicle, and the tool returns the original front and rear fitment over a serverless backend on Vercel.',
-    impact: 'The lookup answers the question the customer came with before anyone in the garage is involved, and every enquiry lands tracked rather than in a notebook.',
+    approach: 'A number plate lookup that checks the car against DVLA records and gives back the exact tyre sizes it left the factory with, front and rear.',
+    impact: 'The customer gets their answer before anyone in the garage is involved, and every enquiry is recorded rather than written on a pad.',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
     shots: [
       { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
@@ -353,8 +353,8 @@ export const clients = [
     sector: 'Vehicle servicing',
     logo: '/clients/c-gbautos.png',
     asked: 'A Feltham garage trading since 2009 had no online presence at all, and wanted to be findable by the people already looking for it.',
-    approach: 'A first website built from nothing, with services, location and opening hours structured for local search and the phone number on every screen.',
-    impact: 'The garage now turns up when someone nearby searches for what it does, and those people can reach the owner directly.',
+    approach: 'A first website built from nothing, with the services, the address and the opening hours laid out the way search engines read them, and the phone number on every page.',
+    impact: 'They now come up when someone nearby searches for what they do, and that person can ring the owner straight away.',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
     shots: [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
@@ -373,8 +373,8 @@ export const clients = [
     sector: 'Family services',
     logo: '/clients/c-hopeful.png',
     asked: 'A growing family services team needed company email that authenticates properly instead of landing in spam.',
-    approach: 'Mailboxes provisioned across Outlook and Google Workspace, domain records set for SPF, DKIM and DMARC, with support as the team grew.',
-    impact: 'Mail from the team reaches the families and agencies it is sent to, and new staff get a working mailbox on day one.',
+    approach: 'Mailboxes set up across Outlook and Google Workspace, with the domain records configured so that mail proves it came from them, plus support as more staff joined.',
+    impact: 'Their mail reaches the families and agencies they send it to instead of going to spam, and a new starter has a working address on day one.',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
     shots: [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
