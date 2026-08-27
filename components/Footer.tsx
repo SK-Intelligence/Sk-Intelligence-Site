@@ -8,7 +8,7 @@ export function Footer() {
       <div className="container footer-inner">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <SkLogo size="footer" label={site.name} />
-          <span>&copy; 2026 {site.name} &middot; formerly SK Webminds</span>
+          <span>&copy; 2026 {site.name}</span>
         </div>
         <div className="footer-links">
           {nav.map(({ label, href }) => (

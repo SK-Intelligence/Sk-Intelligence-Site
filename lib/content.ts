@@ -11,13 +11,22 @@ export const site = {
   tagline: 'AI-native, forward-deployed',
   description:
     'SK Intelligence: an AI-native consultancy that embeds inside your operations, finds the bottleneck, builds the fix, then forward-deploys until it sticks.',
-  /** Displayed address. The real mailbox is `mailto`. */
-  emailDisplay: 'hello@skintelligence',
-  mailto: 'skwebminds@gmail.com',
+  /* Both the same address now. They were split when the shown address was a
+     tidy-looking `hello@skintelligence` (no TLD, so not an address at all) and
+     the working mailbox was a personal Gmail. There is a real company mailbox,
+     so the site shows the address it actually uses. Keep the two fields: the
+     day a display address and a routing address diverge again, they are here. */
+  emailDisplay: 'info@sk-intelligence.co',
+  mailto: 'info@sk-intelligence.co',
   socials: [
     { label: 'Sameer Gul on LinkedIn', href: 'https://www.linkedin.com/in/sameer-g-4728a3260/', icon: 'linkedin' },
     { label: 'Kenneth Obanor on LinkedIn', href: 'https://www.linkedin.com/in/kenneth-obanor-060609275/', icon: 'linkedin' },
     { label: 'Facebook', href: 'https://facebook.com/profile.php?id=61553097449850', icon: 'facebook' },
+    /* These two still say skwebminds because that is the handle the accounts
+       are actually at. The old name is gone from the site's own copy, but a
+       social URL is not copy: pointing them at /skintelligence before those
+       handles exist turns two working links into two 404s. Change them here
+       when the accounts are renamed, not before. */
     { label: 'Instagram', href: 'https://instagram.com/skwebminds', icon: 'instagram' },
     { label: 'X (Twitter)', href: 'https://twitter.com/skwebminds', icon: 'x' },
   ],
