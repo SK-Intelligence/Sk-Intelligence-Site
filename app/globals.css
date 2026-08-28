@@ -143,10 +143,13 @@
     font-size:.72rem; font-weight:700; letter-spacing:.24em; text-transform:uppercase;
     color:var(--accent-deep);
   }
-  /* The leading hairline is gone. At this size it read as a stray hyphen
-     hanging off the label rather than as a rule, and the label is doing the
-     work on its own. .eyebrow keeps its flex gap so nothing else shifts. */
+  /* The leading hairline, back by request. It was dropped once for reading as
+     a stray hyphen at this size; it is wanted, so it stays, and the dark-band
+     variant comes back with it — without that pairing the rule keeps the light
+     accent on the dark sections and all but disappears. */
+  .eyebrow::before{ content:''; width:20px; height:1px; background:var(--accent-deep); display:inline-block; }
   .eyebrow.on-dark{ color:var(--band-ink); }
+  .eyebrow.on-dark::before{ background:var(--band-accent); }
 
   .section-pad{ padding:clamp(72px,10vw,132px) 0; }
   .section-head{ max-width:640px; margin-bottom:clamp(36px,6vw,64px); }
