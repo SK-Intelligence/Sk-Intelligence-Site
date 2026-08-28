@@ -390,6 +390,11 @@
      and `z-index` to the two selectors below rather than duplicating them here.
      Same specificity, so if you ever add a z-index here it will fight that —
      change it there instead. */
+  /* 150ms, not the second this used to take. The canvas is revealed only after
+     the first frame is already rendered, so there is nothing behind the fade
+     worth waiting for — it existed to hide a pop that no longer happens, and
+     the cost was a flat second of poster on every load. Short enough now to
+     cover the swap from the poster and nothing else. */
   #hero-canvas{ width:100%; height:100%; opacity:0; transition:opacity 1s var(--ease); }
   #hero-poster{ position:absolute; inset:0; width:100%; height:100%; opacity:.9; }
 
@@ -488,7 +493,190 @@
      Nothing positions a shared indicator any more, so the wrapping problem that
      rule existed for is gone with it — a selected chip marks itself, wherever
      it lands. */
+  /* This is the JS-off state now: a plain row of logos above every case study.
+     It used to be the open half of the section as well, which is why it carried
+     a min-height reserving room for a Flip that no longer happens. */
   .tabs{ display:flex; flex-wrap:wrap; gap:10px; padding-bottom:20px; border-bottom:1px solid var(--ink-line-strong); }
+
+  /* ── The closed constellation ───────────────────────────────────────────
+     The same six buttons as the open strip, absolutely placed instead of laid
+     out in a row. React supplies --ox/--oy per mark as a plain -1..1 offset;
+     the containment is done here rather than there, because the browser is the
+     only thing that knows how wide the field ended up.
+
+     Read the position as: start at the centre, move out by the offset, but
+     never let the CENTRE travel further than half the field minus half the
+     chip — then step back by half the chip to convert a centre into a left
+     edge. That last subtraction is why this is not `translate(-50%,-50%)`: a
+     centring transform here would sit under whatever else is written to these
+     buttons, and two things writing one property is how a mark ends up
+     stranded off-centre when either of them clears.
+
+     The upshot is that a chip cannot leave the field at any width. A row of
+     absolutely positioned children is precisely how the 28px overflow at 320px
+     happened last time, and the overflow sweep cannot see an element whose
+     containing block sits outside the thing that would clip it. */
+
+  /* Sized by the field inside it and clipped to it. See the note in
+     ClientWork.tsx: a rotated box hands its diagonal to its ancestors as
+     scrollable overflow, which is 41% wider than the field actually is. */
+  .orbit-clip{
+    overflow:hidden;
+    width:100%; max-width:clamp(400px, 42vw, 500px);
+    margin:8px auto 0;
+  }
+  .tabs.is-orbit{
+    display:block; position:relative;
+    /* The floor is 400px. Below that the desktop-sized marks are too big for
+       the field and the wide wordmark starts overlapping its neighbour — which
+       does not look broken, it just quietly eats that neighbour's clicks. The
+       ceiling came down from 520px once the offsets were normalised: the marks
+       now reach all four edges, so a bigger field only spreads them thinner. */
+    width:100%; max-width:clamp(400px, 42vw, 500px);
+    height:clamp(400px, 42vw, 500px);
+    /* No margin. The clip owns the spacing; `overflow:hidden` on it makes a new
+       block formatting context, so a margin here would NOT collapse into it —
+       it stacked on top of the clip's own, pushing the field 8px off the clip's
+       centre and adding 8px to the height budget the phone assertion polices. */
+    margin:0 auto;
+    padding-bottom:0; border-bottom:0;
+  }
+  /* Positions on a CIRCLE of radius (50% - --rad - --d), not on an ellipse
+     filling the box.
+
+     --rad is the mark's LARGEST half-extent, used on both axes rather than a
+     separate half-width and half-height. That looks wasteful for the square
+     marks and is not: the field turns, so a mark placed against the right edge
+     by its half-width arrives at the top a quarter-turn later, where the same
+     distance is measured against its half-height. Sizing the circle to the
+     larger of the two is what makes containment hold for the whole revolution
+     instead of at four angles of it. The 2.35:1 wordmark is the case that
+     forced it — it is 148px wide and 84px tall.
+
+     --d covers the drift from ClientWork.tsx. Without it the guarantee held
+     only at rest: a mark was placed flush against the edge and its chip then
+     drifted past it. The box the CSS positions was inside the field the whole
+     time — it is the chip within it that moves — so measuring buttons said
+     everything was fine while the thing on the screen was not.
+
+     It is the drift's LENGTH, hypot(3, 4) = 5, not either component. The drift
+     is written inside the field, so it turns with it, and a 3-by-4 offset aimed
+     along a page axis reaches 5px there a few seconds later. At 4px this was
+     covered by slack in the ring radius; with the outer ring now at exactly 1.0
+     there is none, so the wide wordmark reached a pixel past the clip and got
+     quietly cropped. Change the amplitudes there and this is hypot of the two,
+     not a copy of one. */
+  .tabs.is-orbit .tab{
+    --hw:42px; --hh:42px; --rad:42px; --d:5px;
+    position:absolute;
+    left:calc(50% + var(--ox) * (50% - var(--rad) - var(--d)) - var(--hw));
+    top: calc(50% + var(--oy) * (50% - var(--rad) - var(--d)) - var(--hh));
+    opacity:1;
+  }
+  .tabs.is-orbit .tab[data-wide]{ --hw:74px; --rad:74px; }
+  .tabs.is-orbit .tab .client-chip{ width:76px; height:76px; padding:14px; }
+  .tabs.is-orbit .tab[data-wide] .client-chip{ width:140px; }
+  /* The drift wrapper. It carries nothing of its own — it exists so that the
+     tween writing a transform every frame and the rules below writing one are
+     not aimed at the same element. Both were on the chip once, and the inline
+     style won every time: the outer ring rendered at full size instead of .88
+     and the hover lift did nothing at all, for everyone except reduced-motion
+     visitors, who were the only ones it worked for. */
+  .tab .chip-drift{ display:block; }
+
+  /* Depth. The outer ring sits fractionally smaller and lighter so the cluster
+     reads as a volume rather than as six marks pasted on a flat plane. */
+  .tabs.is-orbit .tab[data-ring="out"] .client-chip{ transform:scale(.88); opacity:.74; }
+  @media (hover:hover) and (pointer:fine){
+    .tabs.is-orbit .tab:hover .client-chip{ transform:translateY(-3px) scale(1); opacity:1; }
+    .tabs.is-orbit .tab:hover{ transform:none; }
+  }
+  .tabs.is-orbit .tab .client-chip{ transition:transform .3s var(--ease), opacity .3s ease, border-color .25s ease; }
+  @media (prefers-reduced-motion:reduce){
+    .tabs.is-orbit .tab .client-chip{ transition:none; }
+    .tabs.is-orbit .tab:hover .client-chip{ transform:scale(1); }
+  }
+
+  /* The one instruction the section carries. It stays: there is no state in
+     which the constellation is on screen and picking a build is not the thing
+     to do. */
+  .orbit-hint{
+    /* The lowest mark reaches the bottom edge of the field, so 4px put this
+       hard against it. */
+    margin:20px auto 0; text-align:center;
+    font-family:var(--font-display); font-size:.72rem; font-weight:700;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--ink-mute);
+  }
+
+  /* ── The case study, over the constellation ─────────────────────────────
+     Same shell as .lightbox and for the same reasons, including the ones
+     written up there: a transparent dialog carrying the width, an inner block
+     carrying the surface, and overflow:hidden rather than visible so a viewport
+     shorter than the content scrolls the body instead of dropping the bottom of
+     it off the screen unreachably. The two stack — opening a screenshot full
+     size from in here puts .lightbox above this in the top layer. */
+  .case-dialog{
+    width:min(94vw,1180px); max-width:none;
+    max-height:92vh; padding:0; border:0;
+    background:transparent; color:var(--ink);
+    overflow:hidden;
+  }
+  .case-dialog::backdrop{ background:rgba(var(--shadow-rgb),.72); }
+  .case-inner{
+    background:var(--surface);
+    border:1px solid var(--ink-line);
+    border-radius:18px; overflow:hidden;
+    box-shadow:0 40px 90px -30px rgba(var(--shadow-rgb),.6);
+    max-height:92vh;
+    display:flex; flex-direction:column;
+  }
+  /* Just the way out. The case study names itself in the body — see the note
+     in CaseDialog.tsx — so this holds one control and no border, and reads as
+     part of the surface rather than as a title bar with nothing in it. */
+  .case-bar{
+    display:flex; align-items:center; justify-content:flex-end;
+    padding:12px 16px 0;
+    flex:0 0 auto;
+  }
+  /* 44px, not 36px. It is the only visible way out of the case study — Esc and
+     a backdrop click both work, but neither is discoverable — and the same
+     minimum is already stated on .tab for the same reason. */
+  .case-x{
+    display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:50%;
+    border:1px solid var(--ink-line); color:var(--ink);
+    background:none; cursor:pointer;
+    flex:0 0 auto;
+    transition:background .2s ease, border-color .2s ease;
+  }
+  .case-x svg{ width:16px; height:16px; }
+  @media (hover:hover) and (pointer:fine){
+    .case-x:hover{ background:var(--surface-alt); border-color:var(--accent); }
+  }
+  @media (prefers-reduced-motion:reduce){ .case-x{ transition:none; } }
+  /* min-height:0 is the load-bearing part: without it a flex item refuses to
+     shrink below its content and the overflow goes back off the bottom. */
+  .case-body{
+    flex:1 1 auto; min-height:0; overflow:auto;
+    padding:0 clamp(20px,3vw,32px) clamp(20px,3vw,32px);
+  }
+  /* The panel is a two-column grid on the page. In here the dialog is already
+     the narrower thing, and the case study reads top to bottom. */
+  .case-body .panel{ display:block; padding-block:0; }
+  .case-body .panel-head{ margin-bottom:20px; }
+  .case-body .client-showcase{ margin-bottom:clamp(20px,3vw,28px); }
+  .case-body .panel-meta{ margin-bottom:clamp(20px,3vw,28px); }
+  .case-body .panel-quote{ margin:0; }
+  @media (min-width:900px){
+    /* Wide enough for the two-column reading again: the shot on one side, the
+       three questions on the other, which is how it sits on the page. */
+    .case-body .panel{
+      display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);
+      gap:clamp(28px,4vw,48px);
+    }
+    .case-body .client-showcase, .case-body .panel-meta{ margin-bottom:0; }
+  }
+
   .tab{
     /* Positioned so the .visually-hidden label inside resolves its containing
        block HERE. Without it the label, being position:absolute, hangs off a
@@ -503,15 +691,20 @@
     opacity:.42; transition:opacity .25s ease, transform .25s var(--ease);
   }
   .tab .client-chip{ margin-bottom:0; width:56px; height:56px; padding:10px; }
-  .tab[aria-selected="true"], .tab[data-on]{ opacity:1; }
-  .tab[data-on] .client-chip{
-    border-color:var(--accent-deep);
-    box-shadow:0 0 0 1px var(--accent-deep), 0 8px 20px -12px rgba(var(--shadow-rgb),.5);
-  }
-  /* No JS, no selection: every panel is shown, so dimming four of five would
-     be marking a state that is not real. The role is only added on hydration,
-     which makes its absence the cleanest test for it. */
-  .tabs:not([role="tablist"]) .tab{ opacity:1; }
+  /* One of these marks is a 2.35:1 wordmark where every other is roughly
+     square. Contained inside the square box the others use it comes out around
+     36x17 — present, but not readable as a name. It gets a box its own shape
+     instead of being made to fit someone else's. */
+  .tab[data-wide] .client-chip{ width:104px; }
+  /* Nothing marks a selected mark any more, because there is no selection to
+     mark: a build is either open over the page or it is not. The rules that
+     used to live here keyed off `aria-selected` and `data-on`, neither of which
+     the section puts on a mark now.
+
+     No JS, no selection either: every panel is shown, so dimming five of six
+     would be marking a state that is not real. Hydration is what adds a role at
+     all, so having none is the cleanest test for "JavaScript never ran here". */
+  .tabs:not([role]) .tab{ opacity:1; }
   @media (hover:hover) and (pointer:fine){
     .tab:hover{ opacity:1; transform:translateY(-2px); }
   }
@@ -533,10 +726,17 @@
   .tab-panels{ margin-top:40px; position:relative; }
   .panel{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:clamp(28px,5vw,56px); padding-block:8px; }
   .panel + .panel{ border-top:1px solid var(--ink-line); margin-top:8px; padding-top:28px; }
-  .js-tabs .panel{ display:none; border-top:none; margin-top:0; padding-top:8px; }
-  .js-tabs .panel[data-active]{ display:grid; }
-  .js-tabs .panel.is-transitioning{ filter:blur(3px); opacity:.55; }
-  .panel{ transition:filter .2s ease, opacity .2s ease; }
+  /* The entrance moved with the case study.
+     These rules hung off `.js-tabs`, a class the section stopped emitting when
+     the panels moved into a dialog — which left the keyframe below unreachable
+     and the case study appearing with no entrance at all. A <dialog> has none
+     of its own, so this is the whole of it: the content rises as the backdrop
+     comes up, rather than the finished article being switched on. */
+  .case-body .panel{ animation:panel-in .42s var(--ease) both; }
+  @keyframes panel-in{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion:reduce){
+    .case-body .panel{ animation:none; }
+  }
 
   .panel-meta{ border-left:2px solid var(--accent); padding-left:20px; }
   /* A build with no client carries no testimonial, so .panel-meta is the last
@@ -550,14 +750,25 @@
   }
   /* Nothing splits across the break: a metrics row cut in half, or a bullet
      with its first line in one column and its second in the next, reads as a
-     rendering fault. */
-  .panel-meta:last-child > *{ break-inside:avoid; }
+     rendering fault.
+
+     Aimed at the atoms, not at the direct children. This was `> *`, and
+     .panel-meta has exactly two children — the question list and the
+     disclosure — so "two columns, nothing may split" could only resolve one
+     way: the whole of Asked/Approach/Impact in the first column and a single
+     summary line in the second, with the bottom half of that column blank.
+     That is the same wasted half the rule exists to remove, moved sideways, and
+     it shows on precisely the two builds the rule is for. Letting the list
+     break while each question, each metric and the disclosure stay whole is
+     what actually balances the columns. */
+  .panel-meta:last-child .client-qa > div,
+  .panel-meta:last-child .client-metrics > div,
+  .panel-meta:last-child .client-more{ break-inside:avoid; }
   @media (max-width:720px){
     .panel-meta:last-child{ columns:1; }
   }
   /* Sector and name used to live here; they lead the panel now, so the only
      prose left in this column is the outcome line. */
-  .panel-meta .client-work{ color:var(--ink-soft); font-size:.93rem; line-height:1.6; }
 
   /* Asked for / Approach / Impact. Labels are the same small caps as
      .client-sector so the panel keeps one vocabulary for "this is a label",
@@ -709,9 +920,13 @@
   .lightbox-title span{
     margin-left:10px; font-weight:600; color:var(--ink-mute);
   }
+  /* 44px for the same reason as .case-x. These were 36px and had been since the
+     viewer was written; the tap-target sweep never saw them because it only
+     ever ran on the closed page, so nothing inside a dialog was measured. The
+     sweep now opens both dialogs, which is what turned this up. */
   .lightbox-x, .lightbox-nav button{
     display:flex; align-items:center; justify-content:center;
-    width:36px; height:36px; border-radius:50%;
+    width:44px; height:44px; border-radius:50%;
     border:1px solid var(--ink-line); color:var(--ink);
     transition:background .2s ease, border-color .2s ease;
   }
@@ -1391,13 +1606,25 @@
      list of headings rather than a control. A single scrollable strip is the
      conventional mobile pattern and keeps the selected-tab underline meaningful. */
   @media (max-width:720px){
-    .tabs{
+    .tabs:not(.is-orbit){
       flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;
       scrollbar-width:none; -webkit-overflow-scrolling:touch;
       scroll-snap-type:x proximity;
     }
-    .tabs::-webkit-scrollbar{ display:none; }
+    .tabs:not(.is-orbit)::-webkit-scrollbar{ display:none; }
     /* margin-right went with the text tabs; .tabs has a gap now, and adding
-       both put a 30px hole between five chips that should read as one row. */
-    .tab{ flex:0 0 auto; scroll-snap-align:start; }
+       both put a 30px hole between six chips that should read as one row. */
+    .tabs:not(.is-orbit) .tab{ flex:0 0 auto; scroll-snap-align:start; }
+
+    /* The orbit stays on phones rather than falling back to the strip, but it
+       has to give the case study room to start before the fold does. Smaller
+       field, smaller marks, and the wide wordmark shrinks with the rest — at
+       this size it is still the widest thing in the field, so the containment
+       maths above is doing real work here and not just in theory. */
+    .orbit-clip{ max-width:min(92vw, 330px); }
+    .tabs.is-orbit{ max-width:min(92vw, 330px); height:min(92vw, 330px); }
+    .tabs.is-orbit .tab{ --hw:32px; --hh:32px; --rad:32px; }
+    .tabs.is-orbit .tab[data-wide]{ --hw:52px; --rad:52px; }
+    .tabs.is-orbit .tab .client-chip{ width:56px; height:56px; padding:10px; }
+    .tabs.is-orbit .tab[data-wide] .client-chip{ width:96px; }
   }

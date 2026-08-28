@@ -17,6 +17,22 @@ import { chromium } from 'playwright';
 const BASE = process.env.E2E_BASE ?? 'http://127.0.0.1:8123';
 const PHONES = [320, 375, 390, 430];
 
+/* How many builds are in the bank, and how many of them have a real
+   testimonial. Both must track `clients` in lib/content.ts by hand — this is a
+   plain .mjs and cannot import the TypeScript.
+
+   They live here as named constants rather than as literals scattered through
+   the assertions because the count was previously written out five separate
+   times, and adding a sixth build meant finding all five. Deriving them from
+   the page instead would be worse than either: a build that silently vanished
+   from the array would take the expectation with it and still pass.
+
+   QUOTED is deliberately not CLIENTS. Provena has no client to ask and
+   Peshawri has one who has not been asked yet — see the note in content.ts
+   before you "fix" the gap. */
+const CLIENTS = 6;
+const QUOTED = 4;
+
 let fail = 0;
 const ok = (cond, msg) => { if (!cond) fail++; console.log(`${cond ? '  ok  ' : ' FAIL '} ${msg}`); };
 const head = (t) => console.log(`\n── ${t}`);
@@ -37,6 +53,85 @@ const walk = async (p) => {
   await p.evaluate(() => window.scrollTo(0, 0));
   await p.waitForTimeout(500);
 };
+
+/* Opening a build puts a modal dialog over the page, and showModal() makes
+   everything behind it inert — so a second `click('#tab-n')` while one is open
+   does nothing at all, silently. Every "open build n" below goes through here,
+   which closes whatever is open first. Closing via the element rather than the
+   × exercises the same path Esc takes and does not depend on the button's
+   position. */
+const openCase = async (p, i) => {
+  await p.evaluate(() => document.querySelector('dialog.case-dialog')?.close());
+  await p.waitForTimeout(120);
+  /* Hover the field before clicking a mark in it.
+     Two reasons, and they are the same reason. Pointing at the constellation
+     pauses it, so a mark you are reaching for holds still — that is the
+     behaviour, and it is why a person can click a moving target comfortably.
+     Playwright enforces the same thing mechanically: it refuses to click an
+     element whose box is different on two consecutive frames, and a mark that
+     never stops moving is never clickable. Hovering first is not a workaround
+     for the test, it is the test taking the same path a reader does. */
+  /* Moved by coordinate rather than by locator. `#tabList` IS the rotating
+     element, so hovering it has exactly the same stability problem as clicking
+     a mark on it — Playwright will not aim at a box that keeps changing. The
+     clip around it never moves, so its centre is a fixed point inside the
+     field, and putting the pointer there fires the mouseenter that stops the
+     turn. */
+  /* Touch contexts take a different route, because the field does not stop for
+     them. Hover-to-pause is gated behind `(hover: hover)` — a touch browser
+     leaves a synthesised hover on the last thing tapped and never sends
+     mouseleave, so honouring it would freeze the constellation after the first
+     tap. That is right for a reader and awkward for a driver: a real tap lands
+     wherever the finger goes and does not care that the target is moving,
+     whereas Playwright refuses to click anything whose box changed between two
+     frames. `force` skips exactly that staleness check and nothing else that
+     matters here — whether a mark is covered by a neighbour is settled by the
+     geometry assertions above, at every width, rather than by this click. */
+  const canHover = await p.evaluate(() => matchMedia('(hover: hover)').matches);
+  if (!canHover) {
+    await p.evaluate(() => document.querySelector('.orbit-clip')
+      .scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await p.waitForTimeout(150);
+    await p.click(`#tab-${i}`, { force: true });
+    await p.waitForTimeout(450);
+    return;
+  }
+
+  const at = await p.evaluate(() => {
+    /* `behavior:'instant'` on purpose. The page sets scroll-behavior:smooth, so
+       a plain scrollIntoView is still travelling several hundred milliseconds
+       later — the field's rect came back a thousand pixels below the viewport,
+       the pointer was moved to a coordinate off-screen, the hover never
+       happened, the turn never paused, and the click then failed on a moving
+       target. The symptom was "element is not stable"; the cause was a scroll
+       that had not finished. */
+    document.querySelector('.orbit-clip').scrollIntoView({ block: 'center', behavior: 'instant' });
+    const r = document.querySelector('.orbit-clip').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await p.mouse.move(at.x, at.y);
+  await p.waitForTimeout(250);
+  await p.click(`#tab-${i}`);
+  await p.waitForTimeout(450);
+};
+const closeCase = async (p) => {
+  await p.evaluate(() => document.querySelector('dialog.case-dialog')?.close());
+  await p.waitForTimeout(250);
+};
+
+/** The field's rotation in degrees, read off the live matrix. */
+const spinAngle = (p) => p.evaluate(() => {
+  const m = new DOMMatrix(getComputedStyle(document.getElementById('tabList')).transform);
+  return Math.atan2(m.b, m.a) * 180 / Math.PI;
+});
+
+/* Signed difference between two angles, unwrapped.
+   atan2 returns (-180, 180], and the field crosses 180 once a revolution, so a
+   pair of samples straddling that point reads as a ~350 degree jump backwards
+   and fails a check that is looking for a few degrees forwards. Roughly one
+   sample in thirty lands there, which is a test that fails once a fortnight for
+   no reason — the worst kind. */
+const spinDelta = (a, b) => ((b - a + 540) % 360) - 180;
 
 // ─────────────────────────────────────────── pages load clean
 head('pages');
@@ -159,6 +254,307 @@ head('tap targets (44px guidance)');
       .filter(({ r }) => r.height < 44)
       .map(({ el, r }) => `${el.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)} "${(el.textContent || '').trim().slice(0, 18)}"`));
   ok(small.length === 0, `no interactive element under 44px tall ${small.length ? '— ' + small.join(', ') : ''}`);
+
+  /* Again with the dialogs open.
+     The sweep above only ever saw the closed page, so every control inside the
+     case study and the screenshot viewer went unmeasured — which is how two
+     36px close buttons sat there being the only visible way out of a modal on a
+     phone. Anything a reader can reach has to be measured, and a modal is very
+     much reachable. */
+  const measure = () => p.evaluate(() =>
+    [...document.querySelectorAll('a, button')]
+      .filter((el) => el.getClientRects().length)
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.height < 44)
+      .map(({ el, r }) => `${el.className || el.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`));
+
+  /* Resolved by name, and it has to be the four-shot build: the viewer's
+     prev/next controls only render above one screenshot, so landing on a
+     single-shot build would measure the close button and quietly skip the two
+     stepper buttons that were also 36px. */
+  await openCase(p, await indexOf(p, 'A Star Customs'));
+  const inCase = await measure();
+  ok(inCase.length === 0, `no control under 44px inside the case study ${inCase.length ? '— ' + inCase.join(', ') : ''}`);
+
+  await p.click('.showcase-open');
+  await p.waitForTimeout(450);
+  const inLightbox = await measure();
+  ok(inLightbox.length === 0, `no control under 44px inside the screenshot viewer ${inLightbox.length ? '— ' + inLightbox.join(', ') : ''}`);
+  await p.close();
+}
+
+
+// ─────────────────────────────────────────── the constellation
+/* Every phone width, not just one. The overlap that shipped past the first
+   version of this block was a function of how wide the field ended up, so a
+   single viewport is exactly the wrong amount of coverage. */
+head('work orbit');
+for (const w of [...PHONES, 768, 1440]) {
+  const p = w < 900 ? await phone(w) : await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await p.waitForTimeout(600);
+
+  const closed = await p.evaluate(() => {
+    const field = document.getElementById('tabList');
+    /* Measured against the CLIP, not against the field.
+       `#tabList` is the element that rotates, so its getBoundingClientRect is
+       the axis-aligned box around a rotated square — its diagonal. At 33
+       degrees that is 580px around a 500px field, handing the check 40px of
+       slack per side, and at 45 degrees it is 707px and hands it 103px. A mark
+       could sit a hundred pixels outside the visible area, cropped by
+       overflow:hidden and invisible, and this would still read zero. It was the
+       only assertion behind "a chip cannot leave the field at any width" and it
+       was the one that could not fail. The clip does not rotate. */
+    const fr = document.querySelector('.orbit-clip').getBoundingClientRect();
+    const tabs = [...document.querySelectorAll('.tab')];
+    /* Measured on the CHIP, not on the button.
+       The drift translates the chip inside the button, and a child's transform
+       does not move the parent's rect — so measuring buttons checks boxes that
+       by definition never move, while the things a reader can see touch have up
+       to 17px of relative vertical travel between them (+9 against -8 on
+       adjacent marks) and 10px horizontal. At the narrowest layout that is most
+       of the documented clearance. The chip rect is what is on the screen, so
+       it is what both the containment and the overlap checks below use. */
+    const rects = tabs.map((t) => t.querySelector('.client-chip').getBoundingClientRect());
+    return {
+      orbit: field.classList.contains('is-orbit'),
+      role: field.getAttribute('role'),
+      marks: tabs.length,
+      // Each mark says it opens a dialog, and nothing pretends to be a tab in
+      // a tablist: there is no selection here, only six things you can open.
+      haspopup: tabs.filter((t) => t.getAttribute('aria-haspopup') === 'dialog').length,
+      tabRole: document.querySelectorAll('.tab[role="tab"], .tab[aria-selected], .tab[aria-expanded]').length,
+      shown: [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').length,
+      /* Every mark inside the clip, at EVERY rotation, proved rather than
+         sampled.
+
+         Checking the rects where they happen to be catches only the angle the
+         snapshot was taken at, and containment in a square is angle-dependent:
+         a mark's horizontal extent peaks once a revolution, when its centre
+         crosses the horizontal axis. Forcing a set of angles would work and
+         would need the drift and the counter-rotation forced with it.
+
+         The invariant is simpler than that. The marks are counter-rotated, so
+         each one is always upright and its rect is its true size; and its
+         distance from the centre does not change as the field turns. So it
+         stays inside for the whole revolution exactly when
+
+             centre distance + half its longest side + the drift reach <= half the clip
+
+         which is what the CSS computes as `50% - --rad - --d`. 5px is the drift
+         reach, hypot(3, 4), because the drift is written inside the rotating
+         field and so points in every direction over a revolution. */
+      escaped: tabs.map((t, i) => {
+        /* The centre comes from the BUTTON, the extent from the chip inside it.
+           The drift is written to a wrapper within the button, so the button's
+           centre is the mark's true anchor — undrifted — while the chip's rect
+           is the thing that has to fit. Taking the centre from the chip instead
+           would fold the drift into the measurement and then add the drift
+           reach again on top, double-counting it and failing by a pixel. The
+           button's own rect is rotated and its width is meaningless here; only
+           its centre is used, and rotation about the field's centre does not
+           move a centre off its circle. */
+        const b = t.getBoundingClientRect();
+        const c = rects[i];
+        const rho = Math.hypot((b.left + b.right) / 2 - (fr.left + fr.right) / 2,
+                               (b.top + b.bottom) / 2 - (fr.top + fr.bottom) / 2);
+        return rho + Math.max(c.width, c.height) / 2 + 5 - fr.width / 2;
+      }).filter((over) => over > 1).length,
+      /* Real rectangle intersection, and it reports WHICH pair.
+         The first version of this only looked for two marks at nearly the same
+         coordinates, which is a much rarer failure than the one that actually
+         happened: the 2.35:1 wordmark overlapped its neighbour by 21x55px on a
+         phone, sat on top of it, and ate every tap meant for it. Nothing about
+         the picture said so — the neighbour was still visible. Overlapping at
+         all is the bug, not overlapping exactly. */
+      overlaps: rects.flatMap((a, i) => rects.slice(i + 1).map((b, k) => {
+        const j = i + 1 + k;
+        const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return ox > 0 && oy > 0 ? `${i}/${j} by ${Math.round(ox)}x${Math.round(oy)}px` : null;
+      })).filter(Boolean),
+      hint: !!document.querySelector('.orbit-hint'),
+      /* Measured on the clip, not the field. The field is rotated, so its
+         bounding rect is its diagonal and grows and shrinks as it turns —
+         reading it as "how much screen does this cost" overstates it by up to
+         41% and varies by the second. The clip is the unrotated box the reader
+         actually sees. */
+      tall: Math.round(document.querySelector('.orbit-clip').getBoundingClientRect().height),
+    };
+  });
+  ok(closed.orbit && closed.marks === CLIENTS, `${w}px the section opens as ${CLIENTS} marks in a field (${closed.marks})`);
+  ok(closed.role === 'group' && closed.tabRole === 0, `${w}px it is a group of buttons, not a tablist claiming a selection (role ${closed.role})`);
+  ok(closed.haspopup === CLIENTS, `${w}px every mark says it opens a dialog (${closed.haspopup})`);
+  ok(closed.shown === 0, `${w}px no case study until one is picked (${closed.shown} shown)`);
+  ok(closed.escaped === 0, `${w}px every mark stays inside the field (${closed.escaped} escaped)`);
+  ok(closed.overlaps.length === 0, `${w}px no mark covers another ${closed.overlaps.length ? '— ' + closed.overlaps.join(', ') : ''}`);
+  ok(closed.hint, `${w}px the section says what to do`);
+  /* A phone must not spend a whole screen on the selector before the work.
+     Keyed to 720px, which is where the CSS actually switches to the compact
+     field — 768px is a tablet on the desktop layout and is held to the desktop
+     field size, so budgeting it as a phone was measuring the wrong rule. */
+  if (w <= 720) ok(closed.tall <= 340, `${w}px the field leaves room for the case study (${closed.tall}px)`);
+
+  /* It actually turns.
+     The section is meant to read as a constellation in motion, and the drift
+     alone — a few pixels over fourteen seconds — does not read as motion at
+     all. Two samples two seconds apart: at 72s for a revolution that is 10
+     degrees, far outside any rounding. */
+  const a1 = await spinAngle(p);
+  await p.waitForTimeout(2000);
+  const a2 = await spinAngle(p);
+  const turned = Math.abs(spinDelta(a1, a2));
+  ok(turned > 3 && turned < 45, `${w}px the field is turning (${turned.toFixed(1)}deg in 2s)`);
+
+  /* ...and the logos stay upright while it does.
+     Each mark counter-rotates by exactly the field's rotation. If that ever
+     falls out of phase the marks tip over, and the widest one is where it shows
+     first: tilting a 140x76 box even 10 degrees pulls its bounding box towards
+     square, so its ASPECT RATIO is the tell.
+
+     Ratio rather than width, because the outer ring is scaled to .88 for depth
+     and half the marks are on it — comparing raw widths measures the depth
+     effect as much as the rotation. A scale leaves the ratio alone; a rotation
+     does not. */
+  const upright = await p.evaluate(() => {
+    const r = document.querySelector('.tab[data-wide] .client-chip').getBoundingClientRect();
+    return { w: Math.round(r.width), h: Math.round(r.height), ratio: r.width / r.height };
+  });
+  const nominal = w <= 720 ? 96 / 56 : 140 / 76;
+  ok(Math.abs(upright.ratio - nominal) < 0.08,
+    `${w}px the marks stay upright as the field turns (wordmark ${upright.w}x${upright.h}, ratio ${upright.ratio.toFixed(2)} vs ${nominal.toFixed(2)})`);
+
+  /* Where the field is standing at the moment of the click.
+     Every other rotation check here is a DELTA between two samples taken in the
+     same state, which is why none of them noticed the field snapping back to
+     zero the instant a case study opened — the deltas either side were both
+     fine. What matters to a reader is that the arrangement they left is the
+     arrangement they come back to, so that is what gets asserted, across the
+     open and across the close.
+
+     Sampled after the pointer is already resting on the field, so on a device
+     that pauses for a pointer the turn has stopped before the reading is taken.
+     Eight degrees of tolerance because a touch device does not pause for a
+     hover — by design — so a second of legitimate turning sits between the two
+     samples there, at five degrees a second. A reset lands nowhere near that:
+     it snaps to zero from wherever it had reached, which was twenty to ninety
+     degrees every time it was measured. */
+  const settleAt = await p.evaluate(() => {
+    document.querySelector('.orbit-clip').scrollIntoView({ block: 'center', behavior: 'instant' });
+    const r = document.querySelector('.orbit-clip').getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await p.mouse.move(settleAt.x, settleAt.y);
+  await p.waitForTimeout(300);
+  const parked = await spinAngle(p);
+
+  // Picking one opens its case study over the top. Nothing else opens with it.
+  await openCase(p, 2);
+  const held = await spinAngle(p);
+  ok(Math.abs(spinDelta(parked, held)) < 8,
+    `${w}px opening a build does not move the constellation behind it (${parked.toFixed(1)} -> ${held.toFixed(1)}deg)`);
+  const opened = await p.evaluate(() => {
+    const d = document.querySelector('dialog.case-dialog');
+    const shown = [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none');
+    return {
+      dialog: !!d && d.open,
+      modal: !!d && d.matches(':modal'),
+      shown: shown.map((x) => x.id),
+      // The case study names itself in its own heading, once. The chrome bar
+      // used to repeat it directly above and no longer does, so this reads the
+      // heading — and would catch the name going missing altogether.
+      title: d?.querySelector('.client-name')?.textContent ?? '',
+      titles: d?.querySelectorAll('.client-name').length ?? 0,
+      label: d?.getAttribute('aria-label') ?? '',
+      close: !!d?.querySelector('.case-x'),
+      // The constellation is still there behind it, not torn down and rebuilt.
+      orbit: document.getElementById('tabList').classList.contains('is-orbit'),
+      hint: !!document.querySelector('.orbit-hint'),
+    };
+  });
+  ok(opened.dialog && opened.modal, `${w}px picking a mark opens a modal case study`);
+  ok(opened.shown.length === 1 && opened.shown[0] === 'panel-2', `${w}px exactly the build that was picked, and only it (${opened.shown})`);
+  ok(opened.close && opened.title.length > 0 && opened.titles === 1,
+    `${w}px the case study names itself exactly once and offers a way out ("${opened.title}", ${opened.titles})`);
+  ok(opened.label.includes(opened.title),
+    `${w}px the dialog is labelled for assistive tech ("${opened.label}")`);
+  ok(opened.orbit && opened.hint, `${w}px the constellation is still underneath, not replaced`);
+
+  /* The page behind a modal is inert. This is the property the whole design
+     leans on — it is what makes "one at a time" true rather than merely
+     intended — so it gets asserted rather than assumed. */
+  const inert = await p.evaluate(() => {
+    const mark = document.getElementById('tab-0');
+    mark.focus();
+    return document.activeElement?.id !== 'tab-0';
+  });
+  ok(inert, `${w}px the constellation cannot be reached behind the open case study`);
+
+  // Esc closes it, and the platform hands focus back to the mark that opened it.
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(450);
+  const reclosed = await p.evaluate(() => ({
+    dialog: !!document.querySelector('dialog.case-dialog'),
+    orbit: document.getElementById('tabList').classList.contains('is-orbit'),
+    focused: document.activeElement ? document.activeElement.id : null,
+    shown: [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').length,
+  }));
+  ok(!reclosed.dialog && reclosed.shown === 0, `${w}px Esc closes it back to the constellation (${reclosed.shown} shown)`);
+  ok(reclosed.orbit, `${w}px the field is still the field afterwards`);
+  ok(reclosed.focused === 'tab-2', `${w}px closing hands focus back to the mark that was open (${reclosed.focused})`);
+  // ...and the field is where it was left, not back at zero.
+  const returned = await spinAngle(p);
+  ok(Math.abs(spinDelta(held, returned)) < 8,
+    `${w}px closing returns the constellation as it was left (${held.toFixed(1)} -> ${returned.toFixed(1)}deg)`);
+
+  /* Closing with Esc leaves the keyboard on the mark it came back to, and a
+     mark under a visible focus ring holds the field still — a reader stepping
+     through with the keyboard should not have their target sliding away. So
+     first: still while focused. */
+  await p.mouse.move(0, 0);
+  await p.waitForTimeout(300);
+  const k1 = await spinAngle(p);
+  await p.waitForTimeout(900);
+  const k2 = await spinAngle(p);
+  ok(Math.abs(spinDelta(k1, k2)) < 0.5, `${w}px a mark holding keyboard focus holds the field still (${Math.abs(spinDelta(k1, k2)).toFixed(2)}deg)`);
+
+  /* ...and then it turns again once nothing is holding it. This is the check
+     that the tweens were rebuilt on close rather than left paused for good, and
+     that a pointer resting on the field from the click that opened the case
+     study does not freeze it permanently. */
+  await p.evaluate(() => document.activeElement?.blur());
+  await p.waitForTimeout(300);
+  const b1 = await spinAngle(p);
+  await p.waitForTimeout(1600);
+  const b2 = await spinAngle(p);
+  ok(Math.abs(spinDelta(b1, b2)) > 2, `${w}px it goes back to turning once nothing holds it (${Math.abs(spinDelta(b1, b2)).toFixed(1)}deg)`);
+
+  // Another mark opens ITS case study, one at a time, no accumulation.
+  await openCase(p, 4);
+  const second = await p.evaluate(() => ({
+    dialogs: document.querySelectorAll('dialog.case-dialog').length,
+    shown: [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.id),
+  }));
+  ok(second.dialogs === 1 && second.shown.length === 1 && second.shown[0] === 'panel-4',
+    `${w}px picking another opens that one instead, not as well (${second.dialogs} dialog, ${second.shown})`);
+
+  // The × closes it too, not only Esc.
+  await p.click('.case-x');
+  await p.waitForTimeout(400);
+  const byButton = await p.evaluate(() => !!document.querySelector('dialog.case-dialog'));
+  ok(!byButton, `${w}px the close button closes it`);
+
+  // Arrows walk the marks; they do not open anything on their own.
+  await p.focus('#tab-0');
+  await p.keyboard.press('ArrowRight');
+  await p.waitForTimeout(250);
+  const arrowed = await p.evaluate(() => ({
+    dialog: !!document.querySelector('dialog.case-dialog'),
+    focused: document.activeElement?.id,
+  }));
+  ok(!arrowed.dialog && arrowed.focused === 'tab-1', `${w}px arrows move between marks without opening one (${arrowed.focused})`);
   await p.close();
 }
 
@@ -168,35 +564,26 @@ for (const w of [375, 1440]) {
   const p = w < 900 ? await phone(w) : await desktop();
   await p.goto(BASE + '/', { waitUntil: 'load' });
   await settle(p);
-  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center', behavior: 'instant' }));
   await p.waitForTimeout(400);
-  await p.click('#tab-3');
-  await p.waitForTimeout(700);
+  await openCase(p, 3);
   const r = await p.evaluate(() => {
-    const sels = [...document.querySelectorAll('.tab[aria-selected="true"]')];
     const shown = [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none');
     const tabs = [...document.querySelectorAll('.tab')];
     return {
-      // Exactly one chip marked, and it is the one that was clicked. This
-      // replaces the sliding underline, which had to be measured because it was
-      // one element standing in for five and could end up over the wrong one.
-      selCount: sels.length,
-      selIndex: tabs.indexOf(sels[0]),
       // Every chip is a real, labelled control rather than a bare image.
       labelled: tabs.every((t) => t.textContent.trim().length > 0),
-      dimmed: tabs.filter((t) => Number(getComputedStyle(t).opacity) < 0.9).length,
       shown: shown.length,
       id: shown[0]?.id,
       detail: shown[0]?.querySelectorAll('.client-detail li').length,
-      // The list is behind a disclosure and starts closed, so the panel opens
-      // on the outcome and the numbers rather than on an implementation dump.
+      // The list is behind a disclosure and starts closed, so the case study
+      // opens on the outcome and the numbers rather than on an implementation
+      // dump.
       openByDefault: shown[0]?.querySelectorAll('.client-more[open]').length,
     };
   });
-  ok(r.selCount === 1 && r.selIndex === 3, `${w}px exactly the clicked logo is marked (index ${r.selIndex}, ${r.selCount} marked)`);
   ok(r.labelled, `${w}px every logo carries its company name for assistive tech`);
-  ok(r.dimmed === 4, `${w}px the four unselected logos are dimmed back (${r.dimmed})`);
-  ok(r.shown === 1 && r.id === 'panel-3', `${w}px exactly one panel shown and it matches (${r.id})`);
+  ok(r.shown === 1 && r.id === 'panel-3', `${w}px exactly one case study shown and it matches (${r.id})`);
   ok(r.detail > 0, `${w}px technical detail rendered (${r.detail} points)`);
   ok(r.openByDefault === 0, `${w}px the detail list starts folded away (${r.openByDefault} open)`);
 
@@ -209,16 +596,21 @@ for (const w of [375, 1440]) {
   });
   ok(opened.open === 1 && opened.visible, `${w}px the detail opens on click`);
 
-  // held arrow key must not desync tab and panel
+  /* Hammering the keyboard must not leave more than one case study mounted.
+     Arrows only move focus now, so this is checking that a held key cannot race
+     the dialog into opening — the failure it guards against is six presses
+     producing six dialogs stacked in the top layer. */
+  await closeCase(p);
   await p.focus('#tab-0');
   for (let i = 0; i < 7; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(25); }
-  await p.waitForTimeout(900);
-  const race = await p.evaluate(() => {
-    const shown = [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.id);
-    const sel = [...document.querySelectorAll('.tab')].findIndex((t) => t.getAttribute('aria-selected') === 'true');
-    return { shown, sel };
-  });
-  ok(race.shown.length === 1 && race.shown[0] === `panel-${race.sel}`, `${w}px rapid arrows keep tab and panel in sync (${race.shown} / tab ${race.sel})`);
+  await p.waitForTimeout(600);
+  const race = await p.evaluate(() => ({
+    dialogs: document.querySelectorAll('dialog.case-dialog').length,
+    shown: [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').length,
+    focused: document.activeElement?.id,
+  }));
+  ok(race.dialogs === 0 && race.shown === 0,
+    `${w}px rapid arrows open nothing (${race.dialogs} dialogs, focus ${race.focused})`);
   await p.close();
 }
 
@@ -228,16 +620,17 @@ head('case bank');
   const p = await desktop();
   await p.goto(BASE + '/', { waitUntil: 'load' });
   await settle(p);
-  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center', behavior: 'instant' }));
   await p.waitForTimeout(500);
 
   // Every build shows a screenshot, three metrics, and no empty values.
-  // The bound is a literal because `clients` is not importable from here; it
-  // must track the array. Left at 4 when the fifth was added it would have
-  // silently skipped that panel rather than failing, which is the worse bug.
-  for (let i = 0; i < 5; i++) {
-    await p.click(`#tab-${i}`);
-    await p.waitForTimeout(500);
+  // The first click is also what opens the bank — the section starts as the
+  // constellation with no case study showing, so a block that assumed one was
+  // already open would find nothing rather than fail loudly.
+  let quoted = 0;
+  let seen = 0;
+  for (let i = 0; i < CLIENTS; i++) {
+    await openCase(p, i);
     const r = await p.evaluate((n) => {
       const panel = document.getElementById(`panel-${n}`);
       const img = panel.querySelector('.showcase-frame img');
@@ -251,6 +644,7 @@ head('case bank');
         empty: m.filter((d) => !d.querySelector('dt')?.textContent.trim()
                             || !d.querySelector('dd')?.textContent.trim()).length,
         sector: panel.querySelector('.client-sector')?.textContent ?? '',
+        quote: !!panel.querySelector('.panel-quote'),
         qa: [...panel.querySelectorAll('.client-qa > div > dt')].map((d) => d.textContent.trim()),
         answers: panel.querySelectorAll('.client-qa > div > dd').length,
         blank: [...panel.querySelectorAll('.client-qa > div > dd')]
@@ -266,24 +660,28 @@ head('case bank');
        was for, which is the shape this section had before. */
     ok(r.qa.join('|') === 'Asked for|Approach|Impact', `${r.name}: asked, approach, impact, in that order (${r.qa.join(', ')})`);
     ok(r.answers === 3 && r.blank === 0, `${r.name}: all three answered (${r.answers}, ${r.blank} blank)`);
+    if (r.quote) quoted += 1;
+    seen += 1;
   }
 
-  /* Four of the five builds were done for a named company that gave a
-     testimonial. The fifth, Provena AI, has no client, so it carries no quote
-     and the renderer omits the block rather than filling it.
+  /* Four of the six builds were done for a named company that gave a
+     testimonial. Provena AI has no client at all, and Peshawri has one who has
+     not been asked, so both carry no quote and the renderer omits the block
+     rather than filling it.
 
-     If this ever reads five, somebody has written a testimonial and attributed
-     it to a company that does not exist. That is a fabricated endorsement
+     If this ever reads more, somebody has written a testimonial and attributed
+     it to a company that did not give one. That is a fabricated endorsement
      sitting beside four real ones: a lie to the reader, and unlawful for a
      trading company in the UK. Saying nothing about who a build was for is
-     fine. Inventing someone to say it was good is not. */
-  const quotes = await p.evaluate(() => ({
-    panels: document.querySelectorAll('.panel').length,
-    quoted: document.querySelectorAll('.panel .panel-quote').length,
-  }));
-  ok(quotes.panels === 5, `five builds in the bank (${quotes.panels})`);
-  ok(quotes.quoted === 4,
-    `exactly the four with a real client carry a testimonial (${quotes.quoted} of ${quotes.panels})`);
+     fine. Inventing someone to say it was good is not.
+
+     Tallied across the six openings rather than counted in one sweep of the
+     DOM: only the open build is mounted now, so a single querySelectorAll would
+     always find exactly one panel and this check would silently become "the one
+     I happen to be looking at has a quote or does not". */
+  ok(seen === CLIENTS, `${CLIENTS} builds in the bank (${seen})`);
+  ok(quoted === QUOTED,
+    `exactly the four with a real client carry a testimonial (${quoted} of ${seen})`);
 
   // Every shot, not just the one each panel happens to open on. The checks
   // above only decode the primary image, and everything after them compares
@@ -294,9 +692,8 @@ head('case bank');
   // draws one at shots.length > 1), so there is nothing to walk and its one
   // image is checked directly instead. Skipping it entirely would leave that
   // PNG the only unverified file in public/work/.
-  for (let i = 0; i < 5; i++) {
-    await p.click(`#tab-${i}`);
-    await p.waitForTimeout(350);
+  for (let i = 0; i < CLIENTS; i++) {
+    await openCase(p, i);
     const shots = await p.evaluate((n) => {
       const panel = document.getElementById(`panel-${n}`);
       return [...panel.querySelectorAll('.client-shot')].length;
@@ -330,8 +727,7 @@ head('case bank');
   // and it has been at three different indices across two reorders.
   const astar = await indexOf(p, 'A Star Customs');
   ok(astar !== -1, `found A Star in the strip (index ${astar})`);
-  await p.click(`#tab-${astar}`);
-  await p.waitForTimeout(500);
+  await openCase(p, astar);
   const before = await p.evaluate((n) =>
     document.querySelector(`#panel-${n} .showcase-frame img`).getAttribute('src'), astar);
   await p.evaluate((n) => document.querySelectorAll(`#panel-${n} .client-shot`)[2].click(), astar);
@@ -392,8 +788,57 @@ head('case bank');
     }));
     ok(r.gone, `${how} closes the lightbox`);
     ok(r.focus.includes('showcase-open'), `${how} hands focus back to what opened it (${r.focus || 'body'})`);
-    ok(r.locked !== 'hidden', `${how} releases the page scroll lock`);
+    /* Still locked, and that is the correct answer now rather than a
+       regression. The lightbox opens from inside a case study, so there are two
+       dialogs stacked: each saves the body's overflow as it found it and puts
+       that value back on the way out. Closing the inner one restores what the
+       outer one set, which is 'hidden', because the outer one is still open and
+       the page behind it still must not scroll. The lock is released by the
+       case study closing, asserted directly below — a nested dialog that
+       released it early would let the page scroll away underneath the case
+       study the reader is still looking at. */
+    ok(r.locked === 'hidden', `${how} leaves the page locked while the case study is still open (${r.locked || 'unset'})`);
   }
+
+  /* The nested path: close the OUTER dialog while the viewer is still open.
+     Both components unmount in the same commit, and React runs the outer one's
+     cleanup first — so when each dialog saved and restored the body's overflow
+     for itself, the outer restored '' and the inner then restored the 'hidden'
+     it had captured while the outer was open. The page came back with no dialog
+     on it and no way to scroll short of a reload. The lock is counted now, and
+     this is the sequence that proves it. */
+  await openCase(p, astar);
+  await p.click(`#panel-${astar} .showcase-open`);
+  await p.waitForTimeout(450);
+  await p.evaluate(() => document.querySelector('dialog.case-dialog').close());
+  await p.waitForTimeout(600);
+  const nested = await p.evaluate(() => ({
+    dialogs: document.querySelectorAll('dialog[open]').length,
+    lock: document.body.style.overflow || '(unset)',
+    // Asked with an instant scroll: the page sets scroll-behavior:smooth, so a
+    // default scrollBy animates and scrollY has not moved when read back.
+    canScroll: (() => {
+      const y = window.scrollY;
+      window.scrollBy({ top: 200, behavior: 'instant' });
+      const moved = window.scrollY !== y;
+      window.scrollTo({ top: y, behavior: 'instant' });
+      return moved;
+    })(),
+  }));
+  ok(nested.dialogs === 0 && nested.lock !== 'hidden' && nested.canScroll,
+    `closing a case study out from under the viewer leaves the page scrollable (${nested.lock}, ${nested.dialogs} dialogs)`);
+
+  /* ...and closing the case study itself hands the page back. Without this the
+     pair above would pass just as happily on a lock that is never released at
+     all, which is the worse bug of the two: a page that cannot be scrolled
+     again until it is reloaded. */
+  await closeCase(p);
+  const released = await p.evaluate(() => ({
+    lock: document.body.style.overflow,
+    dialogs: document.querySelectorAll('dialog[open]').length,
+  }));
+  ok(released.lock !== 'hidden' && released.dialogs === 0,
+    `closing the case study releases the page scroll lock (${released.lock || 'unset'}, ${released.dialogs} dialogs)`);
 
   // The nav strip is fixed height and must stay reachable. It used to fall off
   // the bottom on anything shorter than ~893px, which is most laptops, and the
@@ -402,13 +847,12 @@ head('case bank');
     const s = await browser.newPage({ viewport: { width: 1440, height: h } });
     await s.goto(BASE + '/', { waitUntil: 'load' });
     await settle(s);
-    await s.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+    await s.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center', behavior: 'instant' }));
     await s.waitForTimeout(400);
     /* Resolved by name because .lightbox-nav only renders above one shot: land
        this on the single-shot build and the assertion below reads null. */
     const multi = await indexOf(s, 'A Star Customs');
-    await s.click(`#tab-${multi}`);
-    await s.waitForTimeout(400);
+    await openCase(s, multi);
     await s.click(`#panel-${multi} .showcase-open`);
     await s.waitForTimeout(600);
     const nav = await s.evaluate(() => {
@@ -436,8 +880,11 @@ for (const w of PHONES) {
   const p = await phone(w);
   await p.goto(BASE + '/', { waitUntil: 'load' });
   await settle(p);
-  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center' }));
+  await p.evaluate(() => document.getElementById('tabList').scrollIntoView({ block: 'center', behavior: 'instant' }));
   await p.waitForTimeout(500);
+  // Open the bank. Closed, the section is the constellation and no panel is
+  // rendered, so every query below would come back null.
+  await openCase(p, 0);
 
   const r = await p.evaluate(() => {
     const sc = document.querySelector('#panel-0 .showcase-scroll');
@@ -546,12 +993,25 @@ head('progressive enhancement');
   const r = await p.evaluate(() => ({
     hidden: [...document.querySelectorAll('[data-reveal]')].filter((e) => getComputedStyle(e).opacity === '0').length,
     panels: [...document.querySelectorAll('.panel')].filter((x) => getComputedStyle(x).display !== 'none').length,
-    tabAria: document.querySelectorAll('[role="tab"], [aria-selected]').length,
+    /* Scoped to the work section. Page-wide it also catches the nav toggle,
+       which legitimately carries aria-expanded whether or not JS ran and has
+       nothing to do with the case bank. */
+    tabAria: document.querySelectorAll('#work [role="tab"], #work [aria-selected], #work [aria-expanded]').length,
     steps: [...document.querySelectorAll('.process-panel')].filter((e) => getComputedStyle(e).visibility === 'visible').length,
+    /* No orbit either. The constellation is a control that needs JS to be
+       worth anything — scattered marks that open nothing would be a puzzle,
+       not a section — so without it the logos are a plain readable row and
+       every panel is already on the page. */
+    orbit: document.querySelectorAll('.tabs.is-orbit, .orbit-hint, dialog.case-dialog').length,
+    // Nothing claims to open a dialog that cannot open without JS.
+    popup: document.querySelectorAll('#work [aria-haspopup]').length,
+    positioned: [...document.querySelectorAll('.tab')].filter((t) => getComputedStyle(t).position === 'absolute').length,
   }));
   ok(r.hidden === 0, `JS off: nothing stuck hidden (${r.hidden})`);
-  ok(r.panels === 5, `JS off: all build panels shown (${r.panels})`);
+  ok(r.panels === CLIENTS, `JS off: all build panels shown (${r.panels})`);
   ok(r.tabAria === 0, `JS off: no tab ARIA claiming a selection (${r.tabAria})`);
+  ok(r.orbit === 0 && r.positioned === 0, `JS off: the marks are a plain row, not a dead constellation (${r.orbit}/${r.positioned})`);
+  ok(r.popup === 0, `JS off: nothing offers to open a dialog that cannot open (${r.popup})`);
   ok(r.steps === 3, `JS off: all process steps readable (${r.steps})`);
   await ctx.close();
 }
@@ -566,9 +1026,25 @@ head('reduced motion');
   const r = await p.evaluate(() => ({
     hidden: [...document.querySelectorAll('[data-reveal]')].filter((e) => getComputedStyle(e).opacity === '0').length,
     labels: [...document.querySelectorAll('.scene-label')].map((e) => getComputedStyle(e).opacity),
+    /* The constellation still lays out — reduced motion asks for less
+       movement, not a different page. What must be gone is every tween: no
+       turning field, no drift, and therefore nothing left holding an inline
+       transform from one. The field itself is the one that matters most; a
+       rotation nobody asked for is the whole thing the setting is about. */
+    orbit: document.querySelectorAll('.tabs.is-orbit').length,
+    marks: document.querySelectorAll('.tabs.is-orbit .tab').length,
+    spinning: (() => {
+      const s = document.getElementById('tabList').style.transform;
+      return s && s !== 'none' ? s : '';
+    })(),
+    drifting: [...document.querySelectorAll('.tab .chip-drift')]
+      .filter((c) => c.style.transform && c.style.transform !== 'none').length,
   }));
   ok(r.hidden === 0, `reduced motion: nothing stuck hidden (${r.hidden})`);
   ok(r.labels.every((o) => Number(o) > 0.9), `reduced motion: scene labels present (${r.labels.join(', ')})`);
+  ok(r.orbit === 1 && r.marks === CLIENTS, `reduced motion: the constellation still lays out (${r.marks} marks)`);
+  ok(r.drifting === 0, `reduced motion: nothing is drifting (${r.drifting} moving)`);
+  ok(r.spinning === '', `reduced motion: the field is not turning (${r.spinning || 'no transform'})`);
   await ctx.close();
 }
 
@@ -783,7 +1259,7 @@ const depthGeo = (p) => p.evaluate(() => {
   const p = await phone();
   await p.goto(BASE + '/', { waitUntil: 'load' });
   await settle(p);
-  await p.evaluate(() => document.querySelector('#founders').scrollIntoView({ block: 'center' }));
+  await p.evaluate(() => document.querySelector('#founders').scrollIntoView({ block: 'center', behavior: 'instant' }));
   await p.waitForTimeout(900);
   const r = await p.evaluate(() => {
     const t = document.querySelector('.founders-track');

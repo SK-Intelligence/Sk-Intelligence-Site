@@ -137,12 +137,22 @@ async function captureMockup(browser, file, shots, fonts) {
  * three have to be settled before the shutter or the capture shows a consent
  * overlay sitting on top of half-decoded placeholders.
  */
-async function captureLive(browser, path, out, focusContent = false) {
+async function captureLive(browser, path, out, focusContent = false, origin = 'https://www.astarcustoms.com') {
   // Same frame as the mockups. Every shot in the bank shares one aspect ratio,
   // so the showcase can declare a single intrinsic size without squashing
   // half of them.
   const page = await browser.newPage({ viewport: { width: 1280, height: 760 }, deviceScaleFactor: 2 });
-  const url = `https://www.astarcustoms.com${path}`;
+  /* The origin is a parameter because this path now serves two live sites.
+     It defaults to A Star so the existing calls are unchanged; Peshawri passes
+     its own. The consent-banner and lazy-image handling below is not
+     A-Star-specific — it tries a list of labels and carries on when none
+     matches — so it costs nothing on a site that has no banner.
+
+     Because this photographs third-party origins, the output is uncontrolled:
+     whatever those sites happen to be serving at shutter time ends up in
+     public/work/ under SK's brand. Open every new capture before `git add` —
+     the blank-frame guard below catches an empty page, not a defaced one. */
+  const url = `${origin}${path}`;
   // Not `networkidle`: this host keeps analytics connections open, so the page
   // never reaches idle and every capture burns the full timeout before
   // throwing. Load the document, then wait on the things that actually matter
@@ -405,6 +415,18 @@ if (wanted('astar')) {
     ['/gallery', 'astar-3', true],
     ['/services', 'astar-4', true],
   ]) await captureLive(browser, path, out, focus);
+}
+
+if (wanted('peshawari')) {
+  console.log('\n── peshawari (live capture)');
+  /* Both captures are unfocused. `focusContent` hunts for a content row to
+     frame and fails the capture when it finds none, which is right for A Star's
+     shop grid and wrong here: these are ordinary pages where the top of the
+     document IS the shot. */
+  for (const [path, out] of [
+    ['/', 'peshawari-1'],
+    ['/menu', 'peshawari-2'],
+  ]) await captureLive(browser, path, out, false, 'https://peshawarichaplikebab.co.uk');
 }
 
 if (wanted('provena')) {

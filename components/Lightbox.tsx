@@ -1,19 +1,18 @@
 'use client';
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import type { Shot } from '@/lib/content';
+import { useModalDialog } from './useModalDialog';
 
 /**
  * Full-screen viewer for the build screenshots.
  *
- * Built on the native <dialog> with showModal(), which gives focus trapping,
- * Esc to close, and inert background content for free. Reimplementing those
- * three by hand is where home-made modals usually go wrong, so this does not.
- *
- * The parent only mounts this while something is open, so the effect below
- * runs exactly once per opening and there is no "is it open" state to keep in
- * sync with the element's own idea of whether it is open.
+ * The dialog mechanics live in useModalDialog, shared with the case study this
+ * usually opens from — showModal on mount, the counted scroll lock that keeps
+ * two stacked dialogs from unlocking the page out from under each other, the
+ * `close` listener, and the dismiss-via-element indirection that preserves the
+ * platform's focus restoration.
  */
 export function Lightbox({
   shots, index, clientName, onIndex, onClose,
@@ -24,49 +23,9 @@ export function Lightbox({
   onIndex: (i: number) => void;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const { ref, dismiss, onBackdropClick } = useModalDialog(onClose);
   const shot = shots[index];
   const many = shots.length > 1;
-
-  // onClose lives in a ref so the effect below can hold an empty dependency
-  // list. With `[onClose]` there instead, an inline arrow from the parent is a
-  // fresh identity on every render, the effect tears down and re-runs, and its
-  // cleanup calls el.close() — so the dialog shuts itself the first time
-  // anything re-renders it, such as stepping to the next screenshot.
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.showModal();
-    // showModal() makes the page inert but does not lock its scroll, so a
-    // wheel over the backdrop still moved the page underneath and the reader
-    // came back hundreds of pixels from where they left.
-    const { overflow } = document.body.style;
-    document.body.style.overflow = 'hidden';
-    // Esc dismisses the dialog natively, so React has to hear about it or the
-    // parent would still think the viewer is open.
-    const bye = () => closeRef.current();
-    el.addEventListener('close', bye);
-    return () => {
-      el.removeEventListener('close', bye);
-      el.close();
-      document.body.style.overflow = overflow;
-    };
-  }, []);
-
-  /**
-   * Every dismissal goes through the element, never straight to onClose.
-   *
-   * Calling onClose() directly unmounts the dialog around the cleanup's
-   * close(), so the focused button leaves the document before the UA can run
-   * its focus restoration, and focus lands on <body>. Closing the element
-   * first lets the platform put focus back on whatever opened it, then the
-   * `close` listener drives the unmount. Esc already took this path, which is
-   * why Esc was the only one that restored focus correctly.
-   */
-  const dismiss = useCallback(() => ref.current?.close(), []);
 
   const step = useCallback((dir: -1 | 1) => {
     onIndex((index + dir + shots.length) % shots.length);
@@ -82,9 +41,7 @@ export function Lightbox({
         if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
         if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
       }}
-      // A click that lands on the dialog itself came from the backdrop: every
-      // click inside the content hits a child first.
-      onClick={(e) => { if (e.target === ref.current) dismiss(); }}
+      onClick={onBackdropClick}
     >
       <div className="lightbox-inner">
         <div className="lightbox-bar">
