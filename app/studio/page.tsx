@@ -20,9 +20,14 @@ export default function Studio() {
         <canvas id="hero-gradient-canvas" aria-hidden="true" />
         <div className="container page-head-inner">
           <p className="eyebrow" data-head-reveal>Build studio</p>
-          <h1 data-head-reveal>We still build the <em>fundamentals</em>.</h1>
+          {/* Says what the studio builds rather than arguing that it still
+              does. Both lines used to lean on "still" — a reader who has to be
+              told something is still true starts wondering why it might not be,
+              and neither line described the work. */}
+          <h1 data-head-reveal>Sites, storefronts and <em>apps</em> that hold up.</h1>
           <p className="page-head-deck" data-head-reveal>
-            AI is the lead offering. The build studio that got us here still runs alongside it.
+            Marketing sites, e-commerce, mobile, and the search and email setup that keeps
+            them found. Built to load fast and to keep working after we hand them over.
           </p>
         </div>
       </section>

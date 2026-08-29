@@ -235,7 +235,11 @@ export function Founders() {
         <div className="section-head" data-reveal>
           <p className="eyebrow">Co-founders</p>
           <h2>The experience we bring</h2>
-          <p>Two engineers. Whoever you speak to is the person writing the code.</p>
+          {/* One sentence, not two fragments. "Two engineers. Whoever you speak
+              to is..." had the clipped, headline-ish rhythm that reads as
+              written-by-machine; the point it makes is a plain one, so it is
+              made plainly. */}
+          <p>There are two of us, so the person you talk to is the one writing the code.</p>
         </div>
 
         <div

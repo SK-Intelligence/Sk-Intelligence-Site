@@ -484,6 +484,18 @@ export function ClientWork() {
           {/* No count in it, deliberately. "Four builds, still running" had to
               be edited the moment a fifth arrived, and again at a sixth. */}
           <h2>What we&rsquo;ve shipped so far</h2>
+          {/* Every other section head on the page carries a line under the
+              heading; this one did not, and with the case studies moved into
+              dialogs there was nothing else above the field to read. It says
+              what the work IS rather than what to do with it — the instruction
+              is already under the field, and repeating it here would be the
+              same sentence twice on one screen. */}
+          {/* No em dash: the suite holds the whole site to that, and it is
+              right to. A full stop does the same work here. */}
+          <p>
+            Client sites, internal tools, and a platform of our own. Each one shipped
+            end to end and still in service.
+          </p>
         </div>
 
         <div>
