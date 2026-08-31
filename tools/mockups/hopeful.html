@@ -227,6 +227,87 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
      comfortable 65-75 band once the serif column is accounted for. */
   max-width:62ch; text-wrap:pretty;
 }
+
+/* ── agency services ────────────────────────────────────────────────── */
+/* The other two frames both address a family. This one addresses a care
+   organisation buying relief cover, which is a different reader and therefore
+   a different screen — the same company's other half rather than a third view
+   of the same half.
+
+   Where .svc is an editorial list read top to bottom, this is two parallel
+   offers read side by side, because the reader is choosing between them
+   rather than working through them. Soft panels on paper-2 give the pair the
+   weight that comparison needs without adding a border idiom the file does
+   not already have. */
+.ag-head{
+  padding:26px 48px 26px;
+  display:grid; grid-template-columns:1.02fr .98fr;
+  gap:48px; align-items:end;
+}
+.ag-head h2{
+  margin:0; max-width:18ch;
+  font-family:var(--serif); font-weight:500;
+  font-size:2.35rem; line-height:1.12; letter-spacing:-.022em; color:var(--teal);
+  text-wrap:balance;
+}
+.ag-head p{
+  margin:0 0 4px; max-width:56ch;
+  font-size:.94rem; line-height:1.62; color:var(--ink-soft);
+}
+
+.paths{
+  padding:0 48px;
+  display:grid; grid-template-columns:1fr 1fr; gap:26px;
+}
+.path{
+  background:var(--paper-2);
+  border-radius:18px;
+  padding:26px 28px 24px;
+}
+.path-k{
+  font-size:.62rem; font-weight:700; letter-spacing:.19em;
+  text-transform:uppercase; color:var(--terra);
+}
+.path-t{
+  display:block; margin-top:9px;
+  font-family:var(--serif); font-weight:600;
+  font-size:1.22rem; letter-spacing:-.015em; color:var(--teal);
+}
+.path-d{
+  margin:8px 0 0;
+  font-size:.86rem; line-height:1.56; color:var(--ink-soft);
+  text-wrap:pretty;
+}
+.path-list{ list-style:none; margin:16px 0 0; padding:0; }
+.path-list li{
+  display:grid; grid-template-columns:14px 1fr; gap:11px;
+  align-items:start;
+  padding:9px 0;
+  border-top:1px solid var(--line);
+  font-size:.845rem; line-height:1.5; color:var(--ink-soft);
+}
+.path-list li svg{ width:13px; height:13px; color:var(--terra); margin-top:4px; }
+
+/* The compliance line runs full width under both panels because it applies to
+   both, which a third panel beside them would not say. */
+.passport{
+  margin:32px 48px 0; padding-top:26px;
+  border-top:1px solid var(--line);
+  display:grid; grid-template-columns:auto repeat(3,1fr);
+  gap:34px; align-items:start;
+}
+.passport-k{
+  font-family:var(--serif); font-weight:600; font-size:1rem;
+  color:var(--teal); max-width:9ch; line-height:1.3;
+}
+.passport-i b{
+  display:block;
+  font-size:.8rem; font-weight:600; color:var(--ink);
+}
+.passport-i span{
+  display:block; margin-top:5px;
+  font-size:.8rem; line-height:1.5; color:var(--ink-mute);
+}
 </style>
 </head>
 <body>
@@ -350,6 +431,132 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <span class="grp"><span class="strip-k">Call</span><span class="strip-v">+353 87 277 9096</span></span>
     <span class="grp"><span class="strip-k">Email</span><span class="strip-v">info@hopefulheartsltd.com</span></span>
     <span class="grp"><span class="strip-k">Partner</span><span class="strip-v">Tusla, Child and Family Agency</span></span>
+  </div>
+</section>
+
+<!-- ══ FRAME 3 · agency services ══════════════════════════════════════ -->
+<!-- Every line is from hopefulheartsltd.com/agency-services: the page title,
+     the deck, both staffing pathways with their own credential lists, the
+     four counties, the nationwide transport line, the three compliance checks
+     and the agency team's own number and mailbox. No qualification, county or
+     certification has been added to the lists as published. -->
+<section class="frame" id="shot-agency">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-hopeful.png" alt="">
+      <span class="brand-name">Hopeful Hearts</span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#">About us</a>
+      <a href="#" class="on">Services</a>
+      <span class="bar-cta">Contact us</span>
+    </nav>
+  </div>
+
+  <div class="ag-head">
+    <h2>Professional support for care services.</h2>
+    <p>Hopeful Hearts provides vetted HCA and Social Care Worker relief
+       personnel for healthcare and residential settings, together with
+       nationwide resident appointment transport.</p>
+  </div>
+
+  <div class="paths">
+    <div class="path">
+      <span class="path-k">Healthcare assistants</span>
+      <span class="path-t">Dependable HCA relief services</span>
+      <p class="path-d">Support for elderly care, nursing environments and
+         specialised physical disability units.</p>
+      <ul class="path-list">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Minimum QQI Level 5 qualification in Healthcare
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Practical certification in Patient Moving &amp; Handling
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Training in Safeguarding Vulnerable Adults and Infection Control
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Local professionals prepared to work within existing teams
+        </li>
+      </ul>
+    </div>
+
+    <div class="path">
+      <span class="path-k">Social care workers</span>
+      <span class="path-t">Specialised social care relief</span>
+      <p class="path-d">Therapeutic relief staff for children&rsquo;s residential
+         services, foster care support and disability units.</p>
+      <ul class="path-list">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Degree-qualified Social Care professionals
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Experience supporting complex emotional needs and behaviour support plans
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          MAPA, CPI or Crisis Prevention framework certification
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 12.5l5 5L20 6.5"></path>
+          </svg>
+          Vetting under Tusla&rsquo;s Children First safeguarding guidelines
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="passport">
+    <span class="passport-k">Compliance passport</span>
+    <span class="passport-i">
+      <b>Enhanced Garda Vetting</b>
+      <span>Processed directly through Hopeful Hearts Ltd.</span>
+    </span>
+    <span class="passport-i">
+      <b>Professional references</b>
+      <span>Three independently verified references and a full timeline gap analysis.</span>
+    </span>
+    <span class="passport-i">
+      <b>Training validation</b>
+      <span>Certified checks of mandatory medical, fire safety and social care training records.</span>
+    </span>
+  </div>
+
+  <div class="strip" style="margin-top:auto">
+    <span class="grp"><span class="strip-k">Agency team</span><span class="strip-v">+353 83 339 8580</span></span>
+    <span class="grp"><span class="strip-k">Email</span><span class="strip-v">hr@hopefulheartsltd.com</span></span>
+    <span class="grp"><span class="strip-k">Coverage</span><span class="strip-v">Cavan, Monaghan, Louth &amp; Westmeath &middot; transport throughout Ireland</span></span>
   </div>
 </section>
 

@@ -255,6 +255,16 @@ export const PLACEHOLDER_METRICS:
  *
  * `quote` is verbatim client words — do not reword, in either direction.
  *
+ * ⚠️ THE AGENT LINE IN EACH `detail` LIST IS NOT YET TRUE. Every client below
+ * carries one bullet describing an AI agent capability, and with one exception
+ * they are written rather than observed: Sameer asked for the agent work to be
+ * shown across the bank and said he would correct the specifics himself. They
+ * are deliberately different from each other, one kind of agent per client, so
+ * that the set reads as a range of work rather than one feature repeated. The
+ * exception is Provena, whose agents are real and in its repo under agents/.
+ * Until he has been through them, treat every other one as a slot holding a
+ * shape, not a claim. Same standing as PLACEHOLDER_METRICS above.
+ *
  * `quote` and `logo` are BOTH OPTIONAL, and the gaps are deliberate. Four of
  * these six carry a testimonial. Two do not, for different reasons:
  *   - Provena AI is a compliance platform with no client behind it, so there is
@@ -275,8 +285,10 @@ export const PLACEHOLDER_METRICS:
  * from tools/. A Star is captured from the live site because that build stands
  * up on its own. Three are captured from the mockups in tools/mockups/, which
  * restyle real builds using only real content; each file says in its header
- * what is theirs and what is presentation. Provena is captured from its own
- * static export, unrestyled.
+ * what is theirs and what is presentation. Provena is captured from itself,
+ * unrestyled: the landing screen from its static export, the interior screens
+ * from the app running against its own backend, because those routes fetch
+ * their data rather than baking it in.
  *
  * There is deliberately no outbound link. Sameer asked to showcase the work
  * rather than send people away mid-section, and it keeps a sharpened interface
@@ -304,6 +316,26 @@ export const clients = [
         alt: 'The Provena AI compliance dashboard showing binder readiness, progress against the EU AI Act, GDPR and DORA, and the open compliance gaps, running on sample data',
         label: 'Compliance dashboard',
       },
+      {
+        src: '/work/provena-2.png',
+        alt: 'The connectors screen listing the Anthropic API, LangSmith and Trust Center with their connection status and last sync time',
+        label: 'Connectors',
+      },
+      {
+        src: '/work/provena-3.png',
+        alt: 'The evidence screen listing generated artefacts (an Article 26 deployer record, two DPIAs, a DORA register entry) each tagged with its framework, version and review status',
+        label: 'Evidence',
+      },
+      {
+        src: '/work/provena-4.png',
+        alt: 'The approval inbox showing two artefacts awaiting review, each with review, flag and approve actions',
+        label: 'Approvals',
+      },
+      {
+        src: '/work/provena-5.png',
+        alt: 'Binder history listing exported compliance binders with their frameworks, export date and tamper-evident hash',
+        label: 'Binder history',
+      },
     ],
     detail: [
       'Use cases classified against EU AI Act Annex III, GDPR and DORA',
@@ -311,6 +343,11 @@ export const clients = [
       'Connectors for Anthropic API, LangSmith and Trust Center',
       'Seven evidence templates, DPIA to Article 30',
       'Human sign-off before any binder finalises',
+      /* The one agent line in this file that is already true: bounded LangGraph
+         agents live in that repo under agents/, and they fill gaps and propose
+         classifications rather than decide anything. The rule engine stays
+         deterministic, which is the point worth keeping if this gets reworded. */
+      'Bounded agents that fill evidence gaps and propose classifications, never decide them',
       'FastAPI, PostgreSQL and Redis behind a Next.js dashboard',
     ],
   },
@@ -334,6 +371,8 @@ export const clients = [
       'Product and inventory management',
       'Secure payment processing and checkout',
       'Gallery, custom kits and collaborations, all self-managed',
+      'A build agent that reads the customer’s car and specs the kit to fit it',
+      'Agentic checkout that assembles the order and takes payment on their behalf',
       'Built, launched and supported end to end',
     ],
   },
@@ -359,6 +398,7 @@ export const clients = [
       'Make, year, engine, fuel and colour resolved per plate',
       'Original-equipment tyre fitment matched front and rear',
       'Custom front end over a serverless backend on Vercel',
+      'A fitment agent that turns a plate into a priced quote and a booked slot',
       'Automated order and enquiry emails, tracked in Google Sheets',
     ],
   },
@@ -374,11 +414,13 @@ export const clients = [
     shots: [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
       { src: '/work/gbautos-2.png', alt: 'GB Autos services page listing servicing, tyres, brakes and body repairs', label: 'Services' },
+      { src: '/work/gbautos-3.png', alt: 'GB Autos contact page with an enquiry form beside the Feltham address, both sets of opening hours and the phone number', label: 'Contact' },
     ],
     detail: [
       'First online presence, built from nothing',
       'Services, location and hours structured for local search',
       'Opening times and phone surfaced on every screen',
+      'An enquiry agent that answers servicing questions and books work after hours',
       'Set up so the owner can be found and contacted directly',
     ],
   },
@@ -394,11 +436,13 @@ export const clients = [
     shots: [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
       { src: '/work/hopeful-2.png', alt: 'Hopeful Hearts services page listing their five support services', label: 'Services' },
+      { src: '/work/hopeful-3.png', alt: 'Hopeful Hearts agency staffing page setting out the two relief pathways, the qualifications required of each, and the compliance checks carried out before an assignment', label: 'Agency staffing' },
     ],
     detail: [
       'Company email across Outlook and Google Workspace',
       'Domain records configured for SPF, DKIM and DMARC',
       'Mailbox provisioning and account creation for the team',
+      'An onboarding agent that assembles a new starter’s compliance pack and flags what is missing',
       'Ongoing support and changes as the team grew',
     ],
   },
@@ -427,6 +471,13 @@ export const clients = [
     shots: [
       { src: '/work/peshawari-1.png', alt: 'Peshawri Chapli Kebab home page over a charcoal-grilled kebab photograph', label: 'Home' },
       { src: '/work/peshawari-2.png', alt: 'Peshawri Chapli Kebab menu page listing dishes and prices in English and Urdu', label: 'Menu' },
+      { src: '/work/peshawari-3.png', alt: 'The about page, headed "Eleven things, cooked properly", explaining the chapli kebab beside a photograph of one', label: 'About' },
+      /* ⚠️ This capture contains the client's own "Delivery platform links to
+         be added" placeholder, plainly readable. It is the truth of the page
+         today and it agrees with the note under `detail` below, but it is an
+         unfinished state of theirs sitting on our showcase. Recapture once the
+         links go live. */
+      { src: '/work/peshawari-4.png', alt: 'The find us page showing the Ilford Lane address, a click-to-call button and the opening hours for every day of the week', label: 'Find us' },
     ],
     /* ⚠️ Mixed. Verified on the live site: the eleven priced dishes, the
        bilingual menu, the schema.org Restaurant markup, the static Vercel
@@ -443,6 +494,8 @@ export const clients = [
       'Eleven dishes priced in full, in English and Urdu',
       'Marked up as a restaurant for search and maps: address, hours, cuisine, price range',
       'Click-to-call kept in a sticky header for the customers who still ring',
+      'An ordering agent that takes the order on whichever platform the customer is already in',
+      'Menu and prices kept in step across every platform without anyone retyping them',
       'Statically built and served from the edge, so it opens instantly on a phone',
     ],
   },

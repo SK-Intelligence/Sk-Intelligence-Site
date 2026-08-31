@@ -11,9 +11,11 @@
  *   2. The other three clients are captured from the mockups in tools/mockups/.
  *      Their live sites are basic, so those are restyled. See each file's
  *      header for what is real content and what is presentation.
- *   3. Provena AI is captured from its own static export, which lives in a
- *      different repo on this machine. Nothing is restyled: it is our product,
- *      so the shot is the real dashboard running its demo data.
+ *   3. Provena AI is captured from itself, in a different repo on this machine.
+ *      Nothing is restyled: it is our product, so the shots are the real
+ *      dashboard running its demo data. The landing screen comes from the
+ *      static export; the interior screens need the backend up, because they
+ *      fetch rather than bake. See captureApp and captureStatic below.
  *
  * Output is PNG into public/work/. It stays PNG deliberately: there is no
  * cwebp or magick on this machine, and next/image converts and resizes at
@@ -38,6 +40,10 @@ const MOCKUPS = join(HERE, 'mockups');
    Sameer's machine; PROVENA_OUT overrides it anywhere else. */
 const PROVENA_OUT = process.env.PROVENA_OUT
   ?? resolve(HERE, '../../../qub_projects/Provena-AI/dashboard-next/out');
+
+/* Where that same app is listening when it is running with its backend. The
+   interior screens can only be captured there — see captureApp below. */
+const PROVENA_BASE = process.env.PROVENA_BASE ?? 'http://127.0.0.1:8000';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -299,7 +305,78 @@ async function captureLive(browser, path, out, focusContent = false, origin = 'h
   await page.close();
 }
 
-// ── our own build ──────────────────────────────────────────────────────────
+// ── our own build, running ─────────────────────────────────────────────────
+/**
+ * The dashboard's landing route bakes its figures into the HTML at export
+ * time. Every other route does not: it renders a skeleton, hydrates, and then
+ * asks the FastAPI backend for its data. Served as a bare static export with
+ * JavaScript off those routes photograph as grey placeholder bars, and with
+ * JavaScript on they photograph as "Failed to load use cases". Neither is the
+ * product.
+ *
+ * So the interior screens are captured against the backend actually running,
+ * which serves the export itself at `/` — same origin, so the dashboard's own
+ * fetches resolve. Start it with the runbook in the Provena repo:
+ *
+ *   docker-compose up -d postgres redis && alembic upgrade head
+ *   uvicorn verifier.api.app:app --port 8000
+ *
+ * If nothing is listening this skips, exactly as the static path skips when
+ * the export is absent. `npm run shots` has to keep working on a machine that
+ * has never seen Provena.
+ */
+async function captureApp(browser, base, shots) {
+  try {
+    const res = await fetch(`${base}/api/connectors`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error(String(res.status));
+  } catch {
+    log(`skipped: nothing serving the dashboard at ${base}`);
+    log('start the Provena backend (see DEMO-LOCAL.md) to regenerate these');
+    return false;
+  }
+
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 760 }, deviceScaleFactor: 2 });
+  for (const [route, out] of shots) {
+    const page = await ctx.newPage();
+    try {
+      await page.goto(base + route, { waitUntil: 'load', timeout: 30_000 });
+    } catch {
+      bad(`${out}: could not load ${route}`);
+      await page.close();
+      continue;
+    }
+    await assertFonts(page, ['Inter'], out);
+    // Hydration, then the fetch, then the render. Wait for the skeleton to go
+    // rather than for a fixed delay — a capture of the loading state is the
+    // failure this whole function exists to avoid.
+    await page.waitForFunction(
+      () => document.querySelectorAll('[class*="animate-pulse"],[class*="skeleton"]').length === 0,
+      null,
+      { timeout: 20_000 },
+    ).catch(() => bad(`${out}: still showing a loading skeleton at the shutter`));
+    // An error state renders no skeleton either, so it would sail past the
+    // check above and land in public/work/ looking like the product failing.
+    const broken = await page.evaluate(() => {
+      const t = document.body.innerText;
+      return /Failed to load|Something went wrong|Try again/i.test(t);
+    });
+    if (broken) {
+      bad(`${out}: the page rendered an error state, keeping the existing capture`);
+      await page.close();
+      continue;
+    }
+    await page.waitForTimeout(500);
+    const dest = join(OUT, `${out}.png`);
+    await page.screenshot({ path: dest });
+    const size = await assertNotBlank(dest, out);
+    if (size >= 12_000) { log(`${out}.png  ${(size / 1024).toFixed(0)}kb  ← running app`); done.push(`${out}.png`); }
+    await page.close();
+  }
+  await ctx.close();
+  return true;
+}
+
+// ── our own build, exported ────────────────────────────────────────────────
 /**
  * Provena AI ships as a Next.js static export, and that export lives in a
  * different repo on this machine rather than in tools/. So this mode takes a
@@ -386,6 +463,11 @@ const browser = await chromium.launch();
 if (wanted('ossett')) {
   console.log('\n── ossett (mockup)');
   await captureMockup(browser, 'ossett.html', [
+    /* Two, not three. A customer-feedback frame was built here and thrown away:
+       it carried three reviews attributed to named individuals and a workshop
+       postcode of S3 8AB, which is in Sheffield — Ossett is in Wakefield. The
+       postcode was the tell that none of it had been read off their site. Any
+       third frame here has to come from ossettyres.co.uk and nowhere else. */
     ['shot-empty', 'ossett-1'],
     ['shot-resolved', 'ossett-2'],
   ], ['Space Grotesk', 'JetBrains Mono', 'Inter']);
@@ -396,6 +478,7 @@ if (wanted('gbautos')) {
   await captureMockup(browser, 'gbautos.html', [
     ['shot-hero', 'gbautos-1'],
     ['shot-services', 'gbautos-2'],
+    ['shot-visit', 'gbautos-3'],
   ], ['Archivo', 'Inter']);
 }
 
@@ -404,6 +487,7 @@ if (wanted('hopeful')) {
   await captureMockup(browser, 'hopeful.html', [
     ['shot-hero', 'hopeful-1'],
     ['shot-services', 'hopeful-2'],
+    ['shot-agency', 'hopeful-3'],
   ], ['Newsreader', 'Inter']);
 }
 
@@ -426,14 +510,36 @@ if (wanted('peshawari')) {
   for (const [path, out] of [
     ['/', 'peshawari-1'],
     ['/menu', 'peshawari-2'],
+    ['/about', 'peshawari-3'],
+    ['/contact', 'peshawari-4'],
   ]) await captureLive(browser, path, out, false, 'https://peshawarichaplikebab.co.uk');
 }
 
 if (wanted('provena')) {
-  console.log('\n── provena (static export)');
-  await captureStatic(browser, PROVENA_OUT, [
-    ['/', 'provena-1'],   // the compliance dashboard is the landing route
+  console.log('\n── provena (our own build)');
+  /* The routes walk the same arc the panel describes, in order: it reads from
+     the tools they already use, writes the paperwork, nothing is final until a
+     person signs it, and a binder comes out the other end. Other routes in the
+     app are real screens too — these are the four that carry the story without
+     photographing the same table twice.
+
+     The AI Use Register is deliberately not among them. It is the right screen
+     for the story and it currently throws on a use case created through the
+     product's own onboarding wizard, so there is nothing here to photograph
+     that is not a crash. Add it once that is fixed. */
+  const live = await captureApp(browser, PROVENA_BASE, [
+    ['/connectors', 'provena-2'],
+    ['/evidence', 'provena-3'],
+    ['/approvals', 'provena-4'],
+    ['/binders', 'provena-5'],
   ]);
+  /* The landing route is the one screen that needs no backend, so it is shot
+     from the export either way: identical output, and it keeps this target
+     useful on a machine where Provena is not running. */
+  await captureStatic(browser, PROVENA_OUT, [
+    ['/', 'provena-1'],
+  ]);
+  if (!live) log('provena-2..5 left as they were');
 }
 
 await browser.close();

@@ -274,6 +274,106 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   letter-spacing:.08em; text-transform:uppercase; color:var(--oxide);
 }
 .svc-go svg{ width:14px; height:14px; }
+
+/* ── visit / enquiry ────────────────────────────────────────────────── */
+/* The third frame is the end of the journey the other two start: the hero
+   sells, the services page explains, this one is where somebody actually gets
+   in touch. So it is neither a headline block nor a tile grid — it is a form
+   beside a location card, which is a third shape rather than a third colour.
+
+   The ink panel inherits the hazard rake from .hero-field rather than
+   introducing a second texture, but in oxide on ink instead of black on
+   oxide. Same device, inverted, which is what makes the two frames read as
+   one site. */
+.visit{
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.04fr .96fr;
+}
+.visit-copy{
+  padding:40px 44px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.visit-copy h2{
+  margin:0;
+  font-family:var(--display); font-weight:900;
+  font-size:2.85rem; line-height:.96; letter-spacing:-.035em;
+  text-transform:uppercase;
+}
+.visit-sub{
+  margin:18px 0 0; max-width:44ch;
+  font-size:.95rem; line-height:1.6; color:var(--ink-soft);
+}
+
+/* Field placeholders, not live inputs: the capture has to be identical every
+   run, and a real focused field depends on caret blink phase. */
+.enq{ margin-top:26px; max-width:440px; }
+.enq-k{
+  font-family:var(--display); font-weight:800;
+  font-size:.66rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--steel);
+  margin-bottom:12px;
+}
+.enq-f{
+  border:1.5px solid var(--line);
+  background:var(--bone-2);
+  padding:12px 14px;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+}
+.enq-f + .enq-f{ border-top:0; }
+.enq-f b{ font-size:.88rem; font-weight:500; color:var(--steel); }
+.enq-f i{
+  font-style:normal; flex:0 0 auto;
+  font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--steel); padding-top:3px;
+}
+.enq-f.tall{ height:84px; }
+.enq-go{
+  margin-top:14px;
+  background:var(--ink); color:var(--bone);
+  padding:14px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--display); font-weight:800; font-size:.86rem;
+}
+.enq-go svg{ width:15px; height:15px; }
+
+.visit-panel{
+  position:relative; overflow:hidden;
+  background:var(--ink); color:var(--bone);
+  padding:40px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.visit-panel::before{
+  content:''; position:absolute; inset:-20%;
+  background:repeating-linear-gradient(
+    -52deg,
+    rgba(168,62,34,.13) 0 26px,
+    rgba(0,0,0,0) 26px 62px);
+}
+.vp{ position:relative; z-index:1; }
+.vp h3{
+  margin:0 0 26px;
+  font-family:var(--display); font-weight:900;
+  font-size:1.55rem; letter-spacing:-.028em; text-transform:uppercase;
+}
+.vp-block + .vp-block{
+  margin-top:22px; padding-top:22px;
+  border-top:1px solid rgba(244,241,236,.16);
+}
+.vp-k{
+  font-family:var(--display); font-weight:800;
+  font-size:.64rem; letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(244,241,236,.55);
+}
+.vp-v{
+  margin-top:8px;
+  font-size:1rem; font-weight:500; line-height:1.5;
+}
+.vp-hours{
+  margin-top:9px;
+  display:grid; grid-template-columns:auto 1fr; gap:7px 24px;
+  font-size:.94rem; font-variant-numeric:tabular-nums;
+}
+.vp-hours span:nth-child(odd){ color:rgba(244,241,236,.66); }
 </style>
 </head>
 <body>
@@ -465,6 +565,96 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <span class="strip-item">
       <span class="strip-k">Call</span>
       <span class="strip-v">020 8844 2156</span>
+    </span>
+    <span class="strip-open"><span class="dot"></span>Open now</span>
+  </div>
+</section>
+
+<!-- ══ FRAME 3 · visit / enquiry ══════════════════════════════════════ -->
+<!-- All from gbautosandtyres.co.uk/contact: the headline, the deck, the three
+     enquiry fields with their own optional/required labelling, the address,
+     both opening-hours lines, and the mailbox in the footer.
+
+     This frame first carried a map coordinate plate and a footer reading
+     "Feltham and East Bedfont", above a comment claiming both came off the
+     contact page. Neither is on it: the page prints no coordinates and never
+     says Bedfont, it says "serving Feltham since 2009". Both are gone. Worth
+     remembering that the false sourcing comment was the dangerous half — an
+     invented fact gets caught by someone who knows the client, an invented
+     citation gets believed. -->
+<section class="frame" id="shot-visit">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-gbautos.png" alt="">
+      <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#">Services</a>
+      <a href="#" class="on">Contact</a>
+      <a href="#">Blog</a>
+      <span class="bar-call">020 8844 2156</span>
+    </nav>
+  </div>
+
+  <div class="visit">
+    <div class="visit-copy">
+      <span class="est">Get in touch</span>
+      <h2>Let&rsquo;s get you<br>back on the road.</h2>
+      <p class="visit-sub">
+        Tell us what your vehicle needs and our Feltham team will get back to
+        you. For the quickest answer during opening hours, call the garage
+        directly.
+      </p>
+
+      <div class="enq">
+        <div class="enq-k">Send an enquiry</div>
+        <div class="enq-f"><b>First name</b><i>Optional</i></div>
+        <div class="enq-f"><b>Email address</b><i>Required</i></div>
+        <div class="enq-f tall"><b>Message</b><i>Required</i></div>
+        <div class="enq-go">
+          Send enquiry
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13M12 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="visit-panel">
+      <div class="vp">
+        <h3>Visit our<br>Feltham workshop</h3>
+
+        <div class="vp-block">
+          <div class="vp-k">Address</div>
+          <div class="vp-v">376 Staines Rd<br>Feltham TW14 8BT</div>
+        </div>
+
+        <div class="vp-block">
+          <div class="vp-k">Opening hours</div>
+          <div class="vp-hours">
+            <span>Monday to Saturday</span><span>09:00 &ndash; 18:30</span>
+            <span>Sunday</span><span>10:00 &ndash; 17:00</span>
+          </div>
+        </div>
+
+        <div class="vp-block">
+          <div class="vp-k">Call the garage</div>
+          <div class="vp-v">020 8844 2156</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="strip-item">
+      <span class="strip-k">Email</span>
+      <span class="strip-v">gbautos100@gmail.com</span>
+    </span>
+    <span class="strip-item">
+      <span class="strip-k">Serving</span>
+      <span class="strip-v">Feltham since 2009</span>
     </span>
     <span class="strip-open"><span class="dot"></span>Open now</span>
   </div>

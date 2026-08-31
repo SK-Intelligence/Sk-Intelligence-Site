@@ -44,7 +44,7 @@ const settle = async (p, ms = 3500) => p.waitForTimeout(ms);
 /* Resolve a build's tab index from its name. The strip has been reordered twice,
    and a hardcoded index does not fail on a reorder: it silently runs the test
    against a different company. The A Star blocks below care which one they get,
-   because it is the only build with four shots. */
+   because they need a build with several shots, and A Star has always had four. */
 /* Matched on the name element, not on the mark's whole text. A mark now carries
    the company name for assistive tech and the sector as its visible caption, so
    comparing textContent against a company name found nothing and every lookup
@@ -273,9 +273,9 @@ head('tap targets (44px guidance)');
       .filter(({ r }) => r.height < 44)
       .map(({ el, r }) => `${el.className || el.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`));
 
-  /* Resolved by name, and it has to be the four-shot build: the viewer's
-     prev/next controls only render above one screenshot, so landing on a
-     single-shot build would measure the close button and quietly skip the two
+  /* Resolved by name, and it has to be a build with more than one shot: the
+     viewer's prev/next controls only render above one screenshot, so landing on
+     a single-shot build would measure the close button and quietly skip the two
      stepper buttons that were also 36px. */
   await openCase(p, await indexOf(p, 'A Star Customs'));
   const inCase = await measure();
@@ -705,6 +705,11 @@ head('case bank');
   // draws one at shots.length > 1), so there is nothing to walk and its one
   // image is checked directly instead. Skipping it entirely would leave that
   // PNG the only unverified file in public/work/.
+  //
+  // No build is in that state today — Provena was, until its interior screens
+  // were captured. The branch stays because the condition it guards is a
+  // property of the renderer rather than of today's content, and the next
+  // client added will start life with one shot.
   for (let i = 0; i < CLIENTS; i++) {
     await openCase(p, i);
     const shots = await p.evaluate((n) => {
@@ -736,8 +741,9 @@ head('case bank');
   }
 
   // Thumbnail strip swaps the primary image and moves the active marker with it.
-  // Resolved by name: this block needs the build with four shots specifically,
-  // and it has been at three different indices across two reorders.
+  // Resolved by name: this block clicks the third thumbnail, so it needs a build
+  // with at least three, and it has been at three different indices across two
+  // reorders.
   const astar = await indexOf(p, 'A Star Customs');
   ok(astar !== -1, `found A Star in the strip (index ${astar})`);
   await openCase(p, astar);
@@ -773,8 +779,15 @@ head('case bank');
   }));
   ok(start !== stepped.src, `arrow keys step through the set (${stepped.count})`);
 
-  // Wrapping, not walking off the end: 4 more rights from shot 4 of 4.
-  for (let i = 0; i < 4; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(180); }
+  // Wrapping, not walking off the end. One full lap of the set lands back on
+  // the shot we are already on, whatever that shot is — so the step count is
+  // read from the build rather than hardcoded. It used to be a literal 4, which
+  // only held while this build had exactly four shots and would have started
+  // passing for the wrong reason the first time anyone reshot it.
+  const lap = await p.evaluate((n) =>
+    document.querySelectorAll(`#panel-${n} .client-shot`).length, astar);
+  ok(lap > 1, `the lightbox build has a set to step through (${lap} shots)`);
+  for (let i = 0; i < lap; i++) { await p.keyboard.press('ArrowRight'); await p.waitForTimeout(180); }
   const wrapped = await p.evaluate(() =>
     document.querySelector('.lightbox-img').getAttribute('src'));
   ok(wrapped === stepped.src, 'stepping past the last shot wraps round rather than escaping the set');
