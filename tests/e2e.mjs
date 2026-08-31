@@ -45,8 +45,13 @@ const settle = async (p, ms = 3500) => p.waitForTimeout(ms);
    and a hardcoded index does not fail on a reorder: it silently runs the test
    against a different company. The A Star blocks below care which one they get,
    because it is the only build with four shots. */
+/* Matched on the name element, not on the mark's whole text. A mark now carries
+   the company name for assistive tech and the sector as its visible caption, so
+   comparing textContent against a company name found nothing and every lookup
+   quietly returned -1. */
 const indexOf = (p, name) => p.evaluate((n) =>
-  [...document.querySelectorAll('.tab')].findIndex((t) => t.textContent.trim() === n), name);
+  [...document.querySelectorAll('.tab')]
+    .findIndex((t) => t.querySelector('.visually-hidden')?.textContent.trim() === n), name);
 const walk = async (p) => {
   const h = await p.evaluate(() => document.documentElement.scrollHeight);
   for (let y = 0; y < h; y += 450) { await p.evaluate((v) => window.scrollTo(0, v), y); await p.waitForTimeout(45); }
@@ -317,7 +322,11 @@ for (const w of [...PHONES, 768, 1440]) {
        adjacent marks) and 10px horizontal. At the narrowest layout that is most
        of the documented clearance. The chip rect is what is on the screen, so
        it is what both the containment and the overlap checks below use. */
-    const rects = tabs.map((t) => t.querySelector('.client-chip').getBoundingClientRect());
+    /* The whole mark, not just the logo. Each mark is a logo with a sector
+       caption under it now, and the caption is as much a part of what a reader
+       sees touching its neighbour as the chip is. .chip-drift is the box that
+       holds both. */
+    const rects = tabs.map((t) => t.querySelector('.chip-drift').getBoundingClientRect());
     return {
       orbit: field.classList.contains('is-orbit'),
       role: field.getAttribute('role'),
@@ -422,7 +431,11 @@ for (const w of [...PHONES, 768, 1440]) {
     const r = document.querySelector('.tab[data-wide] .client-chip').getBoundingClientRect();
     return { w: Math.round(r.width), h: Math.round(r.height), ratio: r.width / r.height };
   });
-  const nominal = w <= 720 ? 96 / 56 : 140 / 76;
+  /* Three sizes, because the marks come in three: a captioned desktop mark, a
+     captioned phone mark, and the bare logo below 361px where a caption does
+     not fit. Measured on the chip rather than the whole mark on purpose — the
+     chip is the part whose shape a rotation would distort. */
+  const nominal = w <= 360 ? 88 / 52 : w <= 720 ? 76 / 48 : 140 / 76;
   ok(Math.abs(upright.ratio - nominal) < 0.08,
     `${w}px the marks stay upright as the field turns (wordmark ${upright.w}x${upright.h}, ratio ${upright.ratio.toFixed(2)} vs ${nominal.toFixed(2)})`);
 

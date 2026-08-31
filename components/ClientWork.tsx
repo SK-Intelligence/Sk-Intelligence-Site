@@ -8,56 +8,44 @@ import { Lightbox } from './Lightbox';
 import { CaseDialog } from './CaseDialog';
 
 /**
- * Where each logo sits in the constellation, as a -1..1 offset from the centre
- * on each axis. CSS turns that into a position that can never leave the
- * container — see `.tabs.is-orbit .tab` in globals.css.
+ * Where each logo sits in the ring, as a -1..1 offset from the centre on each
+ * axis. CSS turns that into a position that can never leave the container — see
+ * `.tabs.is-orbit .tab` in globals.css.
  *
  * Computed rather than hand-placed so a seventh build lands somewhere sensible
  * on its own, and computed from the INDEX rather than Math.random because this
  * renders on the server too: a random layout would differ between the server
  * and the browser and React would throw a hydration mismatch.
  *
- * The offsets describe TRUE CIRCLES, and that is a requirement rather than a
- * preference now that the field rotates. An earlier version normalised each
- * axis to fill the square box, which packed the marks in nicely but put the
- * extreme ones at the corners — and a corner is further from the centre than an
- * edge, so rotating that arrangement swings those marks straight out of the
- * field. On a circle every mark keeps its distance from the centre for the
- * whole revolution, so what is contained standing still stays contained moving.
+ * ONE radius, not two. This was two rings for a while, to stop six marks on an
+ * evenly divided circle reading as a clock face, and the clearance it was
+ * scored on was measured wrong. The marks stay upright while their centres
+ * travel around the field, so the separation VECTOR between any two of them
+ * turns through every angle over a revolution — which means an axis-aligned gap
+ * between two boxes is not a fixed quantity, and scoring it at one angle passes
+ * arrangements that collide a few seconds later. That is exactly what happened:
+ * a search that promised 7px of clearance shipped marks overlapping by 4x9px at
+ * 375px and 14px at 768px.
  *
- * Two things stop it reading as a clock face. The radius alternates between an
- * inner and an outer ring, and every third mark is nudged off its exact spoke.
- * Six marks on one evenly-divided circle is a dial; two loose rings is a
- * constellation.
+ * The correct condition for two upright boxes whose separation rotates is
  *
- * The nudges are not free-form. An earlier set pushed mark 0 into mark 5 —
- * which is the 2.35:1 wordmark and more than twice the width of the others —
- * and the two boxes overlapped by 21x55px on a phone. Nothing looked obviously
- * wrong; what happened is that the wide mark sat on top of its neighbour and
- * swallowed every tap meant for it.
+ *     centre distance  >=  hypot(sum of half-widths, sum of half-heights)
  *
- * These values come from an exhaustive search over both rings and all three
- * nudges. They clear by 10.9px at 320px, which is the worst case, and by
- * considerably more everywhere else. Only the DIFFERENCES between the three
- * nudges matter: a value common to all three is a rotation of the whole
- * arrangement, and this arrangement rotates anyway.
+ * because at exactly that distance there is one angle where both axes touch at
+ * once, and beyond it one axis always separates them. Scored that way, no
+ * two-ring arrangement clears at all — the best is still 0.6px short with the
+ * field as large as it can usefully go — so the marks sit on a single ring,
+ * which is simply the most efficient way to keep six things apart. The nudges
+ * are what keep it off a perfect hexagon.
  *
- * What the search optimises is the part worth writing down. Scoring clearance
- * alone gave two bad answers in a row. First it pushed both rings out to the
- * rim, 0.85 and 0.92, because marks are furthest apart there — a ring with a
- * hole punched through it, every logo in a narrow band at the edge and the
- * middle two-fifths of the field empty. Then, with the inner ring forced in, it
- * spent the freedom it had left on lopsided nudges and produced two tight pairs
- * and two gaps, clustered off to one side. Both scored well. Both looked like
- * an accident.
+ * Only the DIFFERENCES between the three nudges matter: a value common to all
+ * three rotates the whole arrangement, and this arrangement rotates anyway.
  *
- * So the search now rejects any arrangement whose centre of mass sits more than
- * 5% of the radius off centre, or whose widest and narrowest angular gaps
- * differ by more than about 43 degrees, and maximises clearance among what
- * survives. That costs real clearance — 18px down to 11px — and it is worth it:
- * relaxing the inner ring all the way back out only buys a further 1px, which
- * means the binding constraint is angular rather than radial. There is nothing
- * to be had by flattening the cluster again.
+ * One set of numbers serves three different mark sizes — a captioned desktop
+ * mark, a captioned phone mark, and the bare logo below 361px where a caption
+ * does not fit — so the search scores all three together and takes the worst
+ * pair across the lot. It clears by 4.8px at the tightest. Change any size and
+ * re-run it; a value tuned for one will quietly collide in another.
  *
  * This is tuned for six marks with the wide one last, not solved in general. A
  * seventh build, or moving the wordmark, can collide again — so the guarantee
@@ -65,8 +53,8 @@ import { CaseDialog } from './CaseDialog';
  * phone widths and on desktop and names the offending pair. Change these
  * numbers and run that, rather than trusting the picture.
  */
-const RING = [0.65, 1] as const;
-const NUDGE = [0.16, 0.02, -0.06] as const;
+const RADIUS = 0.99;
+const NUDGE = [0.3, 0.18, 0.21] as const;
 
 /** How far a mark drifts from its place, in pixels. Mirrored as `--d` in
  *  globals.css, which insets every mark from the field edge by this much so a
@@ -83,8 +71,7 @@ const DRIFT = { x: 3, y: 4 } as const;
 
 const ORBIT = clients.map((_, i) => {
   const a = -Math.PI / 2 + (i * 2 * Math.PI) / clients.length + NUDGE[i % 3];
-  const r = RING[i % 2];
-  return { ox: Math.cos(a) * r, oy: Math.sin(a) * r, ring: i % 2 ? 'out' : 'in' };
+  return { ox: Math.cos(a) * RADIUS, oy: Math.sin(a) * RADIUS };
 });
 
 /** Seconds for one full revolution of the field. Slow enough to be a drift
@@ -494,7 +481,7 @@ export function ClientWork() {
               right to. A full stop does the same work here. */}
           <p>
             Client sites, internal tools, and a platform of our own. Each one shipped
-            end to end and still in service.
+            end to end.
           </p>
         </div>
 
@@ -524,7 +511,6 @@ export function ClientWork() {
                 ref={(el) => { tabRefs.current[i] = el; }}
                 onClick={() => setOpenIndex(i)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                data-ring={hydrated ? ORBIT[i].ring : undefined}
                 data-wide={WIDE.has(client.id) ? '' : undefined}
                 style={hydrated
                   ? ({ '--ox': ORBIT[i].ox, '--oy': ORBIT[i].oy } as React.CSSProperties)
@@ -542,10 +528,20 @@ export function ClientWork() {
                   <span className="client-chip">
                     <ClientMark logo={client.logo} name="" size={30} />
                   </span>
+                  {/* Both, and in this order. The sector is what shows — a logo
+                      you do not recognise tells you nothing, and "Tyre retail"
+                      under it tells you what the build was for in two words,
+                      which the company's name does not. The name still has to
+                      be the button's accessible name, so it stays in the markup
+                      and is only visually removed; a screen reader reads
+                      "Ossett Tyres, tyre retail" from the two together.
+
+                      Inside the drift wrapper, not beside it, so the caption
+                      travels with its mark and counter-rotates upright with it
+                      rather than sitting still while the logo moves off it. */}
+                  <span className="visually-hidden">{client.name}</span>
+                  <span className="client-tag">{client.sector}</span>
                 </span>
-                {/* The button would otherwise be an unlabelled image to a screen
-                    reader, and to Google. */}
-                <span className="visually-hidden">{client.name}</span>
               </button>
             ))}
           </div>

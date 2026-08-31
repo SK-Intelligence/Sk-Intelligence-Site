@@ -544,7 +544,7 @@
      scrollable overflow, which is 41% wider than the field actually is. */
   .orbit-clip{
     overflow:hidden;
-    width:100%; max-width:clamp(400px, 42vw, 500px);
+    width:100%; max-width:clamp(520px, 46vw, 600px);
     margin:8px auto 0;
   }
   .tabs.is-orbit{
@@ -554,8 +554,17 @@
        does not look broken, it just quietly eats that neighbour's clicks. The
        ceiling came down from 520px once the offsets were normalised: the marks
        now reach all four edges, so a bigger field only spreads them thinner. */
-    width:100%; max-width:clamp(400px, 42vw, 500px);
-    height:clamp(400px, 42vw, 500px);
+    width:100%; max-width:clamp(520px, 46vw, 600px);
+    /* aspect-ratio, not a matching height. The two were the same expression,
+       which is only the same number while nothing else constrains the width —
+       and at 320px the container's padding caps the field at 280 while the
+       height still resolved to 294. A field 14px taller than it is wide turns
+       the ring into an ellipse: the x offset is scaled by half the width and
+       the y offset by half the height, so a mark's distance from the centre
+       depends on where it sits, and rotating that swings the tall ones out of
+       the field. Deriving the height from the realised width keeps it square at
+       every size, which is what the ring maths assumes. */
+    aspect-ratio:1;
     /* No margin. The clip owns the spacing; `overflow:hidden` on it makes a new
        block formatting context, so a margin here would NOT collapse into it —
        it stacked on top of the clip's own, pushing the field 8px off the clip's
@@ -589,13 +598,13 @@
      quietly cropped. Change the amplitudes there and this is hypot of the two,
      not a copy of one. */
   .tabs.is-orbit .tab{
-    --hw:42px; --hh:42px; --rad:42px; --d:5px;
+    --hw:58px; --hh:60px; --rad:60px; --d:5px;
     position:absolute;
     left:calc(50% + var(--ox) * (50% - var(--rad) - var(--d)) - var(--hw));
     top: calc(50% + var(--oy) * (50% - var(--rad) - var(--d)) - var(--hh));
     opacity:1;
   }
-  .tabs.is-orbit .tab[data-wide]{ --hw:74px; --rad:74px; }
+  .tabs.is-orbit .tab[data-wide]{ --hw:79px; --rad:79px; }
   .tabs.is-orbit .tab .client-chip{ width:76px; height:76px; padding:14px; }
   .tabs.is-orbit .tab[data-wide] .client-chip{ width:140px; }
   /* The drift wrapper. It carries nothing of its own — it exists so that the
@@ -606,17 +615,53 @@
      visitors, who were the only ones it worked for. */
   .tab .chip-drift{ display:block; }
 
-  /* Depth. The outer ring sits fractionally smaller and lighter so the cluster
-     reads as a volume rather than as six marks pasted on a flat plane. */
-  .tabs.is-orbit .tab[data-ring="out"] .client-chip{ transform:scale(.88); opacity:.74; }
+  /* The company name under its logo.
+     Hidden exactly as .visually-hidden would hide it everywhere except the
+     constellation: in the plain no-JS row the logos speak for themselves and a
+     caption under each would be a second row of text, but the name still has to
+     reach a screen reader and Google, so it is always in the markup and only
+     ever visually removed. */
+  .tab .client-tag{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  /* Every mark is the same box, and that is the point.
+     Left to the text, the NAME decided the width — "Hopeful Hearts LTD" ran to
+     115px beside a 76px chip — so each of the six had different extents and the
+     ring maths, which insets a mark by its own largest half-extent, had six
+     different insets to satisfy. Fixing the width and reserving two lines for
+     the caption gives every mark identical extents, so the geometry has two
+     numbers to work with instead of twelve, and the captions line up with each
+     other instead of sitting at six heights. */
+  .tabs.is-orbit .tab .chip-drift{ width:108px; }
+  .tabs.is-orbit .tab[data-wide] .chip-drift{ width:150px; }
+  .tabs.is-orbit .tab .client-tag{
+    position:static; width:auto; height:auto; min-height:2.5em;
+    margin:9px auto 0; padding:0;
+    overflow:visible; clip:auto; white-space:normal; border:0;
+    display:block; text-align:center; text-wrap:balance;
+    font-size:.66rem; line-height:1.25; font-weight:600; letter-spacing:.005em;
+    color:var(--ink-soft);
+  }
+  /* The chip stays its own size and centres in that wider box; only the caption
+     uses the extra width. */
+  .tabs.is-orbit .tab .client-chip{ margin-inline:auto; }
   @media (hover:hover) and (pointer:fine){
-    .tabs.is-orbit .tab:hover .client-chip{ transform:translateY(-3px) scale(1); opacity:1; }
+    .tabs.is-orbit .tab:hover .client-tag{ color:var(--ink); }
+  }
+  .tabs.is-orbit .tab .client-tag{ transition:color .25s ease; }
+  @media (prefers-reduced-motion:reduce){
+    .tabs.is-orbit .tab .client-tag{ transition:none; }
+  }
+
+  @media (hover:hover) and (pointer:fine){
+    .tabs.is-orbit .tab:hover .client-chip{ transform:translateY(-3px); }
     .tabs.is-orbit .tab:hover{ transform:none; }
   }
   .tabs.is-orbit .tab .client-chip{ transition:transform .3s var(--ease), opacity .3s ease, border-color .25s ease; }
   @media (prefers-reduced-motion:reduce){
     .tabs.is-orbit .tab .client-chip{ transition:none; }
-    .tabs.is-orbit .tab:hover .client-chip{ transform:scale(1); }
+    .tabs.is-orbit .tab:hover .client-chip{ transform:none; }
   }
 
   /* The one instruction the section carries. It stays: there is no state in
@@ -1644,9 +1689,37 @@
        this size it is still the widest thing in the field, so the containment
        maths above is doing real work here and not just in theory. */
     .orbit-clip{ max-width:min(92vw, 330px); }
-    .tabs.is-orbit{ max-width:min(92vw, 330px); height:min(92vw, 330px); }
-    .tabs.is-orbit .tab{ --hw:32px; --hh:32px; --rad:32px; }
-    .tabs.is-orbit .tab[data-wide]{ --hw:52px; --rad:52px; }
-    .tabs.is-orbit .tab .client-chip{ width:56px; height:56px; padding:10px; }
-    .tabs.is-orbit .tab[data-wide] .client-chip{ width:96px; }
+    .tabs.is-orbit{ max-width:min(92vw, 330px); }
+    .tabs.is-orbit .tab{ --hw:38px; --hh:36px; --rad:38px; }
+    .tabs.is-orbit .tab[data-wide]{ --hw:46px; --rad:46px; }
+    .tabs.is-orbit .tab .client-chip{ width:40px; height:40px; padding:8px; }
+    .tabs.is-orbit .tab[data-wide] .client-chip{ width:66px; }
+    /* Smaller and tighter. Six marks and a double-width wordmark already share a
+       280px field at the narrowest, and every pixel a name adds is paid for
+       twice over in the gap between two of them. */
+    .tabs.is-orbit .tab .chip-drift{ width:68px; }
+    .tabs.is-orbit .tab[data-wide] .chip-drift{ width:84px; }
+    .tabs.is-orbit .tab .client-tag{
+      margin-top:5px; font-size:.5rem; line-height:1.2; min-height:2.4em;
+    }
+  }
+
+  /* Under 361px the caption comes off and the marks go back to being logos.
+     Six labelled marks do not fit a 280px field: a caption is roughly 20px of
+     height and 20px of width on every one of them, and the solver could not
+     find any arrangement of rings and nudges that cleared — the best overlapped
+     by 27px. A label nobody can read because it is sitting on its neighbour is
+     worse than no label, and the sector is the first thing the case study says
+     when the mark is tapped. */
+  @media (max-width:360px){
+    .tabs.is-orbit .tab .client-tag{
+      position:absolute; width:1px; height:1px; min-height:0; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+    .tabs.is-orbit .tab .chip-drift,
+    .tabs.is-orbit .tab[data-wide] .chip-drift{ width:auto; }
+    .tabs.is-orbit .tab{ --hw:30px; --hh:30px; --rad:30px; }
+    .tabs.is-orbit .tab[data-wide]{ --hw:48px; --rad:48px; }
+    .tabs.is-orbit .tab .client-chip{ width:52px; height:52px; padding:9px; }
+    .tabs.is-orbit .tab[data-wide] .client-chip{ width:88px; }
   }
