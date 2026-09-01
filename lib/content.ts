@@ -261,7 +261,9 @@ export const PLACEHOLDER_METRICS:
  * shown across the bank and said he would correct the specifics himself. They
  * are deliberately different from each other, one kind of agent per client, so
  * that the set reads as a range of work rather than one feature repeated. The
- * exception is Provena, whose agents are real and in its repo under agents/.
+ * exception is Provena, whose agents are real and in its repo under agents/,
+ * though every one of them sits behind a default-off feature flag, which is why
+ * its two agent screens had to be drawn rather than captured.
  * Until he has been through them, treat every other one as a slot holding a
  * shape, not a claim. Same standing as PLACEHOLDER_METRICS above.
  *
@@ -335,6 +337,35 @@ export const clients = [
         src: '/work/provena-5.png',
         alt: 'Binder history listing exported compliance binders with their frameworks, export date and tamper-evident hash',
         label: 'Binder history',
+      },
+      {
+        src: '/work/provena-6.png',
+        alt: 'Vendor attestations ingested from Anthropic, listing the data processing agreement, sub-processor list, SOC 2 report, model system card and retention policy, each against the obligation it covers',
+        label: 'Vendor attestations',
+      },
+      {
+        src: '/work/provena-7.png',
+        alt: 'Regulatory updates listing changes to the frameworks in scope, filtered by EU AI Act, UK GDPR, EU GDPR and DORA',
+        label: 'Regulatory updates',
+      },
+      {
+        src: '/work/provena-8.png',
+        alt: 'The getting started checklist showing five steps from classifying an AI use to exporting the first binder, two of them complete',
+        label: 'Getting started',
+      },
+      /* The only two drawn screens of our own product, and the only reason they
+         exist is that the agent layer is real code sitting behind default-off
+         feature flags, so nothing in the shipped UI shows it. Marked as drawn
+         in tools/mockups/provena.html. Eight real, two drawn. */
+      {
+        src: '/work/provena-9.png',
+        alt: 'The gap-fill agent part-way through a DPIA, every filled field attributed to the connector, attestation or person it came from, and the two it could not answer raised rather than guessed',
+        label: 'Gap-fill agent',
+      },
+      {
+        src: '/work/provena-10.png',
+        alt: 'The classification agent proposing a high-risk classification beside the deterministic rule that actually made the decision, with the Annex III clause it cites and the obligations that follow',
+        label: 'Classification agent',
       },
     ],
     detail: [

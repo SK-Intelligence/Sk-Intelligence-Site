@@ -546,6 +546,9 @@ if (wanted('provena')) {
     ['/evidence', 'provena-3'],
     ['/approvals', 'provena-4'],
     ['/binders', 'provena-5'],
+    ['/attestations', 'provena-6'],
+    ['/regulatory-updates', 'provena-7'],
+    ['/getting-started', 'provena-8'],
   ]);
   /* The landing route is the one screen that needs no backend, so it is shot
      from the export either way: identical output, and it keeps this target
@@ -553,7 +556,17 @@ if (wanted('provena')) {
   await captureStatic(browser, PROVENA_OUT, [
     ['/', 'provena-1'],
   ]);
-  if (!live) log('provena-2..5 left as they were');
+  if (!live) log('provena-2..8 left as they were');
+
+  /* Two drawn screens among eight real ones, and the only place in the bank
+     where our own product gets a mockup. The agent layer is real code but sits
+     behind default-off feature flags, so nothing in the shipped UI shows it and
+     Provena was the one client whose agent line had no screenshot. Marked as
+     drawn in the header of provena.html. */
+  await captureMockup(browser, 'provena.html', [
+    ['shot-gapfill', 'provena-9'],
+    ['shot-classify', 'provena-10'],
+  ], ['Inter', 'JetBrains Mono']);
 }
 
 await browser.close();

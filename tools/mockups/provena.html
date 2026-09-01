@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Provena AI — the agent layer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/*
+  Provena AI — the two agent screens.
+
+  THESE TWO ARE DRAWN. The other eight Provena shots are real captures of the
+  product running against its own backend, taken by captureApp() in
+  tools/shots.mjs. These are not, and the reason is specific: the agent layer is
+  real code — bounded LangGraph agents live in that repo under agents/ — but
+  every one of them sits behind a default-off feature flag (ENABLE_GAP_FILL,
+  ENABLE_CLASSIFY_AGENT, ENABLE_ADVISOR) and wants an API key, so no shipped
+  screen surfaces it. Provena was the only client in the bank whose agent line
+  had nothing to show. Eight real, two drawn.
+
+  ⚠️ INVENTED: the artefact, the field values, which source filled what, the
+  three gaps, the confidence figures and the timings. Sameer asked for the agent
+  work to be shown across the bank and will correct the specifics.
+
+  REAL, and load-bearing: the deterministic rule engine and the fact that it,
+  not a model, decides whether a regulation applies. That repo's own CLAUDE.md
+  states it as a rule — "Rule engine is deterministic YAML — LLMs never decide
+  whether a regulation applies" — and the whole product argument rests on it.
+  So frame 2 shows the agent PROPOSING and the rule engine DECIDING, with the
+  rule id and the clause it cites. Never redraw this the other way round. Also
+  real: AIA-ANNEX3-5B-v1 and Annex III(5)(b) are the actual rule and clause the
+  engine returns for credit scoring, and _build_field_provenance() in
+  verifier/api/evidence/generator.py really does attribute every leaf field to a
+  connector, an attestation or a person, which is what frame 1 draws.
+
+  ── On the palette, and one deliberate departure ──────────────────────────
+
+  Sampled from public/work/provena-1.png: near-black with a cool navy lift,
+  a single green accent, and the framework chips in their existing colours.
+  These frames land in the same thumbnail strip as eight photographs of that
+  exact interface, so any invention in the styling would read as a different
+  product rather than as a screen of this one.
+
+  That includes the typeface. The frontend-design guidance is to avoid Inter as
+  a generic default, and in almost any other file in this repo that is right —
+  see astar.html picking Oswald and peshawari.html picking Playfair. Here it is
+  wrong: the product ships next/font Inter, it is on screen in all eight
+  captures, and swapping it for something with more character would make these
+  two frames the odd ones out in their own strip. Fidelity beats distinctiveness
+  when the job is continuity with a real artefact. Mono is used only where the
+  product already uses it: identifiers, hashes and counts.
+*/
+
+:root{
+  --void:#080B11;
+  --shell:#0C1017;
+  --panel:#10151E;
+  --panel-2:#151B26;
+  --line:rgba(230,237,243,.08);
+  --line-strong:rgba(230,237,243,.15);
+  --text:#E6EDF3;
+  --muted:#93A1B1;
+  --faint:#6B7889;
+  --green:#4ADE80;
+  --green-deep:#16A34A;
+  --green-dim:rgba(74,222,128,.12);
+  --amber:#F0B429;
+  --violet:#A371F7;
+  --blue:#58A6FF;
+  --orange:#F0883E;
+
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{ font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--green-deep); color:#fff; }
+
+.frame{
+  width:1280px; height:760px;
+  background:
+    radial-gradient(70% 55% at 76% -12%, rgba(56,110,190,.16) 0%, rgba(56,110,190,0) 62%),
+    radial-gradient(50% 40% at 2% 4%, rgba(22,163,74,.10) 0%, rgba(22,163,74,0) 60%),
+    var(--void);
+  display:grid; grid-template-columns:224px 1fr;
+  overflow:hidden; position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* ── the app shell ──────────────────────────────────────────────────── */
+/* Reproduced from the real captures rather than reinvented: same groups, same
+   order, same labels. A viewer flicking through the strip should not be able to
+   tell the chrome apart from the photographs, only the screen inside it. */
+.side{
+  background:var(--shell);
+  border-right:1px solid var(--line);
+  display:flex; flex-direction:column;
+  padding:16px 0 0;
+}
+.logo{
+  display:flex; align-items:center; gap:9px;
+  padding:0 18px 16px;
+  border-bottom:1px solid var(--line);
+}
+.logo svg{ width:19px; height:19px; color:var(--green); }
+.logo b{ font-size:.92rem; font-weight:600; letter-spacing:-.01em; }
+.grp{
+  padding:15px 18px 6px;
+  font-size:.6rem; font-weight:600; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--faint);
+}
+.nav{ display:block; padding:8px 14px; }
+.nav a{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 11px; border-radius:7px;
+  font-size:.82rem; color:var(--muted); text-decoration:none;
+}
+.nav a.on{ background:var(--green-dim); color:var(--green); font-weight:500; }
+/* Real glyphs, from the sprite at the top of <body>. The first pass used an
+   empty bordered square as a placeholder icon, which at 14px read as a row of
+   unchecked checkboxes and made the whole sidebar look like a form. */
+.nav svg{ width:15px; height:15px; flex:0 0 auto; opacity:.72; }
+.nav a.on svg{ opacity:1; }
+.who{
+  margin-top:auto;
+  border-top:1px solid var(--line);
+  padding:13px 18px;
+  display:flex; align-items:center; gap:10px;
+}
+.who span{
+  width:29px; height:29px; border-radius:50%;
+  background:var(--green-dim); color:var(--green);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem; font-weight:600; flex:0 0 auto;
+}
+.who b{ display:block; font-size:.8rem; font-weight:600; }
+.who small{ display:block; font-size:.66rem; color:var(--faint); }
+
+/* ── the working area ───────────────────────────────────────────────── */
+.main{ display:flex; flex-direction:column; min-width:0; }
+/* A column flex container, not a plain block. `.act` pins itself to the floor
+   with margin-top:auto, and auto margins only resolve against a flex parent —
+   as a block this left the action rail floating mid-panel with 130px of nothing
+   under it, which is the exact defect it was added to fix. */
+.top{
+  flex:1 1 auto; min-height:0; overflow:hidden;
+  padding:24px 30px 0;
+  display:flex; flex-direction:column;
+}
+.sample{
+  border:1px solid rgba(240,180,41,.3);
+  background:rgba(240,180,41,.07);
+  border-radius:9px; padding:9px 14px; margin-bottom:18px;
+  font-size:.8rem; color:var(--amber);
+}
+.sample b{ font-weight:600; }
+.h{ display:flex; align-items:flex-start; justify-content:space-between; gap:28px; }
+.h h1{ margin:0; font-size:1.55rem; font-weight:600; letter-spacing:-.02em; }
+.h p{ margin:5px 0 0; font-size:.85rem; color:var(--muted); }
+.badge{
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:8px;
+  border:1px solid rgba(74,222,128,.32); background:var(--green-dim);
+  color:var(--green); border-radius:999px;
+  padding:7px 14px; font-size:.74rem; font-weight:600;
+}
+.badge i{ width:6px; height:6px; border-radius:50%; background:var(--green); font-style:normal; }
+
+.chip{
+  display:inline-flex; align-items:center;
+  border:1px solid var(--line-strong); border-radius:5px;
+  padding:2px 7px; font-size:.64rem; font-weight:600; letter-spacing:.02em;
+}
+.chip.aia{ color:var(--text); }
+.chip.ukg{ color:var(--violet); border-color:rgba(163,113,247,.4); }
+.chip.eug{ color:var(--blue); border-color:rgba(88,166,255,.4); }
+.chip.dora{ color:var(--orange); border-color:rgba(240,136,62,.4); }
+
+/* ── frame 1: field provenance ──────────────────────────────────────── */
+.meter{ margin-top:20px; }
+.meter-top{
+  display:flex; align-items:baseline; justify-content:space-between;
+  font-size:.82rem; margin-bottom:8px;
+}
+.meter-top b{ font-weight:600; }
+.meter-top span{ color:var(--faint); font-family:var(--mono); font-size:.76rem; }
+.bar{ height:5px; border-radius:99px; background:var(--panel-2); overflow:hidden; display:flex; }
+.bar i{ display:block; height:100%; font-style:normal; }
+.bar .f-conn{ width:47%; background:var(--green-deep); }
+.bar .f-att{ width:23.5%; background:rgba(74,222,128,.45); }
+.bar .f-hum{ width:11.7%; background:rgba(230,237,243,.32); }
+.key{ display:flex; gap:18px; margin-top:10px; font-size:.72rem; color:var(--faint); }
+.key span{ display:inline-flex; align-items:center; gap:7px; }
+.key i{ width:8px; height:8px; border-radius:2px; font-style:normal; }
+
+.rows{ margin-top:18px; border-top:1px solid var(--line); }
+.row{
+  display:grid; grid-template-columns:1.15fr 1.25fr auto;
+  align-items:center; gap:22px;
+  padding:11px 2px; border-bottom:1px solid var(--line);
+}
+.row-f{ font-size:.85rem; font-weight:500; }
+.row-v{ font-size:.82rem; color:var(--muted); }
+.row-v.gap{ color:var(--amber); }
+.src{
+  justify-self:end;
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:.7rem; color:var(--faint);
+  font-family:var(--mono);
+  white-space:nowrap;
+}
+.src i{ width:7px; height:7px; border-radius:2px; font-style:normal; flex:0 0 auto; }
+.src.conn i{ background:var(--green-deep); }
+.src.att i{ background:rgba(74,222,128,.45); }
+.src.hum i{ background:rgba(230,237,243,.32); }
+.src.none{ color:var(--amber); }
+.src.none i{ background:var(--amber); }
+
+.raised{
+  margin-top:18px;
+  border:1px solid rgba(240,180,41,.26);
+  background:rgba(240,180,41,.05);
+  border-radius:10px; padding:14px 16px;
+}
+.raised-k{
+  display:block; margin-bottom:8px;
+  font-size:.68rem; font-weight:600; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--amber);
+}
+.raised p{ margin:0; font-size:.83rem; line-height:1.6; color:var(--muted); }
+.raised p + p{ margin-top:6px; }
+
+/* ── frame 2: proposal against the rule ─────────────────────────────── */
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
+.card{
+  border:1px solid var(--line); border-radius:12px;
+  background:var(--panel); padding:18px 20px;
+  display:flex; flex-direction:column;
+}
+.card.decided{ border-color:rgba(74,222,128,.34); background:var(--panel-2); }
+.card-k{
+  display:flex; align-items:center; gap:9px;
+  font-size:.66rem; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint);
+  margin-bottom:12px;
+}
+.card.decided .card-k{ color:var(--green); }
+.card h3{
+  margin:0 0 3px; font-size:1.08rem; font-weight:600; letter-spacing:-.015em;
+}
+.card .sub{ margin:0 0 13px; font-size:.78rem; color:var(--faint); font-family:var(--mono); }
+.card p{ margin:0; font-size:.83rem; line-height:1.62; color:var(--muted); }
+.card p + p{ margin-top:9px; }
+.conf{
+  margin-top:auto; padding-top:13px; border-top:1px solid var(--line);
+  display:flex; align-items:baseline; justify-content:space-between;
+  font-size:.76rem; color:var(--faint); font-family:var(--mono);
+}
+.conf b{ color:var(--text); font-weight:500; }
+.card.decided .conf b{ color:var(--green); }
+
+.obl{ margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+.obl-k{
+  display:block; margin-bottom:11px;
+  font-size:.66rem; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint);
+}
+.obl ul{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:7px; }
+.obl li{
+  font-size:.75rem; color:var(--muted);
+  border:1px solid var(--line); border-radius:6px;
+  padding:5px 10px; background:var(--panel);
+}
+
+.note{
+  margin-top:16px;
+  display:flex; gap:11px; align-items:flex-start;
+}
+.note svg{ width:15px; height:15px; color:var(--green); flex:0 0 auto; margin-top:2px; }
+.note p{ margin:0; font-size:.82rem; line-height:1.6; color:var(--muted); max-width:74ch; }
+.note b{ color:var(--text); font-weight:600; }
+
+/* The action rail at the foot of the working area. Both frames ended a third of
+   the way up the panel with nothing under them, which on a product screen reads
+   as an unfinished page rather than as breathing room. Each frame now closes on
+   what the person looking at it would actually do next. */
+.act{
+  margin-top:auto; padding:16px 0 20px;
+  border-top:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-between; gap:24px;
+}
+.act-meta{ font-size:.76rem; line-height:1.5; color:var(--faint); font-family:var(--mono); }
+.act-btns{ display:flex; align-items:center; gap:10px; flex:0 0 auto; }
+.btn{
+  font-size:.8rem; font-weight:500;
+  border:1px solid var(--line-strong); border-radius:8px;
+  padding:9px 16px; color:var(--muted);
+}
+.btn.pri{
+  background:var(--green-deep); border-color:var(--green-deep); color:#04140A;
+  font-weight:600;
+}
+
+/* ── the disclaimer rail ────────────────────────────────────────────── */
+.foot{
+  flex:0 0 auto;
+  border-top:1px solid var(--line);
+  padding:12px 30px;
+  font-size:.74rem; color:var(--faint); text-align:center;
+}
+</style>
+</head>
+<body>
+
+<!-- Icon sprite. Defined once and referenced by <use> from both sidebars, which
+     is the one thing in this file worth deduplicating: nine glyphs written out
+     twice would be more markup than both frames put together. -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-dash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11.2L12 4l8 7.2"></path><path d="M6 10v10h12V10"></path>
+  </symbol>
+  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path>
+  </symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 3H7a1 1 0 00-1 1v16a1 1 0 001 1h10a1 1 0 001-1V7z"></path><path d="M14 3v4h4"></path>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 12.2l2.4 2.4 4.6-4.9"></path>
+  </symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 4h6v3H9z"></path><path d="M15 5.5h2.5a1 1 0 011 1V20a1 1 0 01-1 1h-11a1 1 0 01-1-1V6.5a1 1 0 011-1H9"></path>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.4l6.8 2.7v5c0 3.9-2.7 7.4-6.8 8.5-4.1-1.1-6.8-4.6-6.8-8.5v-5z"></path>
+  </symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7h16v3H4z"></path><path d="M5.5 10v9.5h13V10"></path><path d="M10 14h4"></path>
+  </symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 3v5M15 3v5"></path><path d="M6.5 8h11v3a5.5 5.5 0 01-11 0z"></path><path d="M12 16.5V21"></path>
+  </symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12h4l2.5-6 4 12L16 12h5"></path>
+  </symbol>
+</svg>
+
+<!-- The sidebar is identical in both frames bar the active item, so it is
+     written out twice rather than templated. These files are read as much as
+     they are rendered, and a reader comparing two frames should be able to see
+     the whole of each one without holding a mental diff. -->
+
+<!-- ══ FRAME 1 · the gap-fill agent ═══════════════════════════════════ -->
+<section class="frame" id="shot-gapfill">
+  <aside class="side">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l7.5 3v5.6c0 4.3-3 8.2-7.5 9.4-4.5-1.2-7.5-5.1-7.5-9.4V6z"></path>
+      </svg>
+      <b>Provena AI</b>
+    </div>
+    <span class="grp">Overview</span>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-dash"/></svg>Dashboard</a>
+      <a href="#"><svg><use href="#i-list"/></svg>AI Use Register</a>
+    </nav>
+    <span class="grp">Compliance</span>
+    <nav class="nav">
+      <a href="#" class="on"><svg><use href="#i-doc"/></svg>Evidence</a>
+      <a href="#"><svg><use href="#i-check"/></svg>Approvals</a>
+      <a href="#"><svg><use href="#i-clip"/></svg>Compliance Wizard</a>
+      <a href="#"><svg><use href="#i-shield"/></svg>Vendor Attestations</a>
+      <a href="#"><svg><use href="#i-box"/></svg>Binder History</a>
+    </nav>
+    <span class="grp">Monitoring</span>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-plug"/></svg>Connectors</a>
+      <a href="#"><svg><use href="#i-pulse"/></svg>Event Log</a>
+    </nav>
+    <div class="who">
+      <span>SC</span>
+      <div><b>Sarah Chen</b><small>Compliance Lead</small></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="top">
+      <div class="sample"><b>Sample data</b> &mdash; Connect your AI stack to see real compliance data.</div>
+
+      <div class="h">
+        <div>
+          <h1>DPIA &middot; Credit Pre-Screening Assistant</h1>
+          <p>
+            <span class="chip ukg">UK GDPR</span>
+            &nbsp;Article 35 &middot; drafted from what the connectors already hold
+          </p>
+        </div>
+        <span class="badge"><i></i>Gap-fill agent</span>
+      </div>
+
+      <div class="meter">
+        <div class="meter-top">
+          <b>14 of 17 fields filled</b>
+          <span>3 raised, 0 guessed</span>
+        </div>
+        <div class="bar"><i class="f-conn"></i><i class="f-att"></i><i class="f-hum"></i></div>
+        <div class="key">
+          <span><i style="background:var(--green-deep)"></i>8 from connectors</span>
+          <span><i style="background:rgba(74,222,128,.45)"></i>4 from attestations</span>
+          <span><i style="background:rgba(230,237,243,.32)"></i>2 from a person</span>
+          <span><i style="background:var(--amber)"></i>3 raised</span>
+        </div>
+      </div>
+
+      <div class="rows">
+        <div class="row">
+          <span class="row-f">Processing purpose</span>
+          <span class="row-v">Creditworthiness evaluation, retail loans</span>
+          <span class="src hum"><i></i>onboarding</span>
+        </div>
+        <div class="row">
+          <span class="row-f">Model and version</span>
+          <span class="row-v">claude-sonnet-4, pinned</span>
+          <span class="src conn"><i></i>anthropic api</span>
+        </div>
+        <div class="row">
+          <span class="row-f">Sub-processors</span>
+          <span class="row-v">AWS eu-west-1, Google Cloud</span>
+          <span class="src att"><i></i>trust centre</span>
+        </div>
+        <div class="row">
+          <span class="row-f">Retention of inputs</span>
+          <span class="row-v">Not retained by default</span>
+          <span class="src att"><i></i>dpa v2.1</span>
+        </div>
+        <div class="row">
+          <span class="row-f">Volume of decisions</span>
+          <span class="row-v gap">Nobody has told it this</span>
+          <span class="src none"><i></i>raised</span>
+        </div>
+        <div class="row">
+          <span class="row-f">Human review step</span>
+          <span class="row-v gap">Who overrules a decline, and when</span>
+          <span class="src none"><i></i>raised</span>
+        </div>
+      </div>
+
+      <div class="raised">
+        <span class="raised-k">Why these are raised, not filled</span>
+        <p>Neither answer is in any connector, any attestation or anything Sarah
+           has already written down. The agent could produce a plausible sentence
+           for both. It does not, because a DPIA that reads well and is wrong is
+           worse than one with two blanks and a name against them.</p>
+      </div>
+
+      <div class="act">
+        <span class="act-meta">
+          drafted 14:22 &middot; snapshot rules@2026-05-03<br>
+          every field traceable to its source
+        </span>
+        <span class="act-btns">
+          <span class="btn">View reasoning</span>
+          <span class="btn">Send 2 questions to Sarah</span>
+          <span class="btn pri">Mark author-reviewed</span>
+        </span>
+      </div>
+    </div>
+    <div class="foot">Preparation tool only &mdash; not legal advice. All outputs require review by qualified counsel before regulatory submission.</div>
+  </div>
+</section>
+
+<!-- ══ FRAME 2 · the classification agent ═════════════════════════════ -->
+<section class="frame" id="shot-classify">
+  <aside class="side">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l7.5 3v5.6c0 4.3-3 8.2-7.5 9.4-4.5-1.2-7.5-5.1-7.5-9.4V6z"></path>
+      </svg>
+      <b>Provena AI</b>
+    </div>
+    <span class="grp">Overview</span>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-dash"/></svg>Dashboard</a>
+      <a href="#" class="on"><svg><use href="#i-list"/></svg>AI Use Register</a>
+    </nav>
+    <span class="grp">Compliance</span>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-doc"/></svg>Evidence</a>
+      <a href="#"><svg><use href="#i-check"/></svg>Approvals</a>
+      <a href="#"><svg><use href="#i-clip"/></svg>Compliance Wizard</a>
+      <a href="#"><svg><use href="#i-shield"/></svg>Vendor Attestations</a>
+      <a href="#"><svg><use href="#i-box"/></svg>Binder History</a>
+    </nav>
+    <span class="grp">Monitoring</span>
+    <nav class="nav">
+      <a href="#"><svg><use href="#i-plug"/></svg>Connectors</a>
+      <a href="#"><svg><use href="#i-pulse"/></svg>Event Log</a>
+    </nav>
+    <div class="who">
+      <span>SC</span>
+      <div><b>Sarah Chen</b><small>Compliance Lead</small></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="top">
+      <div class="h">
+        <div>
+          <h1>Credit Pre-Screening Assistant</h1>
+          <p>Claude-based credit risk assessment for UK retail loan applications</p>
+        </div>
+        <span class="badge"><i></i>Classification agent</span>
+      </div>
+
+      <div class="two">
+        <div class="card">
+          <span class="card-k">The agent proposed</span>
+          <h3>High risk</h3>
+          <p class="sub">read 5 answers &middot; 1.8s</p>
+          <p>Reads the description as creditworthiness evaluation performed on
+             natural persons, and suggests Annex III(5)(b) is the clause to test
+             against.</p>
+          <p>It also flagged the fraud-detection carve-out as the thing most
+             likely to make this wrong, and asked for it to be checked.</p>
+          <div class="conf">
+            <span>status</span>
+            <b>proposal only</b>
+          </div>
+        </div>
+
+        <div class="card decided">
+          <span class="card-k">The rule engine decided</span>
+          <h3>High risk, confirmed</h3>
+          <p class="sub">AIA-ANNEX3-5B-v1 &middot; deterministic</p>
+          <p>&ldquo;The system performs creditworthiness_evaluation on natural
+             persons. This matches Annex III(5)(b) of Regulation (EU) 2024/1689.
+             The financial fraud detection exception does not apply.&rdquo;</p>
+          <div class="conf">
+            <span>confidence</span>
+            <b>DETERMINISTIC</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="obl">
+        <span class="obl-k">Obligations that follow, from the rule and not from the model</span>
+        <ul>
+          <li>Art. 9 &middot; Risk management</li>
+          <li>Art. 10 &middot; Data governance</li>
+          <li>Art. 11 &middot; Technical documentation</li>
+          <li>Art. 12 &middot; Record-keeping</li>
+          <li>Art. 13 &middot; Transparency</li>
+          <li>Art. 14 &middot; Human oversight</li>
+          <li>Art. 15 &middot; Accuracy and robustness</li>
+          <li>Art. 43 &middot; Conformity assessment</li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3l7.5 3v5.6c0 4.3-3 8.2-7.5 9.4-4.5-1.2-7.5-5.1-7.5-9.4V6z"></path>
+          <path d="M9.2 12.2l2 2 3.6-3.9"></path>
+        </svg>
+        <p><b>The agent never decides whether a regulation applies.</b> It reads
+           the description, proposes which clause to test and says what would
+           change its mind. A versioned YAML rule makes the call and cites the
+           text it made it from, which is why the same use case classifies the
+           same way in June as it did in May, and why an auditor is shown a
+           clause rather than a confidence score.</p>
+      </div>
+
+      <div class="act">
+        <span class="act-meta">
+          rule snapshot rules@2026-05-03, pinned to this classification<br>
+          re-runs to the same answer, and says so if the rule changes
+        </span>
+        <span class="act-btns">
+          <span class="btn">Open the rule</span>
+          <span class="btn pri">Accept and generate evidence</span>
+        </span>
+      </div>
+    </div>
+    <div class="foot">Preparation tool only &mdash; not legal advice. All outputs require review by qualified counsel before regulatory submission.</div>
+  </div>
+</section>
+
+</body>
+</html>
