@@ -248,6 +248,106 @@ body{
   font-feature-settings:'tnum' 1;
 }
 
+/* ── the fitment agent ──────────────────────────────────────────────── */
+/*
+  The two frames above are the tool a customer drives. This is what happens
+  after: the agent takes the vehicle the lookup resolved and does the part a
+  person in the garage used to do by hand, which is deciding what actually
+  fits and what it costs.
+
+  The accent rule holds. Plate yellow appears on the plate and nowhere else,
+  so the recommended tyre is marked with weight, a heavier rule and a word,
+  not with colour. Colour-coding the recommendation would have been the easy
+  move and would have broken the one thing that keeps this file honest.
+
+  Prices, brands, stock counts and slot are in mono for the same reason the
+  spec strip is: they are numbers you compare down a column.
+*/
+.fa-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:32px; }
+.fa-plate{
+  display:flex; align-items:stretch;
+  background:var(--plate); border-radius:6px; overflow:hidden;
+  box-shadow:0 2px 0 0 rgba(0,0,0,.5);
+  flex:0 0 auto;
+}
+.fa-plate .plate-gb{ width:24px; padding-bottom:6px; gap:3px; }
+.fa-plate .plate-gb b{ font-size:.5rem; }
+.fa-plate .plate-stars{ width:10px; height:10px; border-width:1.2px; }
+.fa-plate-v{
+  font-family:var(--mono); font-weight:700; font-size:1.12rem;
+  letter-spacing:.05em; color:var(--plate-ink);
+  padding:8px 14px; display:flex; align-items:center;
+  font-feature-settings:'tnum' 1;
+}
+.fa-veh{ font-size:.9rem; color:var(--muted); }
+.fa-veh b{ color:var(--text); font-weight:600; }
+
+/* The reasoning trail. Four steps, each one a thing it read rather than a
+   thing it guessed, because the claim being made is that the answer is
+   derived and not improvised. */
+.fa-trail{
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-top:1px solid var(--line);
+  margin-top:22px;
+}
+.fa-step{ padding:16px 20px 18px; border-right:1px solid var(--line); }
+.fa-step:last-child{ border-right:0; }
+.fa-step-n{
+  font-family:var(--mono); font-size:.62rem; font-weight:700;
+  letter-spacing:.1em; color:var(--faint);
+}
+.fa-step-t{
+  display:block; margin:9px 0 5px;
+  font-size:.82rem; font-weight:600; color:var(--text);
+}
+.fa-step-d{ font-size:.76rem; line-height:1.5; color:var(--faint); }
+
+.fa-opts{ border-top:1px solid var(--line); }
+.fa-opt{
+  display:grid; grid-template-columns:1.5fr 1fr .8fr auto;
+  align-items:center; gap:20px;
+  padding:15px 22px;
+  border-top:1px solid var(--line);
+}
+.fa-opt:first-child{ border-top:0; }
+/* The recommendation, marked without colour. */
+.fa-opt.pick{ background:var(--raised-2); }
+.fa-opt-b{ font-size:.92rem; font-weight:600; }
+.fa-opt.pick .fa-opt-b::after{
+  content:'Recommended';
+  display:inline-block; margin-left:11px;
+  font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--faint);
+  border:1px solid var(--line-strong); border-radius:99px;
+  padding:3px 8px;
+  vertical-align:middle;
+}
+.fa-opt-s,.fa-opt-p{
+  font-family:var(--mono); font-size:.9rem; color:var(--muted);
+  font-feature-settings:'tnum' 1;
+}
+.fa-opt-p{ color:var(--text); font-weight:500; text-align:right; }
+.fa-opt-stock{
+  font-size:.72rem; color:var(--faint);
+  text-align:right; min-width:9ch;
+}
+
+.fa-foot{
+  display:flex; align-items:center; justify-content:space-between; gap:24px;
+  border-top:1px solid var(--line);
+  padding:16px 22px;
+}
+.fa-foot p{ margin:0; font-size:.82rem; line-height:1.55; color:var(--faint); max-width:56ch; }
+.fa-slot{
+  display:flex; align-items:center; gap:10px;
+  flex:0 0 auto;
+  font-family:var(--mono); font-size:.86rem; color:var(--text);
+  border:1px solid var(--line-strong); border-radius:9px;
+  padding:11px 16px;
+  font-feature-settings:'tnum' 1;
+}
+.fa-slot svg{ width:14px; height:14px; color:var(--muted); }
+
 .fitment{ display:grid; grid-template-columns:1fr 1fr; }
 .fit{
   padding:18px 22px;
@@ -553,6 +653,126 @@ body{
         <span class="sent-sub">Confirmation emailed and logged to the order sheet</span>
       </span>
       <span class="sent-ref">REF 4127</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FRAME 3 · the fitment agent ════════════════════════════════════ -->
+<!--
+     ⚠️ INVENTED. The registration, the vehicle, the tyre brands, every price,
+     the stock counts and the slot are all written. Sameer asked for the agent
+     work to be shown across the case bank and said he would correct the
+     specifics himself, so this is a shape rather than a claim — the same
+     standing as the agent lines in lib/content.ts.
+
+     The reg is a deliberately fake one. DVLA reserves nothing in the WF5 range
+     and a plausible plate on a public marketing page is somebody's real car.
+
+     If a postcode is ever added to this file, Ossett is in WAKEFIELD, WF5. An
+     earlier attempt at a third frame put S3 8AB on it, which is Sheffield, and
+     the whole frame was thrown out over it.
+-->
+<section class="frame" id="shot-agent">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-ossett.png" alt="">
+      <span class="brand-name">Ossett Tyres</span>
+    </div>
+    <nav class="bar-nav">
+      <span>Services</span><span>Blog</span>
+      <span class="on">Order tyres</span><span>Contact</span>
+    </nav>
+  </div>
+
+  <div class="body">
+    <div class="step">
+      <span class="step-n">03</span>
+      <span class="step-label">Fitment agent</span>
+      <span class="step-rule"></span>
+    </div>
+
+    <div class="card">
+      <div style="padding:22px 22px 0">
+        <div class="fa-head">
+          <div>
+            <span class="found" style="margin-bottom:14px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+              Fitment resolved
+            </span>
+            <p class="fa-veh" style="margin:10px 0 0">
+              <b>Ford Focus 1.0 EcoBoost</b>, 2019, petrol, Moondust Silver
+            </p>
+          </div>
+          <div class="fa-plate">
+            <div class="plate-gb">
+              <span class="plate-stars"></span>
+              <b>UK</b>
+            </div>
+            <span class="fa-plate-v">WF19 TYR</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fa-trail">
+        <div class="fa-step">
+          <span class="fa-step-n">01</span>
+          <span class="fa-step-t">Read the plate</span>
+          <span class="fa-step-d">Vehicle resolved against the DVLA record.</span>
+        </div>
+        <div class="fa-step">
+          <span class="fa-step-n">02</span>
+          <span class="fa-step-t">Matched the fitment</span>
+          <span class="fa-step-d">205/55 R16 front and rear, as it left the factory.</span>
+        </div>
+        <div class="fa-step">
+          <span class="fa-step-n">03</span>
+          <span class="fa-step-t">Priced what is in</span>
+          <span class="fa-step-d">Three of the eleven matching tyres are on the shelf today.</span>
+        </div>
+        <div class="fa-step">
+          <span class="fa-step-n">04</span>
+          <span class="fa-step-t">Found a slot</span>
+          <span class="fa-step-d">Two fitting bays free before noon tomorrow.</span>
+        </div>
+      </div>
+
+      <div class="fa-opts">
+        <div class="fa-opt pick">
+          <span class="fa-opt-b">Michelin Primacy 4</span>
+          <span class="fa-opt-s">205/55 R16 91V</span>
+          <span class="fa-opt-stock">4 in stock</span>
+          <span class="fa-opt-p">&pound;104 each</span>
+        </div>
+        <div class="fa-opt">
+          <span class="fa-opt-b">Falken Ziex ZE310</span>
+          <span class="fa-opt-s">205/55 R16 91V</span>
+          <span class="fa-opt-stock">4 in stock</span>
+          <span class="fa-opt-p">&pound;72 each</span>
+        </div>
+        <div class="fa-opt">
+          <span class="fa-opt-b">Rotalla Setula 4 Season</span>
+          <span class="fa-opt-s">205/55 R16 91V</span>
+          <span class="fa-opt-stock">2 in stock</span>
+          <span class="fa-opt-p">&pound;56 each</span>
+        </div>
+      </div>
+
+      <div class="fa-foot">
+        <p>Recommended on tread life against the mileage on this car, not on
+           margin. The garage sees the same three and can overrule it before
+           anyone is charged.</p>
+        <span class="fa-slot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+            <path d="M3 10h18M8 3v4M16 3v4"></path>
+          </svg>
+          Held: Tue 10:30, 4 fitted
+        </span>
+      </div>
     </div>
   </div>
 </section>

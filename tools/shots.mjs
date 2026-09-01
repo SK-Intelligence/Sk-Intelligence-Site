@@ -463,13 +463,9 @@ const browser = await chromium.launch();
 if (wanted('ossett')) {
   console.log('\n── ossett (mockup)');
   await captureMockup(browser, 'ossett.html', [
-    /* Two, not three. A customer-feedback frame was built here and thrown away:
-       it carried three reviews attributed to named individuals and a workshop
-       postcode of S3 8AB, which is in Sheffield — Ossett is in Wakefield. The
-       postcode was the tell that none of it had been read off their site. Any
-       third frame here has to come from ossettyres.co.uk and nowhere else. */
     ['shot-empty', 'ossett-1'],
     ['shot-resolved', 'ossett-2'],
+    ['shot-agent', 'ossett-3'],
   ], ['Space Grotesk', 'JetBrains Mono', 'Inter']);
 }
 
@@ -479,6 +475,7 @@ if (wanted('gbautos')) {
     ['shot-hero', 'gbautos-1'],
     ['shot-services', 'gbautos-2'],
     ['shot-visit', 'gbautos-3'],
+    ['shot-agent', 'gbautos-4'],
   ], ['Archivo', 'Inter']);
 }
 
@@ -488,6 +485,7 @@ if (wanted('hopeful')) {
     ['shot-hero', 'hopeful-1'],
     ['shot-services', 'hopeful-2'],
     ['shot-agency', 'hopeful-3'],
+    ['shot-onboarding', 'hopeful-4'],
   ], ['Newsreader', 'Inter']);
 }
 
@@ -499,6 +497,14 @@ if (wanted('astar')) {
     ['/gallery', 'astar-3', true],
     ['/services', 'astar-4', true],
   ]) await captureLive(browser, path, out, focus);
+
+  /* One drawn screen among four photographs. Their live site has no agent on
+     it, so the agentic checkout could not be captured and had to be designed.
+     See the header of astar.html: it is the only A Star asset that is a
+     mockup, and it is marked as such there. */
+  await captureMockup(browser, 'astar.html', [
+    ['shot-agent', 'astar-5'],
+  ], ['Oswald', 'Inter']);
 }
 
 if (wanted('peshawari')) {
@@ -513,6 +519,14 @@ if (wanted('peshawari')) {
     ['/about', 'peshawari-3'],
     ['/contact', 'peshawari-4'],
   ]) await captureLive(browser, path, out, false, 'https://peshawarichaplikebab.co.uk');
+
+  /* One drawn screen among four photographs, same as A Star. Their find-us
+     page still reads "delivery platform links to be added", so the ordering
+     agent is precisely the thing that page says is coming and there was
+     nothing live to photograph. Marked as a mockup in peshawari.html. */
+  await captureMockup(browser, 'peshawari.html', [
+    ['shot-agent', 'peshawari-5'],
+  ], ['Playfair Display', 'Inter']);
 }
 
 if (wanted('provena')) {

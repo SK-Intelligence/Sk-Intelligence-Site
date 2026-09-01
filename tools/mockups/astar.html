@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>A Star Customs — build agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/*
+  A Star Customs — the build agent and agentic checkout.
+
+  THIS IS THE ONLY A STAR ASSET THAT IS A MOCKUP. The other four shots in the
+  case bank (astar-1 through astar-4) are photographs of astarcustoms.com as it
+  actually is, taken by captureLive() in tools/shots.mjs. Their live site has no
+  agent on it, so this screen could not be photographed and had to be drawn.
+  Keep that distinction visible if anyone reworks this file: four real, one
+  drawn, and the drawn one is the one that has to earn its place beside them.
+
+  ⚠️ EVERYTHING FACTUAL HERE IS INVENTED. The customer, the car, the kit, every
+  price and the basket total are written. Sameer asked for the agent work to be
+  shown across the case bank and said he would correct the specifics himself,
+  so this is a shape rather than a claim — the same standing as the agent lines
+  in lib/content.ts. Their real product names are the only thing anchored:
+  screen upgrades, star lights and ambient lighting are what they actually sell
+  and are named on their own services page.
+
+  Palette. Black ground and electric violet, because that IS their brand: look
+  at astar-1.png, it is a violet-lit cabin with a starlight headliner and a
+  violet wordmark. The other mockups are near-black-with-plate-yellow (Ossett),
+  bone-and-oxide (GB Autos) and lilac-with-indigo (Hopeful). Ossett is the one
+  to worry about since it is also dark, and violet against plate yellow is
+  about as far apart as two hues get, so the two read as two companies rather
+  than one house style. This file also carries a starfield that Ossett would
+  never have: theirs is a measuring instrument, this is a lighting product.
+
+  Type. Oswald, condensed and heavy in caps, because their live site sets every
+  heading in a condensed grotesque of that kind. Inter underneath for anything
+  a person has to actually read. Prices are tabular so they line up down the
+  basket.
+*/
+
+:root{
+  --void:#08070C;
+  --raised:#121019;
+  --raised-2:#191527;
+  --line:rgba(255,255,255,.09);
+  --line-strong:rgba(255,255,255,.16);
+  --text:#F4F2F8;
+  --muted:#A49CB8;
+  --faint:#6E6684;
+  --violet:#8B2FE8;
+  --violet-lit:#B36BFF;
+  --violet-deep:#5A17A0;
+
+  --display:'Oswald','Inter',system-ui,sans-serif;
+  --sans:'Inter',system-ui,sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{ font-family:var(--sans); color:var(--text); -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--violet); color:#fff; }
+
+.frame{
+  width:1280px; height:760px;
+  background:var(--void);
+  display:flex; flex-direction:column;
+  overflow:hidden; position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* The starlight headliner, which is a thing they physically install, reduced
+   to two layers: a violet wash from the top corner and a fixed scatter of
+   points. The scatter is written out rather than generated so the capture is
+   identical every run. */
+.frame::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(90% 60% at 78% -10%, rgba(139,47,232,.30) 0%, rgba(139,47,232,0) 60%),
+    radial-gradient(60% 50% at 8% 108%, rgba(90,23,160,.22) 0%, rgba(90,23,160,0) 62%);
+}
+.stars{
+  position:absolute; inset:0; pointer-events:none; opacity:.55;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 18%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 27% 9%,  #D9C8FF, transparent),
+    radial-gradient(1.5px 1.5px at 41% 24%, #fff, transparent),
+    radial-gradient(1.1px 1.1px at 56% 7%,  #B36BFF, transparent),
+    radial-gradient(1.4px 1.4px at 68% 20%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 83% 12%, #D9C8FF, transparent),
+    radial-gradient(1.3px 1.3px at 92% 27%, #fff, transparent),
+    radial-gradient(1.1px 1.1px at 19% 33%, #B36BFF, transparent),
+    radial-gradient(1.2px 1.2px at 74% 35%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 35% 42%, #D9C8FF, transparent);
+}
+
+/* ── header ─────────────────────────────────────────────────────────── */
+.bar{
+  position:relative; z-index:2;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 40px; flex:0 0 auto;
+  border-bottom:1px solid var(--line);
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+/* Their real logo, the same file the case bank shows in the panel chip. The PNG
+   carries its own near-black ground rather than transparency, which at 30px
+   read as a small grey sticker pasted on the bar. `screen` drops that ground
+   to nothing and keeps the white and violet of the mark, and the extra height
+   is because this is a wordmark, not an icon: it has to be legible. */
+.brand-mark{
+  height:38px; width:auto; object-fit:contain; display:block;
+  mix-blend-mode:screen;
+}
+.bar-nav{ display:flex; align-items:center; gap:26px; }
+.bar-nav span{
+  font-family:var(--display); font-weight:500;
+  font-size:.78rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted);
+}
+.bar-nav span.on{ color:var(--text); }
+.basket{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--display); font-weight:600;
+  font-size:.78rem; letter-spacing:.08em; text-transform:uppercase;
+  background:var(--violet); color:#fff;
+  border-radius:999px; padding:9px 18px;
+}
+.basket svg{ width:14px; height:14px; }
+
+/* ── body ───────────────────────────────────────────────────────────── */
+.body{
+  position:relative; z-index:2;
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.32fr .88fr;
+}
+.left{ padding:30px 36px 28px; display:flex; flex-direction:column; min-height:0; }
+.eyebrow{
+  display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--display); font-weight:600;
+  font-size:.7rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--violet-lit);
+  margin-bottom:14px;
+}
+.eyebrow::before{ content:''; width:24px; height:2px; background:var(--violet); }
+.left h1{
+  margin:0;
+  font-family:var(--display); font-weight:700;
+  font-size:2.5rem; line-height:1.02; letter-spacing:.005em; text-transform:uppercase;
+}
+.left h1 em{ font-style:normal; color:var(--violet-lit); }
+.veh{
+  margin:14px 0 0;
+  font-size:.92rem; line-height:1.6; color:var(--muted);
+}
+.veh b{ color:var(--text); font-weight:600; }
+
+/* The specced kit. A ruled list, not cards: four boxes inside a box is the
+   lazy shape and it would fight the basket panel opposite. */
+.kit{ margin-top:22px; border-top:1px solid var(--line); }
+.kit-row{
+  display:grid; grid-template-columns:1.4fr 1fr auto;
+  align-items:center; gap:22px;
+  padding:13px 2px;
+  border-bottom:1px solid var(--line);
+}
+.kit-t{ font-size:.94rem; font-weight:600; }
+.kit-d{ font-size:.82rem; line-height:1.45; color:var(--faint); }
+.kit-p{
+  font-size:.92rem; font-weight:500; text-align:right;
+  font-variant-numeric:tabular-nums; min-width:7ch;
+}
+
+.why{
+  margin-top:auto; padding-top:20px;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.why svg{ width:16px; height:16px; color:var(--violet-lit); flex:0 0 auto; margin-top:2px; }
+.why p{ margin:0; font-size:.84rem; line-height:1.6; color:var(--muted); max-width:60ch; }
+.why b{ color:var(--text); font-weight:600; }
+
+/* ── the basket ─────────────────────────────────────────────────────── */
+.right{
+  border-left:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(139,47,232,.10) 0%, rgba(139,47,232,0) 52%), var(--raised);
+  padding:30px 32px;
+  display:flex; flex-direction:column;
+}
+.right h2{
+  margin:0 0 3px;
+  font-family:var(--display); font-weight:700;
+  font-size:1.24rem; letter-spacing:.03em; text-transform:uppercase;
+}
+.right > p{ margin:0 0 20px; font-size:.82rem; color:var(--faint); }
+.tot{
+  display:flex; align-items:baseline; justify-content:space-between;
+  padding:11px 0; border-top:1px solid var(--line);
+  font-size:.88rem;
+}
+.tot-k{ color:var(--muted); }
+.tot-v{ font-weight:500; font-variant-numeric:tabular-nums; }
+.tot.big{ border-top:1px solid var(--line-strong); padding-top:16px; margin-top:4px; }
+.tot.big .tot-k{
+  font-family:var(--display); font-weight:600;
+  font-size:.92rem; letter-spacing:.1em; text-transform:uppercase; color:var(--text);
+}
+.tot.big .tot-v{
+  font-family:var(--display); font-weight:700; font-size:1.6rem; color:var(--violet-lit);
+}
+.slot{
+  margin-top:18px; padding:13px 16px;
+  border:1px solid var(--line); border-radius:11px;
+  font-size:.84rem; line-height:1.5; color:var(--muted);
+}
+.slot b{ display:block; color:var(--text); font-weight:600; margin-bottom:3px; }
+/* What happens after the button. This sits where there was previously a third
+   of a column of nothing between the held slot and the pay button, which read
+   as an unfinished panel rather than as breathing room. */
+.next{
+  margin-top:22px; padding-top:16px;
+  border-top:1px solid var(--line);
+}
+.next-k{
+  display:block; margin-bottom:11px;
+  font-family:var(--display); font-weight:600;
+  font-size:.66rem; letter-spacing:.18em; text-transform:uppercase; color:var(--faint);
+}
+.next ol{ list-style:none; margin:0; padding:0; }
+.next li{
+  display:flex; gap:11px; align-items:baseline;
+  padding:6px 0;
+  font-size:.83rem; line-height:1.5; color:var(--muted);
+}
+.next li span{
+  font-family:var(--display); font-weight:600; font-size:.72rem;
+  color:var(--violet-lit); flex:0 0 auto;
+}
+
+.pay{
+  margin-top:auto;
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--violet); color:#fff;
+  border-radius:11px; padding:15px 20px;
+  font-family:var(--display); font-weight:600;
+  font-size:.9rem; letter-spacing:.06em; text-transform:uppercase;
+  box-shadow:0 16px 40px -18px rgba(139,47,232,.9);
+}
+.pay svg{ width:16px; height:16px; }
+/* The agent builds the basket and stops. A customisation job is measured to a
+   specific car and paid for up front, so the last press is the customer's. */
+.pay-note{
+  margin:12px 0 0; text-align:center;
+  font-size:.76rem; line-height:1.5; color:var(--faint);
+}
+</style>
+</head>
+<body>
+
+<!-- ══ FRAME 1 · the build agent and checkout ═════════════════════════ -->
+<section class="frame" id="shot-agent">
+  <span class="stars"></span>
+
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-astar.png" alt="">
+    </div>
+    <nav class="bar-nav">
+      <span>Home</span>
+      <span>Services</span>
+      <span>Gallery</span>
+      <span class="on">Custom kits</span>
+      <span class="basket">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 7h12l-1.2 12.2a2 2 0 01-2 1.8H9.2a2 2 0 01-2-1.8z"></path>
+          <path d="M9 7a3 3 0 016 0"></path>
+        </svg>
+        4 items
+      </span>
+    </nav>
+  </div>
+
+  <div class="body">
+    <div class="left">
+      <span class="eyebrow">Build agent</span>
+      <h1>Specced for <em>your car</em>,<br>not for a category.</h1>
+      <p class="veh">Reading <b>Audi A4 B9 saloon, 2019</b>, factory MMI, no
+         panoramic roof. Every part below fits that cabin as it left the
+         factory.</p>
+
+      <div class="kit">
+        <div class="kit-row">
+          <span class="kit-t">Starlight headliner</span>
+          <span class="kit-d">400 point fibre, roof without a sunroof cut-out</span>
+          <span class="kit-p">&pound;749</span>
+        </div>
+        <div class="kit-row">
+          <span class="kit-t">Ambient lighting, 11 colour</span>
+          <span class="kit-d">Door cards, footwells and dash trim for the B9</span>
+          <span class="kit-p">&pound;385</span>
+        </div>
+        <div class="kit-row">
+          <span class="kit-t">Screen upgrade, 10.25 inch</span>
+          <span class="kit-d">Keeps factory MMI controls and steering buttons</span>
+          <span class="kit-p">&pound;540</span>
+        </div>
+        <div class="kit-row">
+          <span class="kit-t">Fitting, one day</span>
+          <span class="kit-d">Headliner out and back in the same visit</span>
+          <span class="kit-p">&pound;260</span>
+        </div>
+      </div>
+
+      <div class="why">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.6v.6"></path>
+        </svg>
+        <p>The 400 point roof rather than the 600 because <b>this car has no
+           panoramic glass</b>, so the extra density has nowhere to go and would
+           cost £180 for a difference nobody can see. Ask for it anyway and it
+           swaps in.</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <h2>Basket</h2>
+      <p>Built by the agent, priced from stock.</p>
+
+      <div class="tot">
+        <span class="tot-k">Parts</span>
+        <span class="tot-v">&pound;1,674</span>
+      </div>
+      <div class="tot">
+        <span class="tot-k">Fitting</span>
+        <span class="tot-v">&pound;260</span>
+      </div>
+      <div class="tot">
+        <span class="tot-k">Kit discount</span>
+        <span class="tot-v">&minus;&pound;120</span>
+      </div>
+      <div class="tot big">
+        <span class="tot-k">Total</span>
+        <span class="tot-v">&pound;1,814</span>
+      </div>
+
+      <div class="slot">
+        <b>Fitting held, Thu 11 Sep</b>
+        One day in the unit. Released if the order is not paid by Tuesday.
+      </div>
+
+      <div class="next">
+        <span class="next-k">After you pay</span>
+        <ol>
+          <li><span>01</span>Parts pulled and the roof panel measured against your VIN.</li>
+          <li><span>02</span>Photos of the cabin sent before the headliner goes back in.</li>
+          <li><span>03</span>Car back the same evening, lighting set to your colours.</li>
+        </ol>
+      </div>
+
+      <div class="pay">
+        Pay and confirm
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </div>
+      <p class="pay-note">The agent builds the basket. You press the button.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -178,6 +178,80 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   margin-left:auto; font-size:.76rem; color:var(--ink-mute);
 }
 
+/* ── the onboarding agent ───────────────────────────────────────────── */
+/*
+  The compliance passport from their agency-services page, being assembled for
+  one new starter. Every check name below is theirs and is on that page. The
+  staff member, the dates and the states are written.
+
+  Two rules held while designing this, and both are about the client rather
+  than the layout. This is a company placing relief staff into children's
+  residential services, so the agent never clears a check: it gathers, it
+  chases and it flags, and a person signs. And nothing invents a regulator,
+  a framework or an obligation — every row is a check they already say they
+  do. A fabricated compliance requirement is the one thing that would make
+  this company look worse for having worked with us.
+
+  Progress is shown as a ruled ledger rather than a progress bar. A bar makes
+  a compliance pack look like a download; the point is that a person reads
+  each line.
+*/
+.oa{
+  flex:1 1 auto; min-height:0;
+  padding:4px 48px 34px;
+  display:flex; flex-direction:column;
+}
+.oa-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:40px; }
+.oa-head h2{
+  margin:0;
+  font-family:var(--serif); font-weight:500;
+  font-size:2.05rem; line-height:1.14; letter-spacing:-.022em; color:var(--teal);
+}
+.oa-head h2 em{ font-style:italic; color:var(--terra); }
+.oa-who{
+  flex:0 0 auto; text-align:right;
+  font-size:.84rem; line-height:1.6; color:var(--ink-mute);
+}
+.oa-who b{ display:block; font-size:.95rem; color:var(--ink); font-weight:600; }
+
+.oa-ledger{ margin-top:26px; border-top:1px solid var(--line); }
+.oa-row{
+  display:grid; grid-template-columns:1.35fr 1.5fr auto;
+  align-items:center; gap:26px;
+  padding:15px 4px;
+  border-bottom:1px solid var(--line);
+}
+.oa-check{ font-size:.95rem; font-weight:600; color:var(--ink); }
+.oa-note{ font-size:.85rem; line-height:1.5; color:var(--ink-mute); }
+.oa-state{
+  justify-self:end;
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:.74rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  padding:6px 13px; border-radius:999px;
+  white-space:nowrap;
+}
+.oa-state svg{ width:13px; height:13px; }
+.oa-state.done{ background:rgba(31,16,83,.08); color:var(--teal); }
+.oa-state.wait{ background:rgba(254,93,178,.14); color:#B02A6E; }
+
+.oa-foot{
+  margin-top:auto; padding-top:22px;
+  display:flex; align-items:center; justify-content:space-between; gap:32px;
+}
+.oa-said{
+  margin:0; max-width:66ch;
+  font-size:.88rem; line-height:1.62; color:var(--ink-soft);
+}
+.oa-said b{ color:var(--teal); font-weight:600; }
+.oa-sign{
+  flex:0 0 auto;
+  font-size:.9rem; font-weight:600;
+  background:var(--teal); color:var(--paper);
+  border-radius:999px; padding:14px 26px;
+  display:inline-flex; align-items:center; gap:9px;
+}
+.oa-sign svg{ width:15px; height:15px; }
+
 /* ── contact strip ──────────────────────────────────────────────────── */
 .strip{
   flex:0 0 auto;
@@ -557,6 +631,147 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
     <span class="grp"><span class="strip-k">Agency team</span><span class="strip-v">+353 83 339 8580</span></span>
     <span class="grp"><span class="strip-k">Email</span><span class="strip-v">hr@hopefulheartsltd.com</span></span>
     <span class="grp"><span class="strip-k">Coverage</span><span class="strip-v">Cavan, Monaghan, Louth &amp; Westmeath &middot; transport throughout Ireland</span></span>
+  </div>
+</section>
+
+<!-- ══ FRAME 4 · the onboarding agent ═════════════════════════════════ -->
+<!--
+     ⚠️ MIXED, and the split matters more here than anywhere else in the bank.
+
+     REAL, from hopefulheartsltd.com/agency-services: the "compliance passport"
+     idea and its three headings, Enhanced Garda Vetting processed directly
+     through Hopeful Hearts Ltd, three independently verified references with a
+     full timeline gap analysis, certified checks of mandatory medical, fire
+     safety and social care training records, QQI Level 5 in Healthcare,
+     Patient Moving & Handling, Safeguarding Vulnerable Adults and Infection
+     Control, and vetting under Tusla's Children First guidelines.
+
+     INVENTED: Aoife M., every date, and every state on the ledger. Sameer
+     asked for the agent work to be shown across the bank and will correct the
+     specifics.
+
+     DO NOT ADD a regulator, framework, certification or obligation that is not
+     already in the real list above. This is a company placing relief staff
+     into children's residential services. Inventing a compliance requirement
+     for them is not a placeholder, it is a misrepresentation of a real child
+     protection process, and it makes them look worse for having worked with
+     us. For the same reason the agent gathers, chases and flags, and Niamh
+     signs: never show it clearing a vetting check by itself.
+-->
+<section class="frame" id="shot-onboarding">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-hopeful.png" alt="">
+      <span class="brand-name">Hopeful Hearts</span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#">About us</a>
+      <a href="#">Services</a>
+      <a href="#" class="on">Agency services</a>
+      <span class="bar-cta">Contact us</span>
+    </nav>
+  </div>
+
+  <div class="oa">
+    <div class="oa-head">
+      <h2>One starter, <em>one pack</em>,<br>ready before the shift.</h2>
+      <div class="oa-who">
+        <b>Aoife M.</b>
+        Social Care Worker &middot; relief
+        <br>First assignment Mon 8 Sep
+      </div>
+    </div>
+
+    <div class="oa-ledger">
+      <div class="oa-row">
+        <span class="oa-check">Enhanced Garda Vetting</span>
+        <span class="oa-note">Processed directly through Hopeful Hearts Ltd. Returned 21 Aug.</span>
+        <span class="oa-state done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          On file
+        </span>
+      </div>
+      <div class="oa-row">
+        <span class="oa-check">Professional references</span>
+        <span class="oa-note">Two of three verified. Third chased twice, due back Thursday.</span>
+        <span class="oa-state wait">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+          </svg>
+          Chasing
+        </span>
+      </div>
+      <div class="oa-row">
+        <span class="oa-check">Timeline gap analysis</span>
+        <span class="oa-note">Four month gap in 2023 raised for Niamh to ask about.</span>
+        <span class="oa-state wait">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v10M12 18v1.5"></path>
+          </svg>
+          Flagged
+        </span>
+      </div>
+      <div class="oa-row">
+        <span class="oa-check">Children First vetting</span>
+        <span class="oa-note">Tusla safeguarding guidelines. Confirmed 26 Aug.</span>
+        <span class="oa-state done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          On file
+        </span>
+      </div>
+      <div class="oa-row">
+        <span class="oa-check">Training records</span>
+        <span class="oa-note">Medical, fire safety and social care certificates all in date.</span>
+        <span class="oa-state done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          On file
+        </span>
+      </div>
+      <div class="oa-row">
+        <span class="oa-check">Crisis prevention</span>
+        <span class="oa-note">MAPA certificate expires 14 Nov. Refresher offered for October.</span>
+        <span class="oa-state wait">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v10M12 18v1.5"></path>
+          </svg>
+          Expiring
+        </span>
+      </div>
+    </div>
+
+    <div class="oa-foot">
+      <p class="oa-said">Four of six gathered on their own. The agent chased
+         the outstanding reference, read the dates on every certificate and
+         raised the two things a person has to decide about. <b>It signs
+         nothing.</b> Niamh reads the pack and puts her name to it before Aoife
+         is offered a shift.</p>
+      <span class="oa-sign">
+        Niamh to sign off
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M12 5l7 7-7 7"></path>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="grp"><span class="strip-k">Agency team</span><span class="strip-v">+353 83 339 8580</span></span>
+    <span class="grp"><span class="strip-k">Email</span><span class="strip-v">hr@hopefulheartsltd.com</span></span>
+    <span class="grp"><span class="strip-k">Coverage</span><span class="strip-v">Cavan, Monaghan, Louth &amp; Westmeath</span></span>
   </div>
 </section>
 

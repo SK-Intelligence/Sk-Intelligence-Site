@@ -365,6 +365,9 @@ export const clients = [
       { src: '/work/astar-2.png', alt: 'A Star Customs shop with products for sale', label: 'Shop' },
       { src: '/work/astar-3.png', alt: 'A Star Customs gallery of completed builds', label: 'Gallery' },
       { src: '/work/astar-4.png', alt: 'A Star Customs services page showing screen upgrades, star lights and ambient lighting', label: 'Services' },
+      /* The one drawn screen among four photographs of their live site. Marked
+         as a mockup in tools/mockups/astar.html and invented throughout. */
+      { src: '/work/astar-5.png', alt: 'The build agent having specced a starlight headliner, ambient lighting and a screen upgrade to one particular car, with the basket priced and a fitting slot held', label: 'Build agent' },
     ],
     detail: [
       'Storefront built from scratch for the brand',
@@ -392,6 +395,7 @@ export const clients = [
     shots: [
       { src: '/work/ossett-1.png', alt: 'Registration lookup with a UK number plate input and a tyre size explainer', label: 'Reg lookup' },
       { src: '/work/ossett-2.png', alt: 'Resolved vehicle showing make, year, engine, fuel and colour with front and rear tyre sizes', label: 'Vehicle resolved' },
+      { src: '/work/ossett-3.png', alt: 'The fitment agent showing what it read, the original-equipment tyre size it matched, three priced options with one recommended, and a fitting slot held', label: 'Fitment agent' },
     ],
     detail: [
       'DVLA registration-lookup API integration',
@@ -415,6 +419,7 @@ export const clients = [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
       { src: '/work/gbautos-2.png', alt: 'GB Autos services page listing servicing, tyres, brakes and body repairs', label: 'Services' },
       { src: '/work/gbautos-3.png', alt: 'GB Autos contact page with an enquiry form beside the Feltham address, both sets of opening hours and the phone number', label: 'Contact' },
+      { src: '/work/gbautos-4.png', alt: 'The enquiry agent answering a customer at night, diagnosing a brake symptom, quoting a range and holding a slot for the garage to confirm when it opens', label: 'Enquiry agent' },
     ],
     detail: [
       'First online presence, built from nothing',
@@ -437,6 +442,7 @@ export const clients = [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
       { src: '/work/hopeful-2.png', alt: 'Hopeful Hearts services page listing their five support services', label: 'Services' },
       { src: '/work/hopeful-3.png', alt: 'Hopeful Hearts agency staffing page setting out the two relief pathways, the qualifications required of each, and the compliance checks carried out before an assignment', label: 'Agency staffing' },
+      { src: '/work/hopeful-4.png', alt: 'The onboarding agent assembling a new starter compliance pack, four checks gathered and two raised for a person to decide on, with sign-off left to the operations lead', label: 'Onboarding agent' },
     ],
     detail: [
       'Company email across Outlook and Google Workspace',
@@ -478,6 +484,9 @@ export const clients = [
          unfinished state of theirs sitting on our showcase. Recapture once the
          links go live. */
       { src: '/work/peshawari-4.png', alt: 'The find us page showing the Ilford Lane address, a click-to-call button and the opening hours for every day of the week', label: 'Find us' },
+      /* The one drawn screen among four photographs of their live site. Marked
+         as a mockup in tools/mockups/peshawari.html and invented throughout. */
+      { src: '/work/peshawari-5.png', alt: 'The ordering agent showing orders arriving from the website and three delivery platforms into one queue, with the menu and prices held in step across all of them', label: 'Ordering agent' },
     ],
     /* ⚠️ Mixed. Verified on the live site: the eleven priced dishes, the
        bilingual menu, the schema.org Restaurant markup, the static Vercel

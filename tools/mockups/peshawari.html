@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Peshawri Chapli Kebab — ordering agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/*
+  Peshawri Chapli Kebab, trading as Khyber Grill — the ordering agent.
+
+  THIS IS THE ONLY PESHAWRI ASSET THAT IS A MOCKUP. The other four shots
+  (peshawari-1 through peshawari-4) are photographs of their live site taken by
+  captureLive() in tools/shots.mjs. Their site has no agent on it, so this
+  screen had to be drawn. Four real, one drawn.
+
+  ⚠️ INVENTED: the orders, the channels each came in on, the dish quantities,
+  the times, the customer initial and every figure on the sync panel. Sameer
+  asked for the agent work to be shown across the bank and will correct the
+  specifics himself.
+
+  REAL: 279B Ilford Lane, Ilford, London IG1 2SD; 020 3887 8041; open 12:00 to
+  23:00 every day; the menu is eleven priced dishes, bilingual in English and
+  Urdu; and their find-us page currently reads "Delivery platform links to be
+  added". That last one is the reason this screen exists — it is the state this
+  work replaces, so the frame is deliberately the thing their site says is
+  still coming.
+
+  Palette and type, and why this one breaks the rule the others follow.
+
+  Ossett, GB Autos and Hopeful were each pushed AWAY from one another so no two
+  clients read as the same project. This file does the opposite: it is drawn to
+  continue their real site rather than to sit apart from it, because it lands
+  in the same thumbnail strip as four photographs of that site and any distance
+  would read as a different company. So the charcoal ground, the amber, the
+  cream and the big editorial serif are all lifted from peshawari-1.png.
+
+  That does put it near Ossett, which is also dark. What keeps them apart is
+  hue and texture: Ossett is neutral graphite with a single saturated yellow
+  used only on a number plate, this is a warm brown-black with amber through
+  the whole surface, a serif rather than a grotesque, and no mono anywhere.
+  Side by side they read as a restaurant and an instrument.
+
+  Not Fraunces for the serif, deliberately. Fraunces is SK's own display face
+  and using it here would make the client's screen look like our site wearing
+  their name — the same trap the Hopeful file calls out.
+*/
+
+:root{
+  --char:#14100D;
+  --char-2:#1E1813;
+  --char-3:#272019;
+  --line:rgba(244,237,228,.10);
+  --line-strong:rgba(244,237,228,.18);
+  --cream:#F4EDE4;
+  --cream-mute:#B5A899;
+  --cream-faint:#7D7266;
+  --amber:#F0A431;
+  --amber-deep:#C97F17;
+  --ember:#D8461F;
+
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Inter',system-ui,sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; background:#000; }
+body{ font-family:var(--sans); color:var(--cream); -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--amber); color:var(--char); }
+
+.frame{
+  width:1280px; height:760px;
+  background:
+    radial-gradient(80% 60% at 88% -12%, rgba(240,164,49,.13) 0%, rgba(240,164,49,0) 58%),
+    var(--char);
+  display:flex; flex-direction:column;
+  overflow:hidden; position:relative;
+}
+.frame + .frame{ margin-top:48px; }
+
+/* ── header ─────────────────────────────────────────────────────────── */
+.bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 42px; flex:0 0 auto;
+  border-bottom:1px solid var(--line);
+}
+.brand{ display:flex; align-items:center; gap:13px; }
+/* Their real wordmark, the same file the case bank shows in the panel chip.
+   It is a wide 2.35:1 mark on its own dark ground, so it is set by height and
+   screened onto the charcoal rather than boxed. */
+.brand-mark{
+  height:34px; width:auto; object-fit:contain; display:block;
+  mix-blend-mode:screen;
+}
+.bar-nav{ display:flex; align-items:center; gap:26px; }
+.bar-nav span{ font-size:.85rem; font-weight:500; color:var(--cream-mute); }
+.bar-nav span.on{ color:var(--amber); }
+/* Selector has to out-specify `.bar-nav span` above, which is (0,1,1) against
+   a bare `.bar-call` at (0,1,0). It lost, so the number rendered as muted
+   cream on amber and was very close to unreadable. */
+.bar-nav .bar-call{
+  font-size:.85rem; font-weight:600;
+  background:var(--amber); color:var(--char);
+  border-radius:999px; padding:10px 20px;
+}
+
+/* ── body ───────────────────────────────────────────────────────────── */
+.body{
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.42fr .88fr;
+}
+.left{ padding:26px 34px 24px; display:flex; flex-direction:column; min-height:0; }
+.head{ display:flex; align-items:flex-end; justify-content:space-between; gap:28px; }
+.head h1{
+  margin:0;
+  font-family:var(--serif); font-weight:600;
+  font-size:2.05rem; line-height:1.12; letter-spacing:-.012em;
+}
+.head h1 em{ font-style:italic; color:var(--amber); }
+.live{
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:9px;
+  font-size:.72rem; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--cream-mute);
+}
+.live i{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--amber); font-style:normal;
+  box-shadow:0 0 0 4px rgba(240,164,49,.18);
+}
+
+/* The queue. Ruled rows rather than cards, so four orders read as one list
+   the kitchen scans top to bottom, which is how a pass actually works. */
+.q{ margin-top:20px; border-top:1px solid var(--line); }
+.q-row{
+  display:grid; grid-template-columns:auto 1.5fr auto auto;
+  align-items:center; gap:18px;
+  padding:13px 2px;
+  border-bottom:1px solid var(--line);
+}
+.chan{
+  font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  border:1px solid var(--line-strong); border-radius:999px;
+  padding:5px 11px; color:var(--cream-mute);
+  min-width:10ch; text-align:center;
+}
+.chan.direct{ border-color:var(--amber); color:var(--amber); }
+.q-what{ font-size:.92rem; line-height:1.45; }
+.q-what b{ font-weight:600; }
+.q-what span{ color:var(--cream-faint); }
+.q-when{
+  font-size:.8rem; color:var(--cream-faint); text-align:right; min-width:8ch;
+}
+.q-state{
+  font-size:.72rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  text-align:right; min-width:11ch;
+  color:var(--cream-mute);
+}
+.q-state.done{ color:var(--amber); }
+
+/* Tonight so far. This sits under the queue because four rows and a paragraph
+   left a third of the column empty, and an empty middle on a busy-service
+   screen argues against the thing the screen is claiming. */
+.tally{
+  display:grid; grid-template-columns:repeat(3,1fr);
+  margin-top:22px;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+.tally div{ padding:16px 20px 17px; border-right:1px solid var(--line); }
+.tally div:first-child{ padding-left:2px; }
+.tally div:last-child{ border-right:0; }
+.tally dt{
+  font-size:.66rem; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--cream-faint);
+}
+.tally dd{
+  margin:9px 0 0;
+  font-family:var(--serif); font-weight:600; font-size:1.45rem; color:var(--cream);
+}
+.tally dd small{
+  font-family:var(--sans); font-size:.78rem; font-weight:500;
+  color:var(--cream-faint); margin-left:7px;
+}
+
+.said{
+  margin-top:auto; padding-top:20px;
+  display:flex; gap:13px; align-items:flex-start;
+}
+.said svg{ width:17px; height:17px; color:var(--amber); flex:0 0 auto; margin-top:2px; }
+.said p{ margin:0; font-size:.86rem; line-height:1.62; color:var(--cream-mute); max-width:62ch; }
+.said b{ color:var(--cream); font-weight:600; }
+
+/* ── the sync panel ─────────────────────────────────────────────────── */
+.right{
+  border-left:1px solid var(--line);
+  background:var(--char-2);
+  padding:26px 30px;
+  display:flex; flex-direction:column;
+}
+.right h2{
+  margin:0 0 4px;
+  font-family:var(--serif); font-weight:600; font-size:1.32rem;
+}
+.right > p{ margin:0 0 20px; font-size:.82rem; line-height:1.5; color:var(--cream-faint); }
+.plat{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:13px 0; border-top:1px solid var(--line);
+  font-size:.9rem;
+}
+.plat-n{ font-weight:500; }
+.plat-s{
+  display:inline-flex; align-items:center; gap:8px;
+  font-size:.74rem; font-weight:600; letter-spacing:.06em;
+  color:var(--amber);
+}
+.plat-s svg{ width:13px; height:13px; }
+.plat-s.off{ color:var(--cream-faint); }
+
+.sync{
+  margin-top:22px; padding:15px 17px;
+  background:var(--char-3); border-radius:12px;
+}
+.sync-k{
+  display:block; margin-bottom:9px;
+  font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--cream-faint);
+}
+.sync p{ margin:0; font-size:.85rem; line-height:1.55; color:var(--cream-mute); }
+.sync b{ color:var(--cream); font-weight:600; }
+
+.count{
+  margin-top:auto; padding-top:20px;
+  border-top:1px solid var(--line-strong);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+}
+.count-v{
+  font-family:var(--serif); font-weight:700;
+  font-size:2.5rem; line-height:1; color:var(--amber);
+}
+.count-k{ font-size:.8rem; line-height:1.5; color:var(--cream-faint); max-width:22ch; }
+
+/* ── footer ─────────────────────────────────────────────────────────── */
+.strip{
+  flex:0 0 auto;
+  background:var(--char-2);
+  border-top:1px solid var(--line);
+  padding:14px 42px;
+  display:flex; align-items:center; gap:38px;
+}
+.strip-k{
+  font-size:.66rem; font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--cream-faint);
+  margin-right:10px;
+}
+.strip-v{ font-size:.85rem; font-weight:500; }
+.strip .grp{ display:flex; align-items:baseline; }
+</style>
+</head>
+<body>
+
+<!-- ══ FRAME 1 · the ordering agent ═══════════════════════════════════ -->
+<section class="frame" id="shot-agent">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-peshawari.png" alt="">
+    </div>
+    <nav class="bar-nav">
+      <span>Menu</span>
+      <span>About</span>
+      <span>Find us</span>
+      <span class="on">Kitchen</span>
+      <span class="bar-call">020 3887 8041</span>
+    </nav>
+  </div>
+
+  <div class="body">
+    <div class="left">
+      <div class="head">
+        <h1>Every channel,<br><em>one pass.</em></h1>
+        <span class="live"><i></i>Friday 19:42</span>
+      </div>
+
+      <div class="q">
+        <div class="q-row">
+          <span class="chan direct">Direct</span>
+          <span class="q-what"><b>2 &times; Chapli Kebab</b>, 1 &times; Lamb Karahi
+            <span>&middot; collection</span></span>
+          <span class="q-when">19:41</span>
+          <span class="q-state done">Taken by agent</span>
+        </div>
+        <div class="q-row">
+          <span class="chan">Deliveroo</span>
+          <span class="q-what"><b>1 &times; Mixed Grill</b>, 2 &times; Naan
+            <span>&middot; IG1, 1.2 miles</span></span>
+          <span class="q-when">19:38</span>
+          <span class="q-state">In the kitchen</span>
+        </div>
+        <div class="q-row">
+          <span class="chan">Just Eat</span>
+          <span class="q-what"><b>3 &times; Chapli Kebab</b>
+            <span>&middot; rider waiting</span></span>
+          <span class="q-when">19:33</span>
+          <span class="q-state">On the pass</span>
+        </div>
+        <div class="q-row">
+          <span class="chan direct">Phone</span>
+          <span class="q-what"><b>1 &times; Karahi Chicken</b>, 1 &times; Rice
+            <span>&middot; taken by Bilal</span></span>
+          <span class="q-when">19:29</span>
+          <span class="q-state">Out</span>
+        </div>
+      </div>
+
+      <dl class="tally">
+        <div>
+          <dt>Orders tonight</dt>
+          <dd>38 <small>since 17:00</small></dd>
+        </div>
+        <div>
+          <dt>Taken by the agent</dt>
+          <dd>21 <small>direct and phone</small></dd>
+        </div>
+        <div>
+          <dt>Order to the pass</dt>
+          <dd>90s <small>average</small></dd>
+        </div>
+      </dl>
+
+      <div class="said">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 7.6v.6"></path>
+        </svg>
+        <p>The 19:41 order came in on the website and the agent took it end to
+           end: read it, priced it, confirmed the collection time and put it on
+           the pass. <b>Nobody in the kitchen picked up a phone.</b> The other
+           three arrived on the platforms and land in the same queue, in the
+           order they were placed.</p>
+      </div>
+    </div>
+
+    <div class="right">
+      <h2>Menu, in step</h2>
+      <p>Eleven dishes, one price list, pushed everywhere at once.</p>
+
+      <div class="plat">
+        <span class="plat-n">Website</span>
+        <span class="plat-s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          In step
+        </span>
+      </div>
+      <div class="plat">
+        <span class="plat-n">Deliveroo</span>
+        <span class="plat-s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          In step
+        </span>
+      </div>
+      <div class="plat">
+        <span class="plat-n">Just Eat</span>
+        <span class="plat-s">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          In step
+        </span>
+      </div>
+      <div class="plat">
+        <span class="plat-n">Uber Eats</span>
+        <span class="plat-s off">Pushing</span>
+      </div>
+
+      <div class="sync">
+        <span class="sync-k">Last change</span>
+        <p>Chapli Kebab went <b>&pound;7.50 to &pound;7.90</b> at 16:10. Live on
+           three platforms inside a minute, no one retyping it four times.</p>
+      </div>
+
+      <div class="sync" style="margin-top:13px">
+        <span class="sync-k">Sold out</span>
+        <p>Seekh Kebab went off at <b>18:40</b> and came down from all four at
+           once. It goes back up when the kitchen says so.</p>
+      </div>
+
+      <div class="count">
+        <span class="count-v">0</span>
+        <span class="count-k">calls taken tonight just to read out the menu</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="grp"><span class="strip-k">Find us</span><span class="strip-v">279B Ilford Lane, Ilford, London IG1 2SD</span></span>
+    <span class="grp"><span class="strip-k">Open</span><span class="strip-v">12:00 &ndash; 23:00, every day</span></span>
+    <span class="grp"><span class="strip-k">Call</span><span class="strip-v">020 3887 8041</span></span>
+  </div>
+</section>
+
+</body>
+</html>

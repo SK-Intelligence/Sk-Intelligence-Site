@@ -211,6 +211,113 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
   font-size:.74rem; letter-spacing:.14em; text-transform:uppercase;
 }
 .dot{ width:8px; height:8px; border-radius:50%; background:#5CD07E; }
+.dot.shut{ background:var(--oxide); }
+
+/* ── the enquiry agent ───────────────────────────────────────────────── */
+/*
+  Rendered as a transcript with hairline rules rather than as chat bubbles.
+  Bubbles are the default shape for this and they would be the wrong one here:
+  this file is bone, oxide and heavy condensed caps, and a pair of rounded
+  grey lozenges reads as a widget bolted onto a garage rather than as the
+  garage's own voice. Ruled speaker labels are what the rest of the file
+  already does with .strip-k, so the agent inherits it.
+*/
+.ag{
+  flex:1 1 auto; min-height:0;
+  display:grid; grid-template-columns:1.08fr .92fr;
+}
+.ag-copy{ padding:36px 44px; display:flex; flex-direction:column; min-height:0; }
+.ag-turn{ padding:14px 0; border-top:1px solid var(--line); }
+.ag-turn:first-of-type{ border-top:0; padding-top:4px; }
+.ag-who{
+  display:flex; align-items:baseline; gap:10px;
+  margin-bottom:7px;
+}
+.ag-name{
+  font-family:var(--display); font-weight:800;
+  font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
+}
+.ag-name.them{ color:var(--steel); }
+.ag-name.us{ color:var(--oxide); }
+.ag-at{
+  font-size:.68rem; font-weight:600; color:var(--steel);
+  font-variant-numeric:tabular-nums;
+}
+.ag-said{ margin:0; font-size:.95rem; line-height:1.55; color:var(--ink-soft); }
+.ag-said strong{ color:var(--ink); font-weight:600; }
+
+/* What it checked before answering. The point of the frame is that the reply
+   is grounded in the garage's own prices and diary, not improvised. */
+/* margin-top:auto, not a fixed gap. The transcript is two turns and does not
+   fill the column, so a fixed gap left a third of the frame empty under it
+   while the oxide panel opposite was vertically centred. Pushing this to the
+   floor gives the column a bottom edge to sit on. */
+.ag-checked{
+  margin-top:auto;
+  border:1px solid var(--line);
+  background:var(--bone-2);
+  padding:13px 16px;
+}
+.ag-checked-k{
+  font-family:var(--display); font-weight:800;
+  font-size:.62rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--steel);
+  display:block; margin-bottom:9px;
+}
+.ag-checked ul{ list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:7px 8px; }
+.ag-checked li{
+  font-size:.76rem; font-weight:600; color:var(--ink-soft);
+  background:var(--bone); border:1px solid var(--line);
+  padding:5px 10px;
+}
+
+.ag-field{
+  position:relative; overflow:hidden;
+  background:var(--oxide);
+  display:flex; flex-direction:column; justify-content:center;
+  padding:34px;
+}
+.ag-field::before{
+  content:''; position:absolute; inset:-20%;
+  background:repeating-linear-gradient(
+    -52deg,
+    rgba(0,0,0,.10) 0 26px,
+    rgba(0,0,0,0) 26px 62px);
+}
+.ag-card{
+  position:relative; z-index:1;
+  background:rgba(20,20,20,.92); color:var(--bone);
+  padding:26px 28px;
+}
+.ag-card h3{
+  margin:0 0 4px;
+  font-family:var(--display); font-weight:900;
+  font-size:1.3rem; letter-spacing:-.025em; text-transform:uppercase;
+}
+.ag-card > p{ margin:0 0 18px; font-size:.84rem; color:rgba(244,241,236,.62); }
+.ag-row{
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  padding:10px 0; border-top:1px solid rgba(244,241,236,.14);
+  font-size:.88rem;
+}
+.ag-row-k{ color:rgba(244,241,236,.6); font-weight:500; }
+.ag-row-v{ font-weight:600; font-variant-numeric:tabular-nums; }
+.ag-hold{
+  margin-top:18px;
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--oxide); color:var(--bone);
+  padding:13px 18px;
+  font-family:var(--display); font-weight:800; font-size:.86rem;
+}
+.ag-hold svg{ width:15px; height:15px; }
+/* The agent proposes and the garage confirms. Never show it committing a
+   booking on its own: the whole reason a customer trusts a local garage is
+   that a person stands behind the answer. */
+.ag-note{
+  position:relative; z-index:1;
+  margin-top:16px;
+  font-size:.78rem; line-height:1.5; color:rgba(244,241,236,.86);
+}
 
 /* ── services ───────────────────────────────────────────────────────── */
 /* Two-column masthead. Headline left, intro right, so the top of the frame is
@@ -657,6 +764,127 @@ body{ font-family:var(--sans); color:var(--ink); -webkit-font-smoothing:antialia
       <span class="strip-v">Feltham since 2009</span>
     </span>
     <span class="strip-open"><span class="dot"></span>Open now</span>
+  </div>
+</section>
+
+<!-- ══ FRAME 4 · the enquiry agent ════════════════════════════════════ -->
+<!--
+     ⚠️ INVENTED, and knowingly so. The customer, the car, the symptom, the
+     prices, the slot and every word either party says are written. Sameer
+     asked for the agent work to be shown across the case bank and said he
+     would correct the specifics himself, so treat this frame as a shape
+     rather than a claim, the same standing as the agent lines in
+     lib/content.ts.
+
+     Real and safe to keep: 376 Staines Rd, Feltham TW14 8BT, 020 8844 2156,
+     gbautos100@gmail.com, Mon-Sat 09:00-18:30 and Sun 10:00-17:00, serving
+     Feltham since 2009. All of it is on gbautosandtyres.co.uk. Do not add map
+     coordinates or "East Bedfont" back: neither is anywhere on their site.
+
+     The frame is set at 21:48 on a Sunday on purpose. This garage's whole
+     story is that a local person can find them and ring them, so the useful
+     thing to show is what happens in the twelve hours when nobody can. The
+     footer says CLOSED where the other three frames say OPEN NOW, which is
+     the entire point of the screen.
+-->
+<section class="frame" id="shot-agent">
+  <div class="bar">
+    <div class="brand">
+      <img class="brand-mark" src="../../public/clients/c-gbautos.png" alt="">
+      <span class="brand-name">GB Autos <span>&amp; Tyres</span></span>
+    </div>
+    <nav class="bar-nav">
+      <a href="#">Home</a>
+      <a href="#">Services</a>
+      <a href="#" class="on">Contact</a>
+      <a href="#">Blog</a>
+      <span class="bar-call">020 8844 2156</span>
+    </nav>
+  </div>
+
+  <div class="ag">
+    <div class="ag-copy">
+      <span class="est">Sunday 21:48 &middot; after hours</span>
+
+      <div class="ag-turn">
+        <div class="ag-who">
+          <span class="ag-name them">Dan R.</span>
+          <span class="ag-at">21:48</span>
+        </div>
+        <p class="ag-said">Grinding from the front when I brake, worse going
+           slow. 2016 Golf. Is that the pads, and what am I looking at to
+           put right?</p>
+      </div>
+
+      <div class="ag-turn">
+        <div class="ag-who">
+          <span class="ag-name us">GB Autos</span>
+          <span class="ag-at">21:48</span>
+        </div>
+        <p class="ag-said">Grinding rather than squealing usually means the
+           pads are through to the metal, and on a Golf of that age the discs
+           normally go with them. Fronts, pads and discs, is
+           <strong>£210 to £260</strong> all in depending on the parts it
+           takes. I can hold you <strong>9:00 tomorrow</strong> and Gurbaz
+           will have it up on the ramp first thing. If it is only the pads it
+           comes down from there, and he will ring you before he does
+           anything.</p>
+      </div>
+
+      <div class="ag-checked">
+        <span class="ag-checked-k">Answered from</span>
+        <ul>
+          <li>Front pads and discs, 2016 Golf</li>
+          <li>Workshop price list</li>
+          <li>Monday diary, 3 ramps</li>
+          <li>Parts in stock</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ag-field">
+      <div class="ag-card">
+        <h3>Held for Monday</h3>
+        <p>Waiting on the garage to confirm at open.</p>
+        <div class="ag-row">
+          <span class="ag-row-k">Vehicle</span>
+          <span class="ag-row-v">VW Golf, 2016</span>
+        </div>
+        <div class="ag-row">
+          <span class="ag-row-k">Booked for</span>
+          <span class="ag-row-v">Front brakes, inspect</span>
+        </div>
+        <div class="ag-row">
+          <span class="ag-row-k">Slot</span>
+          <span class="ag-row-v">Mon 09:00</span>
+        </div>
+        <div class="ag-row">
+          <span class="ag-row-k">Quoted</span>
+          <span class="ag-row-v">&pound;210 &ndash; &pound;260</span>
+        </div>
+        <div class="ag-hold">
+          Confirm at open
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h13M12 5l7 7-7 7"></path>
+          </svg>
+        </div>
+      </div>
+      <p class="ag-note">Nothing is booked until someone in the garage says so.
+         The agent quotes, holds the slot and hands over the job.</p>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="strip-item">
+      <span class="strip-k">Where</span>
+      <span class="strip-v">376 Staines Rd, Feltham TW14 8BT</span>
+    </span>
+    <span class="strip-item">
+      <span class="strip-k">Call</span>
+      <span class="strip-v">020 8844 2156</span>
+    </span>
+    <span class="strip-open"><span class="dot shut"></span>Closed &middot; agent answering</span>
   </div>
 </section>
 
