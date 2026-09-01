@@ -472,10 +472,15 @@ if (wanted('ossett')) {
 if (wanted('gbautos')) {
   console.log('\n── gbautos (mockup)');
   await captureMockup(browser, 'gbautos.html', [
+    /* Three per client, everywhere in the bank. The strip grew to ten on one
+       build and four or five on the rest, and a visitor deciding whether to
+       call us does not walk ten thumbnails — they see a wall and move on. The
+       three are always the same shape: what the build is, what it does, and
+       the agent we added. Frames that are no longer captured are left in the
+       mockup files rather than deleted, so putting one back is one line. */
     ['shot-hero', 'gbautos-1'],
     ['shot-services', 'gbautos-2'],
-    ['shot-visit', 'gbautos-3'],
-    ['shot-agent', 'gbautos-4'],
+    ['shot-agent', 'gbautos-3'],
   ], ['Archivo', 'Inter']);
 }
 
@@ -484,8 +489,7 @@ if (wanted('hopeful')) {
   await captureMockup(browser, 'hopeful.html', [
     ['shot-hero', 'hopeful-1'],
     ['shot-services', 'hopeful-2'],
-    ['shot-agency', 'hopeful-3'],
-    ['shot-onboarding', 'hopeful-4'],
+    ['shot-onboarding', 'hopeful-3'],
   ], ['Newsreader', 'Inter']);
 }
 
@@ -494,8 +498,6 @@ if (wanted('astar')) {
   for (const [path, out, focus] of [
     ['/', 'astar-1', false],          // the hero is the shot on the home page
     ['/shop', 'astar-2', true],
-    ['/gallery', 'astar-3', true],
-    ['/services', 'astar-4', true],
   ]) await captureLive(browser, path, out, focus);
 
   /* One drawn screen among four photographs. Their live site has no agent on
@@ -503,7 +505,7 @@ if (wanted('astar')) {
      See the header of astar.html: it is the only A Star asset that is a
      mockup, and it is marked as such there. */
   await captureMockup(browser, 'astar.html', [
-    ['shot-agent', 'astar-5'],
+    ['shot-agent', 'astar-3'],
   ], ['Oswald', 'Inter']);
 }
 
@@ -516,8 +518,6 @@ if (wanted('peshawari')) {
   for (const [path, out] of [
     ['/', 'peshawari-1'],
     ['/menu', 'peshawari-2'],
-    ['/about', 'peshawari-3'],
-    ['/contact', 'peshawari-4'],
   ]) await captureLive(browser, path, out, false, 'https://peshawarichaplikebab.co.uk');
 
   /* One drawn screen among four photographs, same as A Star. Their find-us
@@ -525,7 +525,7 @@ if (wanted('peshawari')) {
      agent is precisely the thing that page says is coming and there was
      nothing live to photograph. Marked as a mockup in peshawari.html. */
   await captureMockup(browser, 'peshawari.html', [
-    ['shot-agent', 'peshawari-5'],
+    ['shot-agent', 'peshawari-3'],
   ], ['Playfair Display', 'Inter']);
 }
 
@@ -541,14 +541,14 @@ if (wanted('provena')) {
      for the story and it currently throws on a use case created through the
      product's own onboarding wizard, so there is nothing here to photograph
      that is not a crash. Add it once that is fixed. */
+  /* Cut to one live route. /connectors, /approvals, /binders, /attestations,
+     /regulatory-updates and /getting-started all capture cleanly and are all
+     real screens — they were dropped for length, not for quality, and each is
+     one line away from coming back. /use-cases and /event-log are the two that
+     genuinely cannot be shot: the first throws on a use case created through
+     the product's own onboarding wizard, the second renders "failed to load". */
   const live = await captureApp(browser, PROVENA_BASE, [
-    ['/connectors', 'provena-2'],
-    ['/evidence', 'provena-3'],
-    ['/approvals', 'provena-4'],
-    ['/binders', 'provena-5'],
-    ['/attestations', 'provena-6'],
-    ['/regulatory-updates', 'provena-7'],
-    ['/getting-started', 'provena-8'],
+    ['/evidence', 'provena-2'],
   ]);
   /* The landing route is the one screen that needs no backend, so it is shot
      from the export either way: identical output, and it keeps this target
@@ -556,16 +556,18 @@ if (wanted('provena')) {
   await captureStatic(browser, PROVENA_OUT, [
     ['/', 'provena-1'],
   ]);
-  if (!live) log('provena-2..8 left as they were');
+  if (!live) log('provena-2 left as it was');
 
   /* Two drawn screens among eight real ones, and the only place in the bank
      where our own product gets a mockup. The agent layer is real code but sits
      behind default-off feature flags, so nothing in the shipped UI shows it and
      Provena was the one client whose agent line had no screenshot. Marked as
      drawn in the header of provena.html. */
+  /* The gap-fill frame is still in provena.html and is still good; only one
+     agent screen is needed to make the point, and the classification one makes
+     the stronger claim because it shows the deterministic rule deciding. */
   await captureMockup(browser, 'provena.html', [
-    ['shot-gapfill', 'provena-9'],
-    ['shot-classify', 'provena-10'],
+    ['shot-classify', 'provena-3'],
   ], ['Inter', 'JetBrains Mono']);
 }
 

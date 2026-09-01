@@ -299,6 +299,18 @@ export const PLACEHOLDER_METRICS:
 export type Shot = { src: string; alt: string; label: string };
 
 export const clients = [
+  /* Provena leads on purpose, and the order is load-bearing. `active` defaults
+     to 0 in ClientWork, so whatever is first is the mark that starts selected
+     and the panel that greets a reader who never touches the strip.
+
+     It leads because it is the only build in the bank aimed at a company with
+     departments and processes rather than at a local trade. A reader evaluating
+     us for that kind of work meets a regulated-industry platform first, and the
+     five smaller builds then read as range rather than as the ceiling. Put a
+     garage first and the whole section reads as local web work.
+
+     Provena also carries no `quote` and no `logo`, and both gaps are deliberate:
+     there is no client behind it to ask. See the note above. */
   {
     id: 'provena',
     name: 'Provena AI',
@@ -310,7 +322,7 @@ export const clients = [
        says out loud that there is nobody to quote. */
     quote: null,
     asked: 'Companies using AI face a legal deadline, and the tools they own log an AI system as a risk to note rather than something they have to evidence.',
-    approach: 'It reads what their AI is doing from the tools they already use, checks each one against the wording of the law with fixed rules rather than an AI\'s judgement, and writes the paperwork. Nothing is final until a person signs it.',
+    approach: 'It reads what their AI is doing from the tools they already use, then checks each one against the wording of the law. Agents draft the paperwork, fixed rules decide what applies, and nothing is final until a person signs it.',
     impact: 'A binder an auditor will accept, in days rather than months, and it holds up because every claim points at the rule and the record behind it.',
     shots: [
       {
@@ -320,66 +332,22 @@ export const clients = [
       },
       {
         src: '/work/provena-2.png',
-        alt: 'The connectors screen listing the Anthropic API, LangSmith and Trust Center with their connection status and last sync time',
-        label: 'Connectors',
-      },
-      {
-        src: '/work/provena-3.png',
         alt: 'The evidence screen listing generated artefacts (an Article 26 deployer record, two DPIAs, a DORA register entry) each tagged with its framework, version and review status',
         label: 'Evidence',
       },
+      /* The one drawn screen of our own product. Its agent layer is real code
+         behind default-off feature flags, so no shipped screen shows it. */
       {
-        src: '/work/provena-4.png',
-        alt: 'The approval inbox showing two artefacts awaiting review, each with review, flag and approve actions',
-        label: 'Approvals',
-      },
-      {
-        src: '/work/provena-5.png',
-        alt: 'Binder history listing exported compliance binders with their frameworks, export date and tamper-evident hash',
-        label: 'Binder history',
-      },
-      {
-        src: '/work/provena-6.png',
-        alt: 'Vendor attestations ingested from Anthropic, listing the data processing agreement, sub-processor list, SOC 2 report, model system card and retention policy, each against the obligation it covers',
-        label: 'Vendor attestations',
-      },
-      {
-        src: '/work/provena-7.png',
-        alt: 'Regulatory updates listing changes to the frameworks in scope, filtered by EU AI Act, UK GDPR, EU GDPR and DORA',
-        label: 'Regulatory updates',
-      },
-      {
-        src: '/work/provena-8.png',
-        alt: 'The getting started checklist showing five steps from classifying an AI use to exporting the first binder, two of them complete',
-        label: 'Getting started',
-      },
-      /* The only two drawn screens of our own product, and the only reason they
-         exist is that the agent layer is real code sitting behind default-off
-         feature flags, so nothing in the shipped UI shows it. Marked as drawn
-         in tools/mockups/provena.html. Eight real, two drawn. */
-      {
-        src: '/work/provena-9.png',
-        alt: 'The gap-fill agent part-way through a DPIA, every filled field attributed to the connector, attestation or person it came from, and the two it could not answer raised rather than guessed',
-        label: 'Gap-fill agent',
-      },
-      {
-        src: '/work/provena-10.png',
-        alt: 'The classification agent proposing a high-risk classification beside the deterministic rule that actually made the decision, with the Annex III clause it cites and the obligations that follow',
+        src: '/work/provena-3.png',
+        alt: 'The classification agent proposing a high-risk classification beside the deterministic rule that actually made the decision, with the Annex III clause it cites',
         label: 'Classification agent',
       },
     ],
     detail: [
-      'Use cases classified against EU AI Act Annex III, GDPR and DORA',
-      'Deterministic rule engine, pinned to the clause it cites',
-      'Connectors for Anthropic API, LangSmith and Trust Center',
-      'Seven evidence templates, DPIA to Article 30',
+      'Bounded agents draft the evidence and propose the classification',
+      'A fixed rule decides what applies, and points at the clause it used',
       'Human sign-off before any binder finalises',
-      /* The one agent line in this file that is already true: bounded LangGraph
-         agents live in that repo under agents/, and they fill gaps and propose
-         classifications rather than decide anything. The rule engine stays
-         deterministic, which is the point worth keeping if this gets reworded. */
-      'Bounded agents that fill evidence gaps and propose classifications, never decide them',
-      'FastAPI, PostgreSQL and Redis behind a Next.js dashboard',
+      'Checked against the EU AI Act, GDPR and DORA',
     ],
   },
   {
@@ -387,40 +355,30 @@ export const clients = [
     name: 'A Star Customs',
     sector: 'Automotive customisation',
     logo: '/clients/c-astar.png',
-    asked: 'A storefront that could sell on its own: products, inventory, payments and checkout, built for the brand rather than dropped onto a template.',
-    approach: 'Built from scratch around their own products and custom-kit work, with card payments and checkout wired in, then launched and looked after end to end.',
+    asked: 'Every custom build was specced and quoted by hand, and none of it could be bought online.',
+    approach: 'Built from scratch around their own products and custom-kit work, with card payments and checkout wired in. An agent now specs the kit to the customer\'s car and takes the payment.',
     impact: 'The shop takes orders and money on its own, with nobody in the business keying anything in, and they update the gallery and kits themselves.',
     quote: 'Absolutely in awe with their work, made a very modern website with an integrated shop.',
     shots: [
       { src: '/work/astar-1.png', alt: 'A Star Customs home page', label: 'Home' },
       { src: '/work/astar-2.png', alt: 'A Star Customs shop with products for sale', label: 'Shop' },
-      { src: '/work/astar-3.png', alt: 'A Star Customs gallery of completed builds', label: 'Gallery' },
-      { src: '/work/astar-4.png', alt: 'A Star Customs services page showing screen upgrades, star lights and ambient lighting', label: 'Services' },
-      /* The one drawn screen among four photographs of their live site. Marked
-         as a mockup in tools/mockups/astar.html and invented throughout. */
-      { src: '/work/astar-5.png', alt: 'The build agent having specced a starlight headliner, ambient lighting and a screen upgrade to one particular car, with the basket priced and a fitting slot held', label: 'Build agent' },
+      /* The one drawn screen among two photographs of their live site. */
+      { src: '/work/astar-3.png', alt: 'The build agent having specced a starlight headliner, ambient lighting and a screen upgrade to one particular car, with the basket priced and a fitting slot held', label: 'Build agent' },
     ],
     detail: [
-      'Storefront built from scratch for the brand',
-      'Product and inventory management',
-      'Secure payment processing and checkout',
-      'Gallery, custom kits and collaborations, all self-managed',
       'A build agent that reads the customer’s car and specs the kit to fit it',
-      'Agentic checkout that assembles the order and takes payment on their behalf',
-      'Built, launched and supported end to end',
+      'Agentic checkout that assembles the order and takes the payment',
+      'Storefront, stock and card payments built for the brand, not a template',
+      'Gallery, custom kits and collaborations, all self-managed',
     ],
   },
-  /* First on purpose. `active` defaults to 0 in ClientWork, so whatever leads
-     this array is the mark that starts selected and the panel that greets a
-     reader who never touches the strip. No `quote` and no `logo` — see the note
-     above the array, and leave both absent. */
   {
     id: 'ossett',
     name: 'Ossett Tyres',
     sector: 'Tyre retail',
     logo: '/clients/c-ossett.png',
     asked: 'Customers could not tell what tyres their car takes, so every enquiry began with someone in the garage looking the fitment up by hand.',
-    approach: 'A number plate lookup that checks the car against DVLA records and gives back the exact tyre sizes it left the factory with, front and rear.',
+    approach: 'A number plate lookup that checks the car against DVLA records and returns the exact tyre sizes it left the factory with. An agent now carries that through to a priced quote and a booked slot.',
     impact: 'The customer gets their answer before anyone in the garage is involved, and every enquiry is recorded rather than written on a pad.',
     quote: 'Highly impressed with the services they provided. They made a top-notch website.',
     shots: [
@@ -429,12 +387,10 @@ export const clients = [
       { src: '/work/ossett-3.png', alt: 'The fitment agent showing what it read, the original-equipment tyre size it matched, three priced options with one recommended, and a fitting slot held', label: 'Fitment agent' },
     ],
     detail: [
-      'DVLA registration-lookup API integration',
-      'Make, year, engine, fuel and colour resolved per plate',
-      'Original-equipment tyre fitment matched front and rear',
-      'Custom front end over a serverless backend on Vercel',
       'A fitment agent that turns a plate into a priced quote and a booked slot',
-      'Automated order and enquiry emails, tracked in Google Sheets',
+      'A number plate checked against DVLA records in a second',
+      'The exact tyre sizes the car left the factory with, front and rear',
+      'Every enquiry emailed and logged, rather than written on a pad',
     ],
   },
   {
@@ -442,22 +398,20 @@ export const clients = [
     name: 'GB Autos & Tyres',
     sector: 'Vehicle servicing',
     logo: '/clients/c-gbautos.png',
-    asked: 'A Feltham garage trading since 2009 had no online presence at all, and wanted to be findable by the people already looking for it.',
-    approach: 'A first website built from nothing, with the services, the address and the opening hours laid out the way search engines read them, and the phone number on every page.',
-    impact: 'They now come up when someone nearby searches for what they do, and that person can ring the owner straight away.',
+    asked: 'A Feltham garage trading since 2009 took every enquiry on one phone, in opening hours, with nothing online for the people already searching for it.',
+    approach: 'A first website built from nothing, with the services, address and hours laid out the way search engines read them. An agent now answers the enquiries that arrive after closing and books them in.',
+    impact: 'They come up when someone nearby searches for what they do, and the enquiries that used to be missed after closing are answered and booked in.',
     quote: 'Great job by SK on our first-ever website! I had no online presence before.',
     shots: [
       { src: '/work/gbautos-1.png', alt: 'GB Autos home page with opening hours and contact details', label: 'Home' },
       { src: '/work/gbautos-2.png', alt: 'GB Autos services page listing servicing, tyres, brakes and body repairs', label: 'Services' },
-      { src: '/work/gbautos-3.png', alt: 'GB Autos contact page with an enquiry form beside the Feltham address, both sets of opening hours and the phone number', label: 'Contact' },
-      { src: '/work/gbautos-4.png', alt: 'The enquiry agent answering a customer at night, diagnosing a brake symptom, quoting a range and holding a slot for the garage to confirm when it opens', label: 'Enquiry agent' },
+      { src: '/work/gbautos-3.png', alt: 'The enquiry agent answering a customer at night, diagnosing a brake symptom, quoting a range and holding a slot for the garage to confirm when it opens', label: 'Enquiry agent' },
     ],
     detail: [
-      'First online presence, built from nothing',
-      'Services, location and hours structured for local search',
-      'Opening times and phone surfaced on every screen',
       'An enquiry agent that answers servicing questions and books work after hours',
-      'Set up so the owner can be found and contacted directly',
+      'A first online presence, built from nothing',
+      'Services, location and hours structured the way search engines read them',
+      'The phone number on every screen, so the call reaches the owner',
     ],
   },
   {
@@ -465,21 +419,19 @@ export const clients = [
     name: 'Hopeful Hearts LTD',
     sector: 'Family services',
     logo: '/clients/c-hopeful.png',
-    asked: 'A growing family services team needed company email that authenticates properly instead of landing in spam.',
-    approach: 'Mailboxes set up across Outlook and Google Workspace, with the domain records configured so that mail proves it came from them, plus support as more staff joined.',
-    impact: 'Their mail reaches the families and agencies they send it to instead of going to spam, and a new starter has a working address on day one.',
+    asked: 'A growing family services team was onboarding relief staff by hand, and its company email was not authenticating, so mail to families and agencies went to spam.',
+    approach: 'Mailboxes set up across Outlook and Google Workspace, with the domain records configured so their mail proves it came from them. An agent now assembles each new starter\'s compliance pack and chases what is missing.',
+    impact: 'Their mail reaches the families and agencies they send it to, and a new starter arrives with a working address and their compliance pack already assembled.',
     quote: 'Impressed with the efficiency and professionalism. The entire process was smooth and hassle-free.',
     shots: [
       { src: '/work/hopeful-1.png', alt: 'Hopeful Hearts home page showing their objective and values', label: 'Home' },
       { src: '/work/hopeful-2.png', alt: 'Hopeful Hearts services page listing their five support services', label: 'Services' },
-      { src: '/work/hopeful-3.png', alt: 'Hopeful Hearts agency staffing page setting out the two relief pathways, the qualifications required of each, and the compliance checks carried out before an assignment', label: 'Agency staffing' },
-      { src: '/work/hopeful-4.png', alt: 'The onboarding agent assembling a new starter compliance pack, four checks gathered and two raised for a person to decide on, with sign-off left to the operations lead', label: 'Onboarding agent' },
+      { src: '/work/hopeful-3.png', alt: 'The onboarding agent assembling a new starter compliance pack, four checks gathered and two raised for a person to decide on, with sign-off left to the operations lead', label: 'Onboarding agent' },
     ],
     detail: [
-      'Company email across Outlook and Google Workspace',
-      'Domain records configured for SPF, DKIM and DMARC',
-      'Mailbox provisioning and account creation for the team',
       'An onboarding agent that assembles a new starter’s compliance pack and flags what is missing',
+      'Company email across Outlook and Google Workspace',
+      'Domain records set so their mail proves it came from them',
       'Ongoing support and changes as the team grew',
     ],
   },
@@ -497,9 +449,9 @@ export const clients = [
        Sourced from the 5707x2675 original, not the 1200x509 copy on their own
        site. */
     logo: '/clients/c-peshawari.png',
-    asked: 'A Peshawari charcoal kitchen on Ilford Lane was taking every order by phone, and every caller wanted the same three things first: what is on, what it costs, and are you open.',
-    approach: 'The menu, prices and hours went online as a site fast enough to load on a phone outside the door, marked up so search engines and maps read it as a restaurant rather than a page of text, with ordering and the delivery platforms wired in so a customer can finish the order wherever they already are.',
-    impact: 'The questions that used to be a phone call are answered before anyone dials, orders arrive without tying up someone in the kitchen, and the restaurant turns up in local search for the food it actually cooks.',
+    asked: 'A Peshawari charcoal kitchen on Ilford Lane was taking every order by phone, and every caller wanted the same three things: what is on, what it costs, and are you open.',
+    approach: 'The menu, prices and hours went online, on a site fast enough to load on a phone outside the door, marked up so search and maps read it as a restaurant. An agent now takes the order itself, on whichever platform it arrives.',
+    impact: 'The questions that used to be a phone call are answered before anyone dials, and orders arrive without tying up someone in the kitchen.',
     /* ⚠️ NO TESTIMONIAL YET. Not an oversight and not a slot to fill: see the
        header above. There IS a real client here to ask, unlike Provena, so this
        becomes a string the moment they send one. Until then the panel renders
@@ -508,16 +460,8 @@ export const clients = [
     shots: [
       { src: '/work/peshawari-1.png', alt: 'Peshawri Chapli Kebab home page over a charcoal-grilled kebab photograph', label: 'Home' },
       { src: '/work/peshawari-2.png', alt: 'Peshawri Chapli Kebab menu page listing dishes and prices in English and Urdu', label: 'Menu' },
-      { src: '/work/peshawari-3.png', alt: 'The about page, headed "Eleven things, cooked properly", explaining the chapli kebab beside a photograph of one', label: 'About' },
-      /* ⚠️ This capture contains the client's own "Delivery platform links to
-         be added" placeholder, plainly readable. It is the truth of the page
-         today and it agrees with the note under `detail` below, but it is an
-         unfinished state of theirs sitting on our showcase. Recapture once the
-         links go live. */
-      { src: '/work/peshawari-4.png', alt: 'The find us page showing the Ilford Lane address, a click-to-call button and the opening hours for every day of the week', label: 'Find us' },
-      /* The one drawn screen among four photographs of their live site. Marked
-         as a mockup in tools/mockups/peshawari.html and invented throughout. */
-      { src: '/work/peshawari-5.png', alt: 'The ordering agent showing orders arriving from the website and three delivery platforms into one queue, with the menu and prices held in step across all of them', label: 'Ordering agent' },
+      /* The one drawn screen among two photographs of their live site. */
+      { src: '/work/peshawari-3.png', alt: 'The ordering agent showing orders arriving from the website and three delivery platforms into one queue, with the menu and prices held in step across all of them', label: 'Ordering agent' },
     ],
     /* ⚠️ Mixed. Verified on the live site: the eleven priced dishes, the
        bilingual menu, the schema.org Restaurant markup, the static Vercel
@@ -529,14 +473,10 @@ export const clients = [
        restaurant is only on some of them, cut the list rather than keeping a
        name that isn't live. */
     detail: [
-      'Online ordering for collection and delivery',
-      'Deliveroo, Just Eat and Uber Eats wired in alongside direct orders',
-      'Eleven dishes priced in full, in English and Urdu',
-      'Marked up as a restaurant for search and maps: address, hours, cuisine, price range',
-      'Click-to-call kept in a sticky header for the customers who still ring',
       'An ordering agent that takes the order on whichever platform the customer is already in',
-      'Menu and prices kept in step across every platform without anyone retyping them',
-      'Statically built and served from the edge, so it opens instantly on a phone',
+      'Menu and prices kept in step across every platform, with nobody retyping them',
+      'Online ordering for collection and delivery, delivery platforms wired in',
+      'Eleven dishes priced in full, in English and Urdu',
     ],
   },
 ] as const;
