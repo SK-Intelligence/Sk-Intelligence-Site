@@ -7,7 +7,7 @@ import { site } from '@/lib/content';
 /**
  * Calendly, inline, in place of the contact form.
  *
- * Three deviations from the snippet Calendly gives you, all deliberate:
+ * Four deviations from the snippet Calendly gives you, all deliberate:
  *
  *   1. `min-width:320px` is dropped. Inside this container a 320px floor is
  *      wider than the content box at a 320px viewport, which pushes the whole
@@ -22,6 +22,9 @@ import { site } from '@/lib/content';
  *      opaque colour that fill resolves to over the panel, matched by eye
  *      against a screenshot. These cross an iframe boundary as URL parameters
  *      and so cannot read a CSS variable: if the palette moves, move them.
+ *   4. Their GDPR banner is suppressed, because it opens over the calendar and
+ *      hides the dates. See the note on THEME below for what that does and
+ *      does not mean.
  *
  * Fallbacks matter more here than they did for the form, because a form that
  * fails still shows its fields whereas a widget that fails shows an empty
@@ -31,8 +34,38 @@ import { site } from '@/lib/content';
 
 /* Bare hex, as Calendly wants them. Background is the form's translucent fill
    resolved over the panel; text and primary are --band-ink and --band-accent,
-   the same two the form uses on this ground. */
-const THEME = 'background_color=332C24&text_color=F5F1E8&primary_color=CDAC82';
+   the same two the form uses on this ground.
+
+   hide_gdpr_banner is Calendly's own embed parameter and it is here because
+   their consent banner opens over the calendar and covers the dates, which is
+   the one thing the widget exists to show. It cannot be styled or dismissed
+   from our side: it renders inside their cross-origin iframe, so no CSS or
+   script of ours reaches it. This parameter is the only lever there is.
+
+   ⚠️ It only works alongside `embed_domain` and `embed_type`, which widget.js
+   appends itself when it mounts the iframe. Calendly ignores the flag without
+   them. Two consequences worth knowing before anyone "tidies" this up:
+
+     - It cannot be verified from a file:// page. Test it there and the banner
+       still appears, because embed_domain resolves to nothing and the whole
+       parameter is dropped. That false negative cost a round trip here.
+     - It needs a settled widget to observe. The banner arrives seconds after
+       the calendar paints, so a screenshot taken while the days are still
+       loading shows no banner whether or not this flag is doing anything.
+
+   Verify on a real http origin, and wait for the bookable days to highlight
+   before you believe the result.
+
+   Note what it does and does not do. It suppresses the banner; it does not
+   stop Calendly setting cookies, and Calendly documents it for embedders who
+   take on consent themselves. This site currently shows no consent UI of its
+   own, so if one is ever added, Calendly belongs behind it. */
+const THEME = [
+  'background_color=332C24',
+  'text_color=F5F1E8',
+  'primary_color=CDAC82',
+  'hide_gdpr_banner=1',
+].join('&');
 const BOOKING_URL = 'https://calendly.com/sk-intelligence-info/30min';
 
 export function BookingEmbed() {

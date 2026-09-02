@@ -18,17 +18,29 @@ export const site = {
      day a display address and a routing address diverge again, they are here. */
   emailDisplay: 'info@sk-intelligence.co',
   mailto: 'info@sk-intelligence.co',
+  /* One row, one link per platform. It used to carry both founders' personal
+     LinkedIn profiles and no company page; those two profiles are still one
+     click away on the founder cards, which is where a reader looking for a
+     person goes anyway, so the row now points at the company.
+
+     Every URL here was loaded before it was committed. A dead social link is
+     worse than a missing one. Two traps met while doing it:
+
+       - The LinkedIn company page must be the plain /company/<id>/ form. The
+         admin URL (/admin/page-posts/published/) is what you get from your own
+         address bar while signed in as a page admin, and it sends everyone
+         else to a login wall.
+       - No `locale=en_GB` on the Facebook profile. It pins the interface to
+         British English for every visitor regardless of where they are, and
+         the page resolves identically without it. */
   socials: [
-    { label: 'Sameer Gul on LinkedIn', href: 'https://www.linkedin.com/in/sameer-g-4728a3260/', icon: 'linkedin' },
-    { label: 'Kenneth Obanor on LinkedIn', href: 'https://www.linkedin.com/in/kenneth-obanor-060609275/', icon: 'linkedin' },
-    { label: 'Facebook', href: 'https://facebook.com/profile.php?id=61553097449850', icon: 'facebook' },
-    /* These two still say skwebminds because that is the handle the accounts
-       are actually at. The old name is gone from the site's own copy, but a
-       social URL is not copy: pointing them at /skintelligence before those
-       handles exist turns two working links into two 404s. Change them here
-       when the accounts are renamed, not before. */
-    { label: 'Instagram', href: 'https://instagram.com/skwebminds', icon: 'instagram' },
-    { label: 'X (Twitter)', href: 'https://twitter.com/skwebminds', icon: 'x' },
+    { label: 'SK Intelligence on LinkedIn', href: 'https://www.linkedin.com/company/101373494/', icon: 'linkedin' },
+    { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61553097449850', icon: 'facebook' },
+    { label: 'Instagram', href: 'https://www.instagram.com/sk.intelligence.co/', icon: 'instagram' },
+    /* X is still skwebminds because that is the handle the account is actually
+       at; the Instagram account has since been renamed, this one has not. A
+       social URL is not copy, so it moves when the handle moves, not before. */
+    { label: 'X (Twitter)', href: 'https://x.com/skwebminds', icon: 'x' },
   ],
 } as const;
 
