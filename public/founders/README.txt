@@ -24,9 +24,9 @@ Current state
     kenneth.jpg     present (288x288, metadata stripped)
     sameer.jpg      present (288x288, metadata stripped)
 
-Both are cropped from graduation photos at matching tightness: face roughly 44%
-of the frame height, head and shoulders, gown visible. Keep that ratio if either
-is ever replaced.
+Both are studio-style headshots on a plain light wall (replaced 2026-10-08),
+cropped at matching tightness: head roughly 58% of the frame height, head and
+shoulders. Keep that ratio if either is ever replaced.
 
 Strip EXIF first
 ----------------

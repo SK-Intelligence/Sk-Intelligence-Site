@@ -44,7 +44,9 @@ import { CaseDialog } from './CaseDialog';
  * One set of numbers serves three different mark sizes — a captioned desktop
  * mark, a captioned phone mark, and the bare logo below 361px where a caption
  * does not fit — so the search scores all three together and takes the worst
- * pair across the lot. It clears by 4.8px at the tightest. Change any size and
+ * pair across the lot. Resized 2026-10-08 (bigger chips, less padding, a
+ * 580px desktop floor); the rotation-proof clearance is 1.5px at 320px and
+ * 2.5px or more everywhere else. Change any size and
  * re-run it; a value tuned for one will quietly collide in another.
  *
  * This is tuned for six marks with the wide one last, not solved in general. A

@@ -544,7 +544,7 @@
      scrollable overflow, which is 41% wider than the field actually is. */
   .orbit-clip{
     overflow:hidden;
-    width:100%; max-width:clamp(520px, 46vw, 600px);
+    width:100%; max-width:clamp(580px, 48vw, 640px);
     margin:8px auto 0;
   }
   .tabs.is-orbit{
@@ -554,7 +554,7 @@
        does not look broken, it just quietly eats that neighbour's clicks. The
        ceiling came down from 520px once the offsets were normalised: the marks
        now reach all four edges, so a bigger field only spreads them thinner. */
-    width:100%; max-width:clamp(520px, 46vw, 600px);
+    width:100%; max-width:clamp(580px, 48vw, 640px);
     /* aspect-ratio, not a matching height. The two were the same expression,
        which is only the same number while nothing else constrains the width —
        and at 320px the container's padding caps the field at 280 while the
@@ -598,15 +598,18 @@
      quietly cropped. Change the amplitudes there and this is hypot of the two,
      not a copy of one. */
   .tabs.is-orbit .tab{
-    --hw:58px; --hh:60px; --rad:60px; --d:5px;
+    --hw:62px; --hh:65px; --rad:65px; --d:5px;
     position:absolute;
     left:calc(50% + var(--ox) * (50% - var(--rad) - var(--d)) - var(--hw));
     top: calc(50% + var(--oy) * (50% - var(--rad) - var(--d)) - var(--hh));
     opacity:1;
   }
-  .tabs.is-orbit .tab[data-wide]{ --hw:79px; --rad:79px; }
-  .tabs.is-orbit .tab .client-chip{ width:76px; height:76px; padding:14px; }
-  .tabs.is-orbit .tab[data-wide] .client-chip{ width:140px; }
+  .tabs.is-orbit .tab[data-wide]{ --hw:90px; --rad:90px; }
+  .tabs.is-orbit .tab .client-chip{ width:92px; height:92px; padding:11px; }
+  .tabs.is-orbit .tab[data-wide] .client-chip{ width:168px; }
+  /* The drawn mark fills its chip the way the logo <img>s do, rather than
+     sitting at the 30px it is rendered at, which read as a dot in a 92px chip. */
+  .tabs.is-orbit .tab .client-mark{ width:100%; height:100%; }
   /* The drift wrapper. It carries nothing of its own — it exists so that the
      tween writing a transform every frame and the rules below writing one are
      not aimed at the same element. Both were on the chip once, and the inline
@@ -633,8 +636,8 @@
      the caption gives every mark identical extents, so the geometry has two
      numbers to work with instead of twelve, and the captions line up with each
      other instead of sitting at six heights. */
-  .tabs.is-orbit .tab .chip-drift{ width:108px; }
-  .tabs.is-orbit .tab[data-wide] .chip-drift{ width:150px; }
+  .tabs.is-orbit .tab .chip-drift{ width:116px; }
+  .tabs.is-orbit .tab[data-wide] .chip-drift{ width:176px; }
   .tabs.is-orbit .tab .client-tag{
     position:static; width:auto; height:auto; min-height:2.5em;
     margin:9px auto 0; padding:0;
@@ -1688,12 +1691,14 @@
        field, smaller marks, and the wide wordmark shrinks with the rest — at
        this size it is still the widest thing in the field, so the containment
        maths above is doing real work here and not just in theory. */
-    .orbit-clip{ max-width:min(92vw, 330px); }
-    .tabs.is-orbit{ max-width:min(92vw, 330px); }
-    .tabs.is-orbit .tab{ --hw:38px; --hh:36px; --rad:38px; }
-    .tabs.is-orbit .tab[data-wide]{ --hw:46px; --rad:46px; }
-    .tabs.is-orbit .tab .client-chip{ width:40px; height:40px; padding:8px; }
-    .tabs.is-orbit .tab[data-wide] .client-chip{ width:66px; }
+    .orbit-clip{ max-width:min(92vw, 340px); }
+    .tabs.is-orbit{ max-width:min(92vw, 340px); }
+    /* 46px chips with 5px of padding: past the 44px touch-target minimum,
+       and a 36px logo where 40px chips with 8px padding left 24px. */
+    .tabs.is-orbit .tab{ --hw:36px; --hh:38px; --rad:38px; }
+    .tabs.is-orbit .tab[data-wide]{ --hw:43px; --rad:43px; }
+    .tabs.is-orbit .tab .client-chip{ width:46px; height:46px; padding:5px; }
+    .tabs.is-orbit .tab[data-wide] .client-chip{ width:73px; }
     /* Smaller and tighter. Six marks and a double-width wordmark already share a
        280px field at the narrowest, and every pixel a name adds is paid for
        twice over in the gap between two of them. */
@@ -1720,6 +1725,6 @@
     .tabs.is-orbit .tab[data-wide] .chip-drift{ width:auto; }
     .tabs.is-orbit .tab{ --hw:30px; --hh:30px; --rad:30px; }
     .tabs.is-orbit .tab[data-wide]{ --hw:48px; --rad:48px; }
-    .tabs.is-orbit .tab .client-chip{ width:52px; height:52px; padding:9px; }
+    .tabs.is-orbit .tab .client-chip{ width:52px; height:52px; padding:6px; }
     .tabs.is-orbit .tab[data-wide] .client-chip{ width:88px; }
   }
