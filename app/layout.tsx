@@ -11,7 +11,7 @@ import { HashScroll } from '@/components/HashScroll';
 import { site } from '@/lib/content';
 
 /** Set NEXT_PUBLIC_SITE_URL once the domain is live so og:url/canonical resolve. */
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://skintelligence.com';
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.sk-intelligence.co';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
