@@ -1453,7 +1453,12 @@ head('contact — the blanks');
     const off = getComputedStyle(document.getElementById('brief-name').closest('.blank')).backgroundSize;
     return { on, off };
   });
-  ok(/2\.5px/.test(ul.on) && !/2\.5px/.test(ul.off), `the focused blank's rule thickens (${ul.on} vs ${ul.off})`);
+  /* The rule's thickness is the last length in background-size. Read as a
+     number, not matched as text: the size transitions, and a reading taken a
+     frame early comes back as 2.49983px, which a /2\.5px/ match fails while
+     the rule on screen is already right. */
+  const rule = (size) => parseFloat(size.trim().split(/\s+/).pop());
+  ok(rule(ul.on) >= 2.4 && rule(ul.off) < 2, `the focused blank's rule thickens (${ul.on} vs ${ul.off})`);
 
   /* Focus has to be unmistakable in every state, including after a failed
      submit when the blank is also marked invalid: a ring around the blank, not
@@ -1469,7 +1474,7 @@ head('contact — the blanks');
     const cs = getComputedStyle(el);
     return { id: document.activeElement.id, invalid: el.hasAttribute('data-invalid'), w: parseFloat(cs.outlineWidth), style: cs.outlineStyle, size: cs.backgroundSize };
   });
-  ok(ring.invalid && ring.w >= 2 && ring.style === 'solid' && /2\.5px/.test(ring.size), `an invalid blank that has focus shows a ring and the thick rule (${JSON.stringify(ring)})`);
+  ok(ring.invalid && ring.w >= 2 && ring.style === 'solid' && rule(ring.size) >= 2.4, `an invalid blank that has focus shows a ring and the thick rule (${JSON.stringify(ring)})`);
   const noteRing = await p.evaluate(() => { const t = document.querySelector('.brief-note textarea'); t.focus(); return parseFloat(getComputedStyle(t).outlineWidth); });
   ok(noteRing >= 2, `the note shows a focus ring too (${noteRing}px)`);
 
