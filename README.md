@@ -111,18 +111,31 @@ re-skin is that block and nothing else.
 
 ## Contact form
 
-`POST /api/contact` validates, rate-limits (5 per 10 min per IP, in-memory) and
-carries a honeypot field. Delivery is **not configured** — it logs server-side and
-returns `delivered: false` rather than pretending to have sent. To turn it on:
+The contact panel offers two ways in: the Calendly widget (default) and
+"Send a brief", a sentence the visitor completes (`components/ContactPanel.tsx`,
+`BriefForm.tsx`; the choices live in `lib/brief.ts`).
+
+`POST /api/contact` accepts only JSON from this site's own pages (anything else,
+or a cross-site `Sec-Fetch-Site`, gets 403), validates, rate-limits (5 per 10 min
+per IP, in-memory) and carries a honeypot field. The browser sends option ids;
+the server writes the email from the labels in `lib/brief.ts`.
+
+With no mail provider configured it does not pretend to have sent: outside
+production it returns `delivered: false` (the form then tells the visitor it did
+not go through and offers a mailto), and when `VERCEL_ENV=production` it returns
+503. To turn delivery on:
 
 ```
 RESEND_API_KEY=...      # or swap the `deliver()` body for another provider
-CONTACT_TO=...
+CONTACT_TO=...         # the one primary recipient
+CONTACT_CC=...         # optional, comma-separated; sent as cc, reply_to stays the visitor
 CONTACT_FROM=...        # optional
 NEXT_PUBLIC_SITE_URL=https://your-domain   # makes og:url / canonical resolve
 ```
 
-The form degrades: the mailto link next to it always works, including with JS off.
+With JS off the switch and the form do not appear; the booking fallback link and
+the mailto line are the way in. `tests/resend-stub.cjs` is used by the e2e suite
+to observe what would be sent to Resend; it is not part of the site.
 
 ## Things that will bite you if you change them
 

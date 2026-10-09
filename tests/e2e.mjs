@@ -13,6 +13,11 @@
  * site — install it ad hoc: npm i -D playwright && npx playwright install chromium
  */
 import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
+import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const BASE = process.env.E2E_BASE ?? 'http://127.0.0.1:8123';
 const PHONES = [320, 375, 390, 430];
@@ -1161,23 +1166,634 @@ head('navigation');
   await p.close();
 }
 
-// ─────────────────────────────────────────── contact API
-head('contact endpoint');
+// ─────────────────────────────────────────── contact: book a call / send a brief
+/* The contact panel carries two ways in. Booking is the default and stays the
+   primary path; the brief is a sentence the visitor completes. These checks
+   cover the endpoint's gates, the switch, the blanks, both halves of
+   validation, real submissions, and the JS-off page.
+
+   Nothing here posts a submission to the server under test. That server may be
+   running with real mail keys from a developer's environment, and a test run
+   must not send anyone an email. Instead the suite starts its own throwaway
+   `next start` processes on spare ports, each with an environment spelled out
+   in full (empty strings rather than absent variables, so no .env file can leak
+   in):
+
+     OK    fake keys, plus a preload that answers Resend locally and records the
+           request body (tests/resend-stub.cjs): the "it was sent" path.
+     NONE  no keys, outside production: the route answers `delivered: false`.
+     PROD  no keys, VERCEL_ENV=production: the route answers 503.
+
+   The route rate-limits per address (5 per 10 minutes) and takes the address
+   from X-Forwarded-For. On Vercel that header is overwritten by the platform,
+   so it can be trusted there; anywhere else a client can set it, and this suite
+   does, to give every request that must succeed its own bucket. */
+const RESEND_DIR = mkdtempSync(join(tmpdir(), 'resend-'));
+const freePort = () => new Promise((res, rej) => {
+  const s = createServer();
+  s.once('error', rej);
+  s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => res(port)); });
+});
+const startServer = async (env = {}) => {
+  const port = await freePort();
+  const log = join(RESEND_DIR, `${port}.log`);
+  const child = spawn('npx', ['next', 'start', '-p', String(port)], {
+    stdio: 'ignore', detached: true,
+    env: {
+      ...process.env, PORT: String(port),
+      RESEND_API_KEY: '', CONTACT_TO: '', CONTACT_CC: '', CONTACT_FROM: '', VERCEL_ENV: '',
+      RESEND_STUB_LOG: log, NODE_OPTIONS: `--require ${resolve('tests/resend-stub.cjs')}`,
+      ...env,
+    },
+  });
+  const base = `http://127.0.0.1:${port}`;
+  for (let i = 0; i < 80; i++) {
+    if (await fetch(base + '/').then((r) => r.ok, () => false)) break;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return {
+    base,
+    /** Every request body the stub has seen, parsed. */
+    sent: () => (existsSync(log) ? readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []),
+    stop: () => { try { process.kill(-child.pid, 'SIGTERM'); } catch {} },
+  };
+};
+const KEYS = { RESEND_API_KEY: 'test-key', CONTACT_TO: 'primary@example.test' };
+const [OK, NONE, PROD] = await Promise.all([startServer(KEYS), startServer(), startServer({ VERCEL_ENV: 'production' })]);
+
+const RUN = Math.floor(Math.random() * 200) + 20;
+let ipN = 0;
+const freshIp = () => `203.0.${RUN}.${(++ipN % 250) + 1}`;
+/* Route every call to /api/contact through a header that gives it its own
+   address, optionally rewriting the body on the way. It still reaches the real
+   handler. */
+const viaOwnIp = (p, rewrite) => p.route('**/api/contact', (route) => {
+  const req = route.request();
+  const headers = { ...req.headers(), 'x-forwarded-for': freshIp() };
+  route.continue(rewrite ? { headers, postData: rewrite(req.postDataJSON()) } : { headers });
+});
+const openBrief = async (p) => {
+  await p.evaluate(() => document.querySelector('#contact').scrollIntoView({ behavior: 'instant' }));
+  await p.waitForTimeout(400);
+  /* A click that lands before hydration has nothing listening, which is the
+     page's normal behaviour rather than a fault, so retry until it takes. */
+  for (let i = 0; i < 4 && !(await p.locator('.brief').isVisible()); i++) {
+    await p.click('#contact-tab-brief');
+    await p.waitForTimeout(700);
+  }
+  await p.waitForSelector('.brief', { state: 'visible' });
+};
+const fillBrief = async (p, o = {}) => {
+  const v = { sector: 'restaurant', goal: 'bookings', timing: 'quarter', name: 'Sameer Gul', email: 'sam@example.com', ...o };
+  if (v.sector) await p.selectOption('#brief-sector', v.sector);
+  if (v.goal) await p.selectOption('#brief-goal', v.goal);
+  if (v.timing) await p.selectOption('#brief-timing', v.timing);
+  if (v.name) await p.fill('#brief-name', v.name);
+  if (v.email) await p.fill('#brief-email', v.email);
+};
+const postJson = (p, base, payload, headers = {}) => p.evaluate(async ({ base, payload, headers, ip }) => {
+  const r = await fetch(base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': ip, ...headers }, body: JSON.stringify(payload) });
+  return { status: r.status, body: await r.json().catch(() => null) };
+}, { base, payload, headers, ip: freshIp() });
+const BRIEF = { name: 'Test', email: 't@example.com', sector: 'restaurant', goal: 'bookings', timing: 'asap' };
+
+head('contact — endpoint gates');
 {
   const p = await desktop();
-  await p.goto(BASE + '/', { waitUntil: 'load' }); // fetch needs a real origin
-  const good = await p.evaluate(async (base) => {
-    const r = await fetch(base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Test', email: 't@example.com', message: 'A test enquiry with enough length.' }) });
-    return { status: r.status, body: await r.json() };
-  }, BASE);
-  ok(good.status === 200 && good.body.ok, `valid submission accepted (${good.status})`);
-  const bad = await p.evaluate(async (base) => {
-    const r = await fetch(base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: '', email: 'nope', message: 'hi' }) });
-    return { status: r.status, body: await r.json() };
-  }, BASE);
-  ok(bad.status === 400 && !!bad.body.error, `invalid submission rejected (${bad.status}: ${bad.body.error})`);
+  await p.goto(OK.base + '/', { waitUntil: 'load' }); // fetch needs a real origin
+  const good = await postJson(p, OK.base, BRIEF);
+  ok(good.status === 200 && good.body?.ok && good.body.delivered === true, `a same-origin JSON brief is accepted and delivered (${good.status})`);
+  const bad = await postJson(p, OK.base, { name: '', email: 'nope', sector: 'restaurant' });
+  ok(bad.status === 400 && !!bad.body?.error, `an incomplete brief is rejected (${bad.status}: ${bad.body?.error})`);
+
+  const before = OK.sent().length;
+  /* A cross-site <form enctype="text/plain"> or a no-cors fetch arrives as
+     text/plain, and the browser labels it cross-site. */
+  const plain = await p.evaluate(async ({ base, body }) => {
+    const r = await fetch(base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body });
+    return r.status;
+  }, { base: OK.base, body: JSON.stringify(BRIEF) });
+  ok(plain === 403, `a text/plain POST is refused (${plain})`);
+  /* Sec-Fetch-* is a forbidden header name in page scripts, so the browser
+     would overwrite it. Sent from outside a page to prove the server's side. */
+  const crossRaw = await fetch(OK.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Sec-Fetch-Site': 'cross-site', 'X-Forwarded-For': freshIp() }, body: JSON.stringify(BRIEF) });
+  ok(crossRaw.status === 403, `a JSON POST marked sec-fetch-site: cross-site is refused (${crossRaw.status})`);
+  const sameSite = await fetch(OK.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Sec-Fetch-Site': 'same-site', 'X-Forwarded-For': freshIp() }, body: JSON.stringify(BRIEF) });
+  ok(sameSite.status === 403, `sec-fetch-site: same-site is refused too (${sameSite.status})`);
+  const noHeader = await fetch(OK.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': freshIp() }, body: JSON.stringify(BRIEF) });
+  ok(noHeader.status === 200, `a non-browser client with no sec-fetch-site header still works (${noHeader.status})`);
+  ok(OK.sent().length === before + 1, `none of the refused requests reached the mail provider (${OK.sent().length - before} sent)`);
+
+  for (const [label, raw] of [['null', 'null'], ['an array', '[1,2]'], ['a number', '7'], ['a string', '"hi"'], ['malformed JSON', '{nope']]) {
+    const r = await fetch(OK.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': freshIp() }, body: raw });
+    ok(r.status === 400, `a body of ${label} is a 400, not a 500 (${r.status})`);
+  }
+
+  // invisible and bidi characters never reach the email
+  const before2 = OK.sent().length;
+  const sneaky = await postJson(p, OK.base, { ...BRIEF, name: 'Ann\u202Ee\u200Bve\u2066', note: 'line one\u202E\u200B\nline two\u0000\u2028', sector: 'other', sector_other: 'ba\u200Dk\u202Eery' });
+  const mail = OK.sent()[before2];
+  ok(sneaky.status === 200 && mail && !/[\p{Cf}\p{Cc}\u2028\u2029]/u.test(mail.text.replace(/\n/g, '')) && /Ann e ve/.test(mail.text) && /line one\nline two/.test(mail.text),
+    `bidi, zero-width and control characters are stripped from what is emailed (${JSON.stringify(mail?.text)})`);
+
+  const cases = [
+    ['unknown sector id', { ...BRIEF, sector: 'astronaut' }],
+    ['unknown goal id', { ...BRIEF, goal: '<script>' }],
+    ['unknown timing id', { ...BRIEF, timing: 'yesterday' }],
+    ['a label sent in place of an id', { ...BRIEF, sector: 'garage or tyre shop' }],
+    ['other with no words', { ...BRIEF, sector: 'other' }],
+    ['other with one character', { ...BRIEF, goal: 'other', goal_other: 'a' }],
+    ['other with only invisible characters', { ...BRIEF, sector: 'other', sector_other: '\n\t\u0000\u200B ' }],
+    ['missing timing', { ...BRIEF, timing: undefined }],
+    ['bad email', { ...BRIEF, email: 'nope' }],
+    ['non-string fields', { ...BRIEF, name: { a: 1 }, sector: ['restaurant'] }],
+    ['the retired name, email, message shape', { name: 'Test', email: 't@example.com', message: 'A test enquiry with enough length.' }],
+  ];
+  for (const [label, payload] of cases) {
+    const r = await postJson(p, OK.base, payload);
+    ok(r.status === 400 && /^Please include /.test(r.body?.error || ''), `rejected: ${label} (${r.status} ${r.body?.error})`);
+  }
+  const other = await postJson(p, OK.base, { ...BRIEF, sector: 'other', sector_other: 'bakery', goal: 'other', goal_other: 'tidy the stock sheets', note: 'x'.repeat(5000) });
+  ok(other.status === 200 && OK.sent().at(-1).text.length < 1700, `"something else" with its own words, and an oversized note, is accepted and capped (${other.status})`);
+  await p.close();
+
+  // no provider configured
+  const q = await desktop();
+  await q.goto(NONE.base + '/', { waitUntil: 'load' });
+  const none = await postJson(q, NONE.base, BRIEF);
+  ok(none.status === 200 && none.body.delivered === false, `no mail provider outside production: ok but delivered false (${none.status} ${none.body?.delivered})`);
+  await q.close();
+  const r = await postRaw(PROD);
+  ok(r.status === 503 && /email us directly/.test(r.body?.error || ''), `no mail provider in production: 503 with the email-us message (${r.status} ${r.body?.error})`);
+}
+async function postRaw(srv) {
+  const r = await fetch(srv.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': freshIp() }, body: JSON.stringify(BRIEF) });
+  return { status: r.status, body: await r.json().catch(() => null) };
+}
+
+head('contact — switch between booking and brief');
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  const d = await p.evaluate(() => {
+    const t = (id) => document.getElementById(id);
+    const vis = (el) => !!el && el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
+    return {
+      tabs: [...document.querySelectorAll('.cta-switch [role=tab]')].map((e) => `${e.textContent}:${e.getAttribute('aria-selected')}:${e.tabIndex}`).join(' '),
+      list: document.querySelector('.cta-switch').getAttribute('role'),
+      listLabel: document.querySelector('.cta-switch').getAttribute('aria-label'),
+      book: vis(t('contact-panel-book')), brief: vis(t('contact-panel-brief')),
+      widget: vis(document.querySelector('.calendly-inline-widget')),
+      formMounted: document.querySelectorAll('.brief').length,
+      controls: ['book', 'brief'].map((k) => `${t('contact-tab-' + k).getAttribute('aria-controls')}>${t('contact-panel-' + k).getAttribute('aria-labelledby')}`).join(' '),
+    };
+  });
+  ok(d.tabs === 'Book a call:true:0 Send a brief:false:-1', `default: booking is selected, roving tabindex set (${d.tabs})`);
+  ok(d.list === 'tablist' && !!d.listLabel, `the switch is a labelled tablist ("${d.listLabel}")`);
+  ok(d.book && d.widget && !d.brief, 'default: the Calendly widget shows and the brief does not');
+  ok(d.formMounted === 0, `the form is not mounted until it is asked for (${d.formMounted})`);
+  ok(d.controls === 'contact-panel-book>contact-tab-book contact-panel-brief>contact-tab-brief', `tabs and panels point at each other (${d.controls})`);
+  const homeH = await p.evaluate(() => document.documentElement.scrollHeight);
+
+  /* Tag the real iframe node before leaving it. Finding "an element" afterwards
+     proves nothing, since the wrapper div is always there; the same tagged
+     iframe still being in the document proves the widget was not rebuilt. */
+  const framed = await p.waitForSelector('.calendly-inline-widget iframe', { timeout: 20000 }).then(() => true, () => false);
+  ok(framed, 'the Calendly iframe is in the page');
+  await p.evaluate(() => { document.querySelector('.calendly-inline-widget iframe').dataset.probe = 'same-node'; });
+
+  await p.evaluate(() => document.querySelector('#contact-tab-book').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await p.waitForTimeout(300);
+  const topBefore = await p.evaluate(() => Math.round(document.querySelector('.cta-switch').getBoundingClientRect().top));
+  await p.click('#contact-tab-brief');
+  await p.waitForSelector('.brief', { state: 'visible' });
+  await p.waitForTimeout(700);
+  const s = await p.evaluate(() => ({
+    sel: document.getElementById('contact-tab-brief').getAttribute('aria-selected'),
+    book: document.getElementById('contact-panel-book').hidden,
+    brief: document.getElementById('contact-panel-brief').hidden,
+    top: Math.round(document.querySelector('.cta-switch').getBoundingClientRect().top),
+    blanks: document.querySelectorAll('.brief .blank').length,
+  }));
+  ok(s.sel === 'true' && s.book && !s.brief, 'clicking "Send a brief" shows the form and hides booking');
+  ok(s.blanks === 5, `the sentence has five blanks (${s.blanks})`);
+  ok(Math.abs(s.top - topBefore) <= 2, `the switch does not move in the viewport when the panel changes (${topBefore} to ${s.top})`);
+
+  // keyboard: arrows, Home, End, with focus following selection
+  await p.focus('#contact-tab-brief');
+  const seq = [];
+  for (const k of ['ArrowLeft', 'ArrowRight', 'Home', 'End', 'ArrowDown']) {
+    await p.keyboard.press(k);
+    seq.push(await p.evaluate(() => `${document.activeElement.id.replace('contact-tab-', '')}:${document.activeElement.getAttribute('aria-selected')}`));
+  }
+  ok(seq.join(' ') === 'book:true brief:true book:true brief:true book:true', `arrow keys, Home and End move and select (${seq.join(' ')})`);
+  await p.keyboard.press('End');
+  await p.keyboard.press('Tab');
+  const afterTab = await p.evaluate(() => document.activeElement.id);
+  ok(afterTab === 'brief-sector', `Tab from the switch lands on the first blank (${afterTab})`);
+  await p.click('#contact-tab-book');
+  await p.waitForTimeout(500);
+  const back = await p.evaluate(() => ({ h: document.documentElement.scrollHeight, same: document.querySelector('.calendly-inline-widget iframe')?.dataset.probe === 'same-node' }));
+  ok(Math.abs(back.h - homeH) <= 2, `switching back restores the page height (${homeH} to ${back.h})`);
+  ok(back.same, 'switching back finds the very same Calendly iframe node, not a rebuilt one');
+  await p.close();
+
+  /* The page is last above the footer, so on a tall screen at the very bottom
+     the shorter panel shrinks the document and the browser clamps the scroll
+     position, which moves the switch down. No scrolling can undo that (there is
+     nowhere further to scroll), so what is asserted is the part that matters:
+     the switch is still in view and still the focused control afterwards. */
+  const tall = await browser.newPage({ viewport: { width: 1440, height: 2400 } });
+  await tall.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(tall, 2500);
+  await tall.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await tall.waitForTimeout(400);
+  await tall.click('#contact-tab-brief');
+  await tall.waitForSelector('.brief', { state: 'visible' });
+  await tall.waitForTimeout(500);
+  const clamp = await tall.evaluate(() => {
+    const r = document.querySelector('.cta-switch').getBoundingClientRect();
+    return { inView: r.top >= 0 && r.bottom <= innerHeight, atBottom: Math.abs(scrollY - (document.documentElement.scrollHeight - innerHeight)) < 2 };
+  });
+  ok(clamp.inView && clamp.atBottom, `at the page bottom on a tall screen the shorter panel clamps the scroll and the switch stays in view (${JSON.stringify(clamp)})`);
+  await tall.close();
+}
+
+head('contact — the blanks');
+{
+  const p = await desktop();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p);
+  await openBrief(p);
+  const labels = await p.evaluate(() => [...document.querySelectorAll('.brief select, .brief input:not(.brief-trap), .brief textarea')]
+    .map((e) => `${e.id}=${(e.labels?.[0]?.textContent || '').trim()}`));
+  ok(labels.length === 6 && labels.every((l) => !l.endsWith('=')), `every blank has a label (${labels.join(' | ')})`);
+  const trap = await p.evaluate(() => { const t = document.querySelector('.brief-trap'); return t.tabIndex === -1 && t.getAttribute('aria-hidden') === 'true'; });
+  ok(trap, 'the honeypot is out of the tab order and hidden from assistive tech');
+
+  const w = (id) => p.evaluate((i) => Math.round(document.getElementById(i).closest('.blank').getBoundingClientRect().width), id);
+  const w0 = await w('brief-name');
+  await p.fill('#brief-name', 'Alexandra Montgomery-Ellison');
+  const w1 = await w('brief-name');
+  await p.fill('#brief-name', 'Al');
+  const w2 = await w('brief-name');
+  ok(w1 > w0 + 40 && w2 < w1 - 40, `a text blank grows and shrinks with what is typed (${w0} to ${w1} to ${w2}px)`);
+  await p.selectOption('#brief-goal', 'bookings');
+  const g0 = await w('brief-goal');
+  await p.selectOption('#brief-goal', 'internal');
+  const g1 = await w('brief-goal');
+  ok(g1 > g0 + 10, `a list blank is as wide as the option in it (${g0} to ${g1}px)`);
+
+  // the underline marks where you are
+  await p.focus('#brief-email');
+  await p.waitForTimeout(450);
+  const ul = await p.evaluate(() => {
+    const on = getComputedStyle(document.getElementById('brief-email').closest('.blank')).backgroundSize;
+    const off = getComputedStyle(document.getElementById('brief-name').closest('.blank')).backgroundSize;
+    return { on, off };
+  });
+  ok(/2\.5px/.test(ul.on) && !/2\.5px/.test(ul.off), `the focused blank's rule thickens (${ul.on} vs ${ul.off})`);
+
+  /* Focus has to be unmistakable in every state, including after a failed
+     submit when the blank is also marked invalid: a ring around the blank, not
+     just the rule. Measured as a real outline of at least 2px. */
+  await p.evaluate(() => document.getElementById('brief-email').blur());
+  await p.fill('#brief-email', '');
+  await p.click('.brief-send');
+  await p.waitForTimeout(300);
+  await p.keyboard.press('Shift+Tab');
+  await p.keyboard.press('Tab');
+  const ring = await p.evaluate(() => {
+    const el = document.activeElement.closest('.blank');
+    const cs = getComputedStyle(el);
+    return { id: document.activeElement.id, invalid: el.hasAttribute('data-invalid'), w: parseFloat(cs.outlineWidth), style: cs.outlineStyle, size: cs.backgroundSize };
+  });
+  ok(ring.invalid && ring.w >= 2 && ring.style === 'solid' && /2\.5px/.test(ring.size), `an invalid blank that has focus shows a ring and the thick rule (${JSON.stringify(ring)})`);
+  const noteRing = await p.evaluate(() => { const t = document.querySelector('.brief-note textarea'); t.focus(); return parseFloat(getComputedStyle(t).outlineWidth); });
+  ok(noteRing >= 2, `the note shows a focus ring too (${noteRing}px)`);
+
+  // "something else" becomes a typed blank, and the way back works by keyboard
+  await p.selectOption('#brief-sector', 'other');
+  const o1 = await p.evaluate(() => ({ active: document.activeElement.id, select: !!document.getElementById('brief-sector'), back: !!document.querySelector('.blank-back') }));
+  ok(o1.active === 'brief-sector-text' && !o1.select && o1.back, `"something else" turns the blank into a text field and focuses it (${o1.active})`);
+  await p.keyboard.type('bakery');
+  await p.keyboard.press('Tab');
+  await p.keyboard.press('Enter');
+  const o2 = await p.evaluate(() => ({ active: document.activeElement.id, value: document.getElementById('brief-sector')?.value }));
+  ok(o2.active === 'brief-sector' && o2.value === '', `the back button returns to the list, empty, with focus on it (${o2.active})`);
+
+  /* The note re-fits when its box changes width without the words changing, in
+     both directions: a stale height clips the text when the box narrows and
+     leaves a gap when it widens. Judged against the height it would have if it
+     were measured from scratch. */
+  await p.setViewportSize({ width: 800, height: 900 });
+  await p.fill('.brief-note textarea', 'a fairly long note that will wrap onto more lines when the box gets narrower than it is now '.repeat(2));
+  const drift = () => p.evaluate(() => {
+    const t = document.querySelector('.brief-note textarea');
+    const shown = t.offsetHeight;
+    const keep = t.style.height;
+    t.style.height = 'auto';
+    const natural = t.scrollHeight + (t.offsetHeight - t.clientHeight);
+    t.style.height = keep;
+    return { shown, natural: Math.round(natural) };
+  });
+  const wide = await drift();
+  await p.setViewportSize({ width: 420, height: 900 });
+  await p.waitForTimeout(400);
+  const narrow = await drift();
+  await p.setViewportSize({ width: 800, height: 900 });
+  await p.waitForTimeout(400);
+  const wide2 = await drift();
+  ok(narrow.shown !== wide.shown && Math.abs(narrow.shown - narrow.natural) <= 2 && Math.abs(wide2.shown - wide2.natural) <= 2,
+    `the note re-fits when its width changes, in both directions (${wide.shown}, ${narrow.shown} vs ${narrow.natural}, ${wide2.shown} vs ${wide2.natural})`);
   await p.close();
 }
+
+head('contact — validation and submission');
+{
+  const p = await desktop();
+  const posts = [];
+  p.on('request', (r) => { if (r.url().endsWith('/api/contact')) posts.push(r.postData()); });
+  await p.goto(OK.base + '/', { waitUntil: 'load' });
+  await settle(p);
+  await viaOwnIp(p);
+  await openBrief(p);
+
+  await p.click('.brief-send');
+  await p.waitForTimeout(250);
+  const e1 = await p.evaluate(() => ({
+    alert: document.querySelector('.brief-error').textContent,
+    focus: document.activeElement.id,
+    invalid: document.querySelectorAll('.brief [aria-invalid="true"]').length,
+  }));
+  ok(posts.length === 0, `an empty brief is stopped in the browser, no request made (${posts.length})`);
+  ok(/^Please include the kind of business you run, what you want to change, when you would like it done, your name and a valid email address\.$/.test(e1.alert), `the error names every missing blank (${e1.alert})`);
+  ok(e1.focus === 'brief-sector' && e1.invalid === 5, `focus goes to the first missing blank and all five are marked invalid (${e1.focus}, ${e1.invalid})`);
+
+  await fillBrief(p, { email: 'not-an-email' });
+  /* The same error twice in a row has to be announced twice, which a live
+     region only does for a new node. */
+  await p.evaluate(() => { window.__alertNode = document.querySelector('.brief-error'); });
+  await p.click('.brief-send');
+  await p.waitForTimeout(250);
+  const e2 = await p.evaluate(() => ({ alert: document.querySelector('.brief-error').textContent, focus: document.activeElement.id }));
+  ok(e2.alert === 'Please include a valid email address.' && e2.focus === 'brief-email' && posts.length === 0, `a bad email is named and focused (${e2.alert})`);
+  await p.click('.brief-send');
+  await p.evaluate(() => { window.__alertNode = document.querySelector('.brief-error'); });
+  await p.click('.brief-send');
+  await p.waitForTimeout(250);
+  const renewed = await p.evaluate(() => window.__alertNode !== document.querySelector('.brief-error') && document.querySelector('.brief-error').isConnected);
+  ok(renewed, 'a repeated identical error arrives as a fresh live region');
+
+  // the server's own refusal reaches the visitor: strip the email in flight
+  await p.unroute('**/api/contact');
+  await viaOwnIp(p, (b) => JSON.stringify({ ...b, email: '' }));
+  await p.fill('#brief-email', 'sam@example.com');
+  await p.focus('.brief-send');
+  await p.keyboard.press('Enter');
+  await p.waitForFunction(() => /valid email/.test(document.querySelector('.brief-error').textContent) && document.querySelector('.brief-send').getAttribute('aria-disabled') !== 'true');
+  const e3 = await p.evaluate(() => ({
+    alert: document.querySelector('.brief-error').textContent, still: !!document.querySelector('.brief'), done: !!document.querySelector('.brief-done'),
+    focus: document.activeElement.className, tag: document.activeElement.tagName,
+  }));
+  ok(posts.length === 1 && e3.still && !e3.done && e3.alert === 'Please include a valid email address.', `a server refusal is shown and the form stays put (${e3.alert})`);
+  ok(e3.tag !== 'BODY' && /brief-send/.test(e3.focus), `focus is still on the send button after a server error, not dropped to the page (${e3.tag}.${e3.focus})`);
+
+  // the real thing
+  await p.unroute('**/api/contact');
+  await viaOwnIp(p);
+  await p.fill('.brief-note textarea', 'About forty covers on a Friday.\nThe phone never stops.');
+  const mailsBefore = OK.sent().length;
+  const resP = p.waitForResponse((r) => r.url().endsWith('/api/contact'));
+  await p.click('.brief-send');
+  const res = await resP;
+  const body = await res.json();
+  ok(res.status() === 200 && body.ok === true && body.delivered === true, `a complete brief is accepted and delivered (${res.status()} ${JSON.stringify(body)})`);
+  const sent = JSON.parse(posts[posts.length - 1]);
+  ok(sent.sector === 'restaurant' && sent.goal === 'bookings' && sent.timing === 'quarter' && !('message' in sent) && !('sector_label' in sent),
+    `the browser sends ids, not words (${sent.sector}, ${sent.goal}, ${sent.timing})`);
+  const mail = OK.sent()[mailsBefore];
+  ok(mail?.text.includes('Business: restaurant\nWants to: automate bookings\nTiming: this quarter') && mail.text.includes('The phone never stops.') && mail.reply_to === 'sam@example.com',
+    `the email is written by the server from the ids (${JSON.stringify(mail?.text.split('\n').slice(2, 6))})`);
+  await p.waitForSelector('.brief-done');
+  const done = await p.evaluate(() => ({
+    text: document.querySelector('.brief-done').innerText.replace(/\s+/g, ' ').trim(),
+    focus: document.activeElement.classList.contains('brief-done'),
+    role: document.querySelector('.brief-done').getAttribute('role'),
+  }));
+  ok(done.text.startsWith('Thanks, Sameer. We’ll reply to sam@example.com about automating bookings for your restaurant.'), `the brief is read back as a sentence ("${done.text}")`);
+  ok(done.focus && done.role === 'status', 'the confirmation takes focus and is a live status');
+  ok(!/[—–]/.test(done.text), 'no em or en dashes in the confirmation');
+  await p.click('.brief-done .brief-alt');
+  const reset = await p.evaluate(() => ({ form: !!document.querySelector('.brief'), v: document.getElementById('brief-name').value + document.getElementById('brief-sector').value, focus: document.activeElement.id }));
+  ok(reset.form && reset.v === '', 'Send another brief returns a clean form');
+  ok(reset.focus === 'brief-sector', `and puts focus on the first blank, not on the page (${reset.focus})`);
+  // and the way back to booking from inside the form
+  await p.click('.brief-alt');
+  const toBook = await p.evaluate(() => ({ sel: document.getElementById('contact-tab-book').getAttribute('aria-selected'), focus: document.activeElement.id }));
+  ok(toBook.sel === 'true' && toBook.focus === 'contact-tab-book', 'Or book a call instead switches back and focuses the tab');
+  await p.close();
+}
+
+head('contact — a brief the server could not send is not thanked');
+{
+  const p = await desktop();
+  await p.goto(NONE.base + '/', { waitUntil: 'load' });
+  await settle(p, 2000);
+  await viaOwnIp(p);
+  await openBrief(p);
+  await fillBrief(p);
+  await p.fill('.brief-note textarea', 'Forty covers on a Friday.');
+  await p.click('.brief-send');
+  await p.waitForSelector('.brief-done');
+  const u = await p.evaluate(() => ({
+    text: document.querySelector('.brief-done').innerText.replace(/\s+/g, ' ').trim(),
+    href: [...document.querySelectorAll('.brief-done a')].map((a) => a.getAttribute('href')),
+    focus: document.activeElement.classList.contains('brief-done'),
+  }));
+  ok(/^That didn’t go through\./.test(u.text) && !/Thanks|We’ll reply/.test(u.text), `delivered:false shows "that didn't go through", not a thank-you ("${u.text.slice(0, 60)}")`);
+  ok(u.href.length === 2 && u.href.every((h) => h.startsWith('mailto:info@sk-intelligence.co?subject=')) && decodeURIComponent(u.href[0]).includes('We run a restaurant and we want to automate bookings, this quarter.') && decodeURIComponent(u.href[0]).includes('Forty covers on a Friday.'),
+    'it offers a mailto with the brief already written into it');
+  ok(u.focus && !/[—–]/.test(u.text), 'the notice takes focus and has no em or en dashes');
+  await p.click('.brief-done .brief-alt');
+  const back = await p.evaluate(() => ({ form: !!document.querySelector('.brief'), name: document.getElementById('brief-name').value, sector: document.getElementById('brief-sector').value, focus: document.activeElement.id }));
+  ok(back.form && back.name === 'Sameer Gul' && back.sector === 'restaurant' && back.focus === 'brief-name', `Back to the brief keeps every answer and focuses the name (${JSON.stringify(back)})`);
+  await p.close();
+}
+
+head('contact — no sideways scroll with the form shown');
+for (const w of [...PHONES, 768, 1440]) {
+  const p = w < 900 ? await phone(w) : await browser.newPage({ viewport: { width: w, height: 900 } });
+  await p.goto(OK.base + '/', { waitUntil: 'load' });
+  await settle(p, 2000);
+  await viaOwnIp(p);
+  await openBrief(p);
+  const measure = () => p.evaluate(() => ({
+    h: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    out: [...document.querySelectorAll('.brief-card *')].filter((el) => {
+      const c = el.closest('.brief-card').getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (r.width === 0 || el.classList.contains('visually-hidden') || el.classList.contains('brief-trap')) return false;
+      return r.right > c.right + 1 || r.left < c.left - 1;
+    }).map((el) => `${el.tagName.toLowerCase()}.${el.className || el.id}`).slice(0, 4),
+  }));
+  const idle = await measure();
+  await fillBrief(p, { sector: 'garage', goal: 'internal', timing: 'exploring', name: 'Bartholomew Featherstonehaugh', email: 'bartholomew.featherstonehaugh@a-very-long-company-name.example.co.uk' });
+  await p.fill('.brief-note textarea', 'A long note that goes on for rather a lot longer than one line so the note has to grow, and keep growing, and still fit.');
+  const full = await measure();
+  await p.selectOption('#brief-sector', 'other');
+  await p.keyboard.type('independent family run vehicle recovery and storage');
+  await p.selectOption('#brief-goal', 'other');
+  await p.keyboard.type('replace three spreadsheets with one thing');
+  const other = await measure();
+  const bad = [idle, full, other].map((m, i) => ({ ...m, s: ['idle', 'filled', 'other'][i] })).filter((m) => m.h > 0 || m.out.length);
+  ok(bad.length === 0, `${w}px form idle, filled and in "something else" mode stays inside the card${bad.length ? ' — ' + bad.map((b) => `${b.s} h${b.h} ${b.out.join(',')}`).join('; ') : ''}`);
+  await p.click('.brief-send');
+  await p.waitForSelector('.brief-done');
+  const sent = await measure();
+  ok(sent.h <= 0 && sent.out.length === 0, `${w}px confirmation with a long address fits (${sent.h} ${sent.out.join(',')})`);
+  await p.close();
+}
+
+head('contact — tap targets and contrast with the form shown (phone)');
+{
+  const p = await phone(390);
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p, 2000);
+  await openBrief(p);
+  await p.selectOption('#brief-sector', 'other');
+  const small = await p.evaluate(() =>
+    [...document.querySelectorAll('.cta-switch [role=tab], .brief button, .brief .blank')]
+      .filter((el) => el.offsetParent && el.getClientRects().length)
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.height < 44 || r.width < 44)
+      .map(({ el, r }) => `${el.tagName.toLowerCase()}.${el.className} ${Math.round(r.width)}x${Math.round(r.height)}`));
+  ok(small.length === 0, `tabs, buttons and blanks are all at least 44px ${small.length ? '— ' + small.join(', ') : ''}`);
+  const lows = await p.evaluate(() => {
+    const lum = (c) => { const s = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]; };
+    /* Text on the card sits over a dark gradient with a light translucent fill;
+       judged against the lightest backdrop it ever has, not the darkest. */
+    const bg = [64, 56, 47];
+    const parse = (c) => c.match(/[\d.]+/g).map(Number).slice(0, 3);
+    const blend = (c) => { const m = c.match(/[\d.]+/g).map(Number); const a = m[3] ?? 1; return [0, 1, 2].map((i) => m[i] * a + bg[i] * (1 - a)); };
+    const ratio = (a, b) => { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05); };
+    const probe = (sel, pseudo) => {
+      const el = document.querySelector(sel);
+      const c = getComputedStyle(el, pseudo).color;
+      /* A filled button is judged against its own fill, not the card. */
+      const fill = getComputedStyle(el).backgroundColor;
+      const ground = /^rgb\(/.test(fill) ? parse(fill) : bg;
+      return { sel: sel + (pseudo || ''), r: +ratio(blend(c), ground).toFixed(2), px: parseFloat(getComputedStyle(el).fontSize) };
+    };
+    const dim = (() => { document.getElementById('brief-name').focus(); return probe('.brief-line'); })();
+    /* The focus ring is a non-text indicator: 3:1 against the panel (1.4.11). */
+    const ringC = parse(getComputedStyle(document.documentElement).getPropertyValue('--band-accent').trim().replace('#', 'rgb(').replace(/^rgb\((..)(..)(..)$/, (_, a, b, c) => `rgb(${parseInt(a, 16)},${parseInt(b, 16)},${parseInt(c, 16)})`));
+    const ring = { sel: 'focus ring', r: +ratio(ringC, bg).toFixed(2), px: 0 };
+    return [probe('.brief-note textarea', '::placeholder'), probe('.blank input', '::placeholder'), probe('.brief-send'), probe('.brief-alt'), dim, ring];
+  });
+  const weak = lows.filter((l) => l.r < (l.sel === 'focus ring' ? 3 : 4.5));
+  ok(weak.length === 0, `placeholders, the dimmed sentence and the buttons clear 4.5:1, the focus ring 3:1 (${lows.map((l) => `${l.sel} ${l.r}`).join(', ')})`);
+  await p.close();
+}
+
+head('contact — house style with the form shown');
+{
+  const p = await desktop();
+  await p.goto(OK.base + '/', { waitUntil: 'load' });
+  await settle(p, 1500);
+  await viaOwnIp(p);
+  await openBrief(p);
+  const texts = [];
+  texts.push(await p.evaluate(() => document.querySelector('.cta-panels').innerText));
+  texts.push((await p.evaluate(() => [...document.querySelectorAll('.brief option')].map((o) => o.textContent))).join(' | '));
+  await fillBrief(p);
+  await p.click('.brief-send');
+  await p.waitForSelector('.brief-done');
+  texts.push(await p.evaluate(() => document.querySelector('.cta-panels').innerText));
+  const all = texts.join('\n');
+  ok(!/[—–]/.test(all), 'no em or en dashes in the switch, the sentence, the options or the confirmation');
+  const bannedDenials = [/\bwe(?:'|’)?re not\b/i, /\bwe don(?:'|’)?t\b/i, /\bwe do not\b/i, /\bwe won(?:'|’)?t\b/i, /\bnot just\b/i, /\bnot a\b/i, /\bno (?:account manager|middleman|hand[- ]?off)\b/i];
+  const hits = bannedDenials.filter((re) => re.test(all)).map(String);
+  ok(hits.length === 0, `the form's copy says what it does rather than what it isn't${hits.length ? ' — ' + hits.join(' ') : ''}`);
+  await p.close();
+}
+
+head('contact — reduced motion');
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+  const p = await ctx.newPage();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await settle(p, 1500);
+  await openBrief(p);
+  const m = await p.evaluate(() => ({
+    pill: getComputedStyle(document.querySelector('.cta-switch'), '::before').transitionDuration,
+    card: getComputedStyle(document.querySelector('.brief-card')).animationName,
+    blank: getComputedStyle(document.querySelector('.brief .blank')).transitionDuration,
+  }));
+  ok(m.pill === '0s' && m.card === 'none' && m.blank === '0s', `no switch, entrance or underline motion under prefers-reduced-motion (${m.pill} ${m.card} ${m.blank})`);
+  await ctx.close();
+}
+
+head('contact — JS off');
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false });
+  const p = await ctx.newPage();
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await p.waitForTimeout(700);
+  const r = await p.evaluate(() => {
+    const shown = (el) => !!el && el.offsetParent !== null && getComputedStyle(el).visibility !== 'hidden';
+    return {
+      switchShown: shown(document.querySelector('.cta-switch')),
+      form: document.querySelectorAll('.brief, .brief-card form, .cta-panels select').length,
+      fallback: shown(document.querySelector('.cta-panels .booking-fallback')),
+      calendlyLink: !!document.querySelector('.cta-panels .booking-fallback a[href*="calendly.com"]'),
+      mailto: shown(document.querySelector('.cta-contact a[href^="mailto:"]')),
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  ok(!r.switchShown, 'JS off: the switch is not shown, so there is no dead control');
+  ok(r.form === 0, `JS off: no form is rendered (${r.form})`);
+  ok(r.fallback && r.calendlyLink && r.mailto, 'JS off: the booking link and the mailto line are both there');
+  ok(r.overflow <= 0, `JS off: no sideways scroll (${r.overflow})`);
+  await ctx.close();
+}
+
+head('contact — blocked booking script still falls back inside the panel');
+{
+  const p = await desktop();
+  await p.route('https://assets.calendly.com/**', (route) => route.abort());
+  await p.goto(BASE + '/', { waitUntil: 'load' });
+  await p.waitForSelector('#contact .booking-fallback', { timeout: 15000 });
+  const t = await p.evaluate(() => ({ text: document.querySelector('.booking-fallback').textContent, inBook: !!document.querySelector('#contact-panel-book .booking-fallback'), switchOk: !!document.querySelector('.cta-switch') }));
+  ok(t.inBook && t.switchOk && /did not load/.test(t.text), 'script blocked: the fallback message shows in the booking panel and the switch is still there');
+  await openBrief(p);
+  ok(await p.evaluate(() => getComputedStyle(document.querySelector('.brief')).display !== 'none'), 'script blocked: the brief is still reachable');
+  await p.close();
+}
+
+head('contact — CONTACT_TO, CONTACT_CC and reply_to reach the mail provider');
+{
+  /* Each case is its own server, because the variables are read per request but
+     set per process. CONTACT_CC is always set explicitly, to the empty string
+     for "unset", so a developer's .env file cannot decide the outcome. */
+  const withCc = async (cc) => {
+    const srv = await startServer({ ...KEYS, CONTACT_CC: cc });
+    try {
+      const r = await fetch(srv.base + '/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': freshIp() },
+        body: JSON.stringify({ ...BRIEF, email: 'visitor@example.test' }) });
+      return { status: r.status, body: srv.sent()[0] ?? null };
+    } finally { srv.stop(); }
+  };
+  const a = await withCc(' one@example.test, ,two@example.test ,not-an-address,@x');
+  ok(a.status === 200 && a.body?.to === 'primary@example.test', `CONTACT_TO stays the single primary recipient (${a.body?.to})`);
+  ok(JSON.stringify(a.body?.cc) === JSON.stringify(['one@example.test', 'two@example.test']), `CONTACT_CC is trimmed, empties and invalid entries dropped (${JSON.stringify(a.body?.cc)})`);
+  ok(a.body?.reply_to === 'visitor@example.test', `reply_to stays the visitor (${a.body?.reply_to})`);
+  const b = await withCc('');
+  ok(b.status === 200 && b.body && !('cc' in b.body), 'no cc is sent when CONTACT_CC is unset');
+  const c = await withCc(' , ,');
+  ok(c.status === 200 && c.body && !('cc' in c.body), 'no cc is sent when CONTACT_CC holds only empty entries');
+}
+for (const s of [OK, NONE, PROD]) s.stop();
 
 // ─────────────────────────────────────────── anchor landings
 /* Deep links must not park the section heading under the fixed nav. Each anchor

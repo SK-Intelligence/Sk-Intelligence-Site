@@ -47,6 +47,7 @@
     --band-ink:#F5F1E8;
     --band-ink-rgb:245,241,232;
     --band-accent:#CDAC82;
+    --band-alert:#EBA98F;
 
     /* CTA panel — always a rich accent panel, own light-text family */
     --cta-a:#1c1914;
@@ -1415,33 +1416,228 @@
   }
   .booking-fallback a{ color:var(--band-accent); text-decoration:underline; text-underline-offset:3px; }
 
-  /* =================== Contact form ===================
-     Lives on the dark CTA panel, so it uses the band-ink family rather than the
-     page ink. The mailto link beside it is the no-JS path and stays visible. */
-  .cta-form{ margin-top:clamp(24px,3vw,34px); text-align:left; }
-  .cta-form-row{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-  @media (max-width:560px){ .cta-form-row{ grid-template-columns:1fr; } }
-  .cta-form input,
-  .cta-form textarea{
-    width:100%; margin-top:12px; padding:13px 16px; border-radius:14px;
-    font-family:var(--font-display); font-size:.92rem; line-height:1.5;
-    color:var(--band-ink);
+  /* =================== Contact switch + brief ===================
+     Two ways in on the one panel: the booking widget (default) and a form that
+     is a sentence to complete. Same material as the widget beside it, the
+     translucent bone fill and hairline border, so toggling between them swaps
+     content rather than surfaces. */
+
+  /* Honeypot: off-screen rather than display:none, so bots still fill it. */
+  .brief-trap{ position:absolute !important; left:-9999px !important; width:1px !important; height:1px !important; opacity:0 !important; }
+
+  .cta-panels{ margin-top:clamp(24px,3vw,34px); }
+  .cta-panels .booking{ margin-top:clamp(18px,2.4vw,24px); }
+
+  /* The switch only does anything once the page's script has run. Until then
+     (and for good with JS off) it is invisible and inert, so there is never a
+     dead control; it keeps its space so that arming it shifts nothing. Browsers
+     that report no scripting drop the space as well. */
+  .cta-panels:not([data-ready]) .cta-switch{ visibility:hidden; pointer-events:none; }
+  @media (scripting: none){ .cta-switch{ display:none; } .cta-panels .booking{ margin-top:0; } }
+
+  .cta-switch{
+    position:relative; display:grid; grid-template-columns:1fr 1fr; gap:0;
+    width:min(100%, 21rem); margin:0 auto; padding:4px; border-radius:999px;
     background:rgba(var(--band-ink-rgb),.07);
     border:1px solid rgba(var(--band-ink-rgb),.18);
-    transition:border-color .25s var(--ease), background .25s var(--ease);
   }
-  .cta-form-row input{ margin-top:0; }
-  .cta-form textarea{ resize:vertical; min-height:96px; }
-  .cta-form ::placeholder{ color:rgba(var(--band-ink-rgb),.55); }
-  .cta-form input:focus,
-  .cta-form textarea:focus{ outline:none; border-color:var(--band-accent); background:rgba(var(--band-ink-rgb),.11); }
-  .cta-form input:focus-visible,
-  .cta-form textarea:focus-visible{ outline:2px solid var(--band-accent); outline-offset:2px; }
-  /* Honeypot — off-screen rather than display:none so bots still fill it. */
-  .cta-form-trap{ position:absolute !important; left:-9999px !important; width:1px !important; height:1px !important; opacity:0 !important; }
-  .cta-form-actions{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:16px; }
-  .cta-form button[disabled]{ opacity:.6; cursor:progress; }
-  .cta-form-error{ margin-top:14px; font-size:.88rem; color:var(--band-accent); text-align:center; }
+  /* The sliding pill under the active label. A pseudo-element rather than a
+     background on the tab so it can travel between them. */
+  .cta-switch::before{
+    content:''; position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 8px) / 2);
+    border-radius:999px; pointer-events:none;
+    background:rgba(var(--band-ink-rgb),.15);
+    box-shadow:0 1px 0 0 rgba(var(--band-ink-rgb),.14) inset;
+    border:1px solid rgba(var(--band-ink-rgb),.22);
+    transition:transform .45s var(--ease);
+  }
+  .cta-panels[data-mode="brief"] .cta-switch::before{ transform:translateX(100%); }
+  .cta-switch [role="tab"]{
+    position:relative; min-height:44px; padding:0 10px; border-radius:999px;
+    font-family:var(--font-display); font-weight:700; font-size:.86rem; letter-spacing:.01em; white-space:nowrap;
+    color:rgba(var(--band-ink-rgb),.72); transition:color .3s var(--ease);
+  }
+  .cta-switch [role="tab"]:hover{ color:var(--band-ink); }
+  .cta-switch [role="tab"][aria-selected="true"]{ color:var(--band-ink); }
+
+  .brief-card{
+    padding:clamp(1.5rem,4.6vw,2.75rem) clamp(1.1rem,4vw,2.6rem) clamp(1.4rem,3.6vw,2.2rem);
+    margin-top:clamp(18px,2.4vw,24px);
+    border-radius:18px; text-align:left;
+    background:rgba(var(--band-ink-rgb),.07);
+    border:1px solid rgba(var(--band-ink-rgb),.18);
+  }
+  .brief-card{ animation:brief-in .55s var(--ease) both; }
+  @keyframes brief-in{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+
+  /* ---- the sentence ---- */
+  .cta .brief-line{
+    margin:0; font-family:var(--font-serif); font-weight:500; font-optical-sizing:auto;
+    font-size:clamp(1.1rem, .8rem + 1.9vw, 1.95rem); line-height:1.95; letter-spacing:-.005em;
+    color:rgba(var(--band-ink-rgb),.94); overflow-wrap:break-word;
+    transition:color .35s var(--ease);
+  }
+  .brief-line + .brief-line{ margin-top:.55rem; }
+  /* While a blank has the caret, the rest of the sentence steps back a little so
+     the eye stays on the word being chosen. */
+  .brief:focus-within .brief-line{ color:rgba(var(--band-ink-rgb),.62); }
+
+  /* A blank is a grid cell holding the control and a hidden copy of its text.
+     The copy sets the width, so the blank is as wide as what is in it and grows
+     as the visitor types. min-width:0 and max-width:100% let a long email shrink
+     the cell and scroll inside the input instead of pushing the page sideways. */
+  .blank{
+    --blank-line:color-mix(in srgb, var(--band-accent) 55%, transparent);
+    position:relative; display:inline-grid; align-items:center; vertical-align:baseline;
+    max-width:100%; padding-bottom:.02em; margin-inline:.04em;
+    background-image:linear-gradient(90deg, var(--blank-line) 0 50%, transparent 50% 100%);
+    background-size:9px 1.5px; background-repeat:repeat-x; background-position:0 100%;
+    transition:background-size .3s var(--ease);
+  }
+  .blank > *{ grid-area:1 / 1; min-width:0; }
+  /* A blank is a tap target as well as a word. Padding rather than a taller
+     line-height, so the sentence keeps its rhythm on a desktop. */
+  @media (max-width:900px){ .blank{ padding-block:4px 5px; } }
+  .blank-size{
+    visibility:hidden; white-space:pre; overflow:hidden; pointer-events:none;
+    padding:0 .12em; font-style:italic;
+  }
+  .blank-select .blank-size{ padding-right:1.05em; }
+  .blank select,
+  .blank input{
+    /* width:0 with min-width:100% takes the control out of the cell's sizing,
+       so the hidden copy decides the width. Without it a select is as wide as
+       its longest option and an input as wide as its default 20 characters. */
+    width:0; min-width:100%; height:100%; margin:0; padding:0 .12em; border:0; border-radius:0; outline:0;
+    font:inherit; font-style:italic; letter-spacing:inherit; color:var(--band-accent);
+    background:transparent; appearance:none; -webkit-appearance:none; text-overflow:ellipsis;
+    caret-color:var(--band-accent);
+  }
+  .blank select{ padding-right:1.05em; cursor:pointer; color-scheme:dark; }
+  .blank select option{ font-family:var(--font-display); font-style:normal; font-size:1rem; color:var(--band-ink); background:var(--band-bg); }
+  .blank select option:disabled{ color:rgba(var(--band-ink-rgb),.55); }
+  .blank input::placeholder{ color:rgba(var(--band-ink-rgb),.64); font-style:normal; opacity:1; }
+  /* Not yet chosen: reads as a prompt, in the plain face, not as an answer. */
+  .blank-select:not([data-filled]) select{ color:rgba(var(--band-ink-rgb),.64); font-style:normal; }
+  .blank-select:not([data-filled]) .blank-size{ font-style:normal; }
+  .blank-text:not([data-filled]) .blank-size{ font-style:normal; }
+
+  /* Answered: the dashes close into a rule. The dashed gradient is half
+     transparent by construction, so the solid states swap it for a plain one. */
+  .blank[data-filled],
+  .blank:focus-within,
+  .blank[data-invalid]{ background-image:linear-gradient(var(--blank-line), var(--blank-line)); }
+  .blank[data-filled]{ background-size:100% 1.5px; --blank-line:color-mix(in srgb, var(--band-accent) 85%, transparent); }
+  /* Where you are: the rule thickens and goes to full strength, with a soft
+     lift under it. Drawn with background-size and a shadow, so nothing about the
+     line box moves. */
+  .blank:focus-within{
+    background-size:100% 2.5px; --blank-line:var(--band-accent);
+    filter:drop-shadow(0 6px 10px color-mix(in srgb, var(--band-accent) 28%, transparent));
+  }
+  .blank[data-invalid]{ --blank-line:var(--band-alert); background-size:100% 2.5px; }
+  .blank[data-invalid] select,
+  .blank[data-invalid] input{ color:var(--band-alert); }
+  /* Declared after [data-invalid] on purpose: an invalid blank that has the
+     caret must still read as the one you are in, and the thick accent rule is
+     what says so. The alert colour stays on the text. */
+  .blank[data-invalid]:focus-within{
+    --blank-line:var(--band-accent);
+    filter:drop-shadow(0 6px 10px color-mix(in srgb, var(--band-accent) 28%, transparent));
+  }
+  /* A real focus ring as well as the rule, because a 2.5px underline on its own
+     is easy to lose (WCAG 2.4.7). The accent clears 3:1 against the panel
+     (1.4.11). :has() so the ring wraps the whole blank, not the borderless
+     control inside it; text fields always match :focus-visible, selects match
+     it for the keyboard. */
+  .blank:has(:focus-visible){ outline:2px solid var(--band-accent); outline-offset:5px; border-radius:4px; }
+  .blank select:focus-visible,
+  .blank input:focus-visible{ outline:0; }
+  .brief-note textarea:focus-visible{ outline:2px solid var(--band-accent); outline-offset:5px; border-radius:4px; }
+
+  .blank-caret{
+    position:absolute; right:.2em; top:50%; width:.3em; height:.3em; margin-top:-.26em; pointer-events:none;
+    border-right:1.5px solid var(--band-accent); border-bottom:1.5px solid var(--band-accent);
+    transform:rotate(45deg); opacity:.75; transition:transform .3s var(--ease), opacity .3s var(--ease);
+  }
+  .blank:focus-within .blank-caret{ opacity:1; transform:rotate(45deg) translate(1px,1px); }
+
+  /* Back from a typed answer to the list. A 44px target around a small mark. */
+  .blank-back{
+    display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;
+    width:44px; height:44px; margin:-8px -6px -8px 0; border-radius:50%;
+  }
+  .blank-back span{
+    width:22px; height:22px; border-radius:50%; position:relative;
+    border:1px solid rgba(var(--band-ink-rgb),.34); transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .blank-back span::after{
+    content:''; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-5px 0 0 -4px;
+    border-right:1.5px solid var(--band-accent); border-bottom:1.5px solid var(--band-accent); transform:rotate(45deg);
+  }
+  .blank-back:hover span{ border-color:var(--band-accent); background:rgba(var(--band-ink-rgb),.08); }
+
+  /* ---- the note: a last blank that runs the width of the line ---- */
+  .brief-note{ display:flex; flex-wrap:wrap; align-items:baseline; gap:.1rem .9rem; margin-top:clamp(14px,2.4vw,22px); }
+  .brief-note label{
+    flex:none; font-family:var(--font-serif); font-weight:500; font-size:clamp(1.1rem, .8rem + 1.9vw, 1.95rem);
+    line-height:2; color:rgba(var(--band-ink-rgb),.94);
+  }
+  .brief:focus-within .brief-note label{ color:rgba(var(--band-ink-rgb),.62); }
+  .brief-note textarea{
+    flex:1 1 14rem; min-width:0; min-height:2.2em; padding:.3rem .12rem .35rem; margin:0; resize:none; overflow:hidden;
+    font-family:var(--font-serif); font-style:italic; font-weight:500; font-size:clamp(1rem, .75rem + 1.2vw, 1.35rem); line-height:1.5;
+    color:var(--band-accent); caret-color:var(--band-accent);
+    background:transparent; border:0; border-radius:0; outline:0;
+    background-image:linear-gradient(90deg, color-mix(in srgb, var(--band-accent) 55%, transparent) 0 50%, transparent 50% 100%);
+    background-size:9px 1.5px; background-repeat:repeat-x; background-position:0 100%;
+    transition:background-size .3s var(--ease);
+  }
+  .brief-note textarea[data-filled]{ background-size:100% 1.5px; background-image:linear-gradient(var(--band-accent), var(--band-accent)); }
+  .brief-note textarea:focus{ background-size:100% 2.5px; background-image:linear-gradient(var(--band-accent), var(--band-accent)); }
+  .brief-note textarea::placeholder{ color:rgba(var(--band-ink-rgb),.64); font-style:normal; font-size:.82em; opacity:1; }
+
+  /* ---- send ---- */
+  .cta .brief-error{ margin:0; color:var(--band-alert); font-size:.9rem; line-height:1.5; min-height:0; }
+  .cta .brief-error:not(:empty){ margin-top:clamp(14px,2vw,20px); }
+  .brief-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 22px; margin-top:clamp(18px,2.6vw,28px); }
+  .brief-send{
+    gap:12px; min-height:48px; padding:14px 28px; color:var(--cta-a);
+    background:var(--band-accent); border-color:transparent;
+    box-shadow:0 1px 0 0 rgba(255,255,255,.35) inset, 0 20px 40px -18px rgba(0,0,0,.6);
+  }
+  .brief-send svg{ flex:none; transition:transform .35s var(--ease); }
+  .brief-send:hover{ transform:translateY(-2px); background:#d8bb93; }
+  .brief-send:hover svg{ transform:translateX(3px); }
+  .brief-send[aria-disabled="true"]{ opacity:.65; cursor:progress; transform:none; }
+  .brief-alt{
+    min-height:44px; padding:0 2px; font-size:.9rem; font-weight:600; color:rgba(var(--band-ink-rgb),.82);
+    text-decoration:underline; text-underline-offset:4px; text-decoration-color:rgba(var(--band-ink-rgb),.4);
+    transition:color .25s var(--ease), text-decoration-color .25s var(--ease);
+  }
+  .brief-alt:hover{ color:var(--band-accent); text-decoration-color:var(--band-accent); }
+
+  /* ---- after sending: the brief read back as a sentence ---- */
+  .brief-done{ outline:0; animation:brief-in .6s var(--ease) both; }
+  .cta .brief-done-lead{
+    margin:0; font-family:var(--font-serif); font-weight:600; font-size:clamp(1.7rem, 1.1rem + 2.8vw, 2.7rem);
+    line-height:1.15; color:var(--band-ink);
+  }
+  .cta .brief-done-body{
+    margin-top:.7rem; font-family:var(--font-serif); font-style:italic; font-weight:500;
+    font-size:clamp(1.15rem, .85rem + 1.6vw, 1.7rem); line-height:1.5; color:var(--band-accent); overflow-wrap:anywhere;
+  }
+  .cta .brief-done-small{ margin-top:1.1rem; font-size:.92rem; color:rgba(var(--band-ink-rgb),.78); overflow-wrap:anywhere; }
+  .brief-done-small a{ color:var(--band-accent); text-decoration:underline; text-underline-offset:3px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .cta-switch::before,
+    .cta-switch [role="tab"],
+    .blank, .blank-caret, .brief-note textarea, .brief-send svg, .cta .brief-line{ transition:none; }
+    .brief-card, .brief-done{ animation:none !important; }
+    .brief-send:hover{ transform:none; }
+    .brief-send:hover svg{ transform:none; }
+  }
 
   /* =================== Mobile polish ===================
      Everything below came out of an audit on real device widths (320-430).
